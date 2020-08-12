@@ -50,34 +50,34 @@ namespace FrozenBoyTest {
             Registers registers = new Registers {
                 f = 0b_1111_0000,
             };
-            Assert.True(registers.flags.zero);
-            Assert.True(registers.flags.subtract);
-            Assert.True(registers.flags.half_carry);
-            Assert.True(registers.flags.carry);
+            Assert.True(registers.flagZero);
+            Assert.True(registers.flagSubtract);
+            Assert.True(registers.flagHalfCarry);
+            Assert.True(registers.flagCarry);
 
             registers.f = 0b_0111_0000;
-            Assert.False(registers.flags.zero);
-            Assert.True(registers.flags.subtract);
-            Assert.True(registers.flags.half_carry);
-            Assert.True(registers.flags.carry);
+            Assert.False(registers.flagZero);
+            Assert.True(registers.flagSubtract);
+            Assert.True(registers.flagHalfCarry);
+            Assert.True(registers.flagCarry);
 
             registers.f = 0b_0011_0000;
-            Assert.False(registers.flags.zero);
-            Assert.False(registers.flags.subtract);
-            Assert.True(registers.flags.half_carry);
-            Assert.True(registers.flags.carry);
+            Assert.False(registers.flagZero);
+            Assert.False(registers.flagSubtract);
+            Assert.True(registers.flagHalfCarry);
+            Assert.True(registers.flagCarry);
 
             registers.f = 0b_0001_0000;
-            Assert.False(registers.flags.zero);
-            Assert.False(registers.flags.subtract);
-            Assert.False(registers.flags.half_carry);
-            Assert.True(registers.flags.carry);
+            Assert.False(registers.flagZero);
+            Assert.False(registers.flagSubtract);
+            Assert.False(registers.flagHalfCarry);
+            Assert.True(registers.flagCarry);
 
             registers.f = 0b_0000_0000;
-            Assert.False(registers.flags.zero);
-            Assert.False(registers.flags.subtract);
-            Assert.False(registers.flags.half_carry);
-            Assert.False(registers.flags.carry);
+            Assert.False(registers.flagZero);
+            Assert.False(registers.flagSubtract);
+            Assert.False(registers.flagHalfCarry);
+            Assert.False(registers.flagCarry);
         }
     }
 }

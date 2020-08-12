@@ -9,7 +9,11 @@ using u16 = System.UInt16;
 namespace FrozenBoy {
 
     public class Registers {
-        public FlagRegister flags = new FlagRegister();
+
+        const int bitZeroPosition = 7;
+        const int bitSubtractPosition = 6;
+        const int bitHalfCarryPosition = 5;
+        const int bitCarryPosition = 4;
 
         // 8 bit Real registers
         public u8 a { get; set; }
@@ -17,7 +21,7 @@ namespace FrozenBoy {
         public u8 c { get; set; }
         public u8 d { get; set; }
         public u8 e { get; set; }
-        public u8 f { get => flags.f; set => flags.f = value; }
+        public u8 f { get; set; }
         public u8 h { get; set; }
         public u8 l { get; set; }
 
@@ -28,8 +32,8 @@ namespace FrozenBoy {
             }
 
             set {
-                a = ((u8)((value & 0xFF00) >> 8));
-                f = ((u8)(value & 0xFF));
+                a = (u8)((value & 0b_11111111_00000000) >> 8);
+                f = (u8)(value & 0b_00000000_11111111);
             }
         }
 
@@ -39,8 +43,8 @@ namespace FrozenBoy {
             }
 
             set {
-                b = ((u8)((value & 0xFF00) >> 8));
-                c = ((u8)(value & 0xFF));
+                b = (u8)((value & 0b_11111111_00000000) >> 8);
+                c = (u8)(value & 0b_00000000_11111111);
             }
         }
 
@@ -50,8 +54,8 @@ namespace FrozenBoy {
             }
 
             set {
-                d = ((u8)((value & 0xFF00) >> 8));
-                e = ((u8)(value & 0xFF));
+                d = (u8)((value & 0b_11111111_00000000) >> 8);
+                e = (u8)(value & 0b_00000000_11111111);
             }
         }
 
@@ -61,8 +65,61 @@ namespace FrozenBoy {
             }
 
             set {
-                h = ((u8)((value & 0xFF00) >> 8));
-                l = ((u8)(value & 0xFF));
+                h = (u8)((value & 0b_11111111_00000000) >> 8);
+                l = (u8)(value & 0b_00000000_11111111);
+            }
+        }
+
+        // F register flags
+        public bool flagZero {
+            get {
+                // 11010000 & 10000000 = 10000000
+                //                       10000000 != 0, so the bit is set
+                return (f & (1 << bitZeroPosition)) != 0;
+            }
+
+            set {
+                //        1 << bitZeroPosition = 10000000
+                // newValue << bitZeroPosition = 00000000 (newValue = 0)
+                //                          OR = 10000000
+                //                         NOT = 01111111
+                //                           f = 11110000
+                //                         AND = 01110000
+                var newBit = value ? 1 : 0;
+                f = (u8)(f & ~(1 << bitZeroPosition) | (newBit << bitZeroPosition));
+            }
+        }
+
+        public bool flagSubtract {
+            get {
+                return (f & (1 << bitSubtractPosition)) != 0;
+            }
+
+            set {
+                var newBit = value ? 1 : 0;
+                f = (u8)(f & ~(1 << bitSubtractPosition) | (newBit << bitSubtractPosition));
+            }
+        }
+
+        public bool flagHalfCarry {
+            get {
+                return (f & (1 << bitHalfCarryPosition)) != 0;
+            }
+
+            set {
+                var newBit = value ? 1 : 0;
+                f = (u8)(f & ~(1 << bitHalfCarryPosition) | (newBit << bitHalfCarryPosition));
+            }
+        }
+
+        public bool flagCarry {
+            get {
+                return (f & (1 << bitCarryPosition)) != 0;
+            }
+
+            set {
+                var newBit = value ? 1 : 0;
+                f = (u8)(f & ~(1 << bitCarryPosition) | (newBit << bitCarryPosition));
             }
         }
 
