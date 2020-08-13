@@ -3,13 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30406.217
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FrozenBoy", "FrozenBoy\FrozenBoy.csproj", "{6ED5E011-888E-43D3-AA39-823B673A4C5C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FrozenBoyCore", "FrozenBoyCore\FrozenBoyCore.csproj", "{6ED5E011-888E-43D3-AA39-823B673A4C5C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FrozenBoyGUI", "FrozenBoyGUI\FrozenBoyGUI.csproj", "{105EDAE0-F5E3-46BA-8417-EC22B3BA8E0B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FrozenBoyGUI", "FrozenBoyGUI\FrozenBoyGUI.csproj", "{105EDAE0-F5E3-46BA-8417-EC22B3BA8E0B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FrozenBoyConsole", "FrozenBoyConsole\FrozenBoyConsole.csproj", "{0ED2A9AB-2622-42E1-8CDC-C57BBD4D7287}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FrozenBoyConsole", "FrozenBoyConsole\FrozenBoyConsole.csproj", "{0ED2A9AB-2622-42E1-8CDC-C57BBD4D7287}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FrozenBoyTest", "FrozenBoyTest\FrozenBoyTest.csproj", "{DB99A704-9B6E-4A2B-8D14-3A893564890E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FrozenBoyTest", "FrozenBoyTest\FrozenBoyTest.csproj", "{DB99A704-9B6E-4A2B-8D14-3A893564890E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FrozenBoyDebugger", "FrozenBoyDebugger\FrozenBoyDebugger.csproj", "{CFE33399-F495-4684-99EB-34F6ABC979FB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{DB99A704-9B6E-4A2B-8D14-3A893564890E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DB99A704-9B6E-4A2B-8D14-3A893564890E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DB99A704-9B6E-4A2B-8D14-3A893564890E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CFE33399-F495-4684-99EB-34F6ABC979FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CFE33399-F495-4684-99EB-34F6ABC979FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CFE33399-F495-4684-99EB-34F6ABC979FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CFE33399-F495-4684-99EB-34F6ABC979FB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
