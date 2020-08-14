@@ -10,8 +10,6 @@ using System.Reflection.Emit;
 namespace FrozenBoyCore {
 
     public class CPU {
-        private const string dbgFormat = "{0,-15} ;${1,-6:x4} {2}";
-
         public Registers registers;
         public Memory memory;
         public Opcode opcode; // current Opcode
@@ -27,9 +25,22 @@ namespace FrozenBoyCore {
 
             if (Opcodes.unprefixed.ContainsKey(opcodeValue)) {
                 opcode = Opcodes.unprefixed[opcodeValue];
-                opcode.logic.Invoke(memory, registers);
 
-                Debug.WriteLine(DumpState());
+                if (opcode.value != 0xCB) {
+                    opcode.logic.Invoke(memory, registers);
+                }
+                else {
+                    u8 cbOpcodeValue = memory.data[registers.PC + 1];
+
+                    if (Opcodes.prefixed.ContainsKey(cbOpcodeValue)) {
+                        Opcode cb_opcode = Opcodes.prefixed[cbOpcodeValue];
+                        cb_opcode.logic.Invoke(memory, registers);
+                    }
+                    else {
+                        Debug.WriteLine(String.Format("Unsupported cb_opcode: {0:x2}", cbOpcodeValue));
+                        System.Environment.Exit(0);
+                    }
+                }
 
                 // move to the next one
                 registers.PC = (u16)(registers.PC + opcode.length);
@@ -38,30 +49,6 @@ namespace FrozenBoyCore {
                 Debug.WriteLine(String.Format("Unsupported opcode: {0:x2}", opcodeValue));
                 System.Environment.Exit(0);
             }
-        }
-
-
-        private string DumpState() {
-
-            return opcode.length switch
-            {
-                2 => String.Format(dbgFormat,
-                                   String.Format(opcode.asmInstruction,
-                                                 registers.PC,
-                                                 memory.data[registers.PC + 1]),
-                                   registers.PC,
-                                   registers.ToString()),
-
-                3 => String.Format(dbgFormat,
-                                   String.Format(opcode.asmInstruction,
-                                                 registers.PC,
-                                                 memory.data[registers.PC + 1],
-                                                 memory.data[registers.PC + 2]),
-                                   registers.PC,
-                                   registers.ToString()),
-
-                _ => String.Format(dbgFormat, opcode.asmInstruction, registers.PC, registers.ToString()),
-            };
         }
     }
 }
