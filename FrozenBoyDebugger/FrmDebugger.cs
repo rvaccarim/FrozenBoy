@@ -31,6 +31,8 @@ namespace FrozenBoyDebugger {
             InitializeComponent();
 
             disasmGrid.DefaultCellStyle.Font = new Font("Consolas", 9);
+            historyGrid.DefaultCellStyle.Font = new Font("Consolas", 9);
+
         }
 
         private void FrmDebugger_Load(object sender, EventArgs e) {
@@ -79,6 +81,24 @@ namespace FrozenBoyDebugger {
             row.Cells["Instruction"].Value = value;
         }
 
+        private void HistoryAddRow(string instruction, Registers r) {
+            int rowId = historyGrid.Rows.Add();
+            DataGridViewRow row = historyGrid.Rows[rowId];
+            row.Cells["histInstruction"].Value = instruction;
+            row.Cells["histA"].Value = String.Format("{0:x2}", r.A);
+            row.Cells["histB"].Value = String.Format("{0:x2}", r.B);
+            row.Cells["histC"].Value = String.Format("{0:x2}", r.C);
+            row.Cells["histD"].Value = String.Format("{0:x2}", r.D);
+            row.Cells["histE"].Value = String.Format("{0:x2}", r.E);
+            row.Cells["histF"].Value = String.Format("{0:x2}", r.F);
+            row.Cells["histH"].Value = String.Format("{0:x2}", r.H);
+            row.Cells["histL"].Value = String.Format("{0:x2}", r.L);
+            row.Cells["histFlagZ"].Value = String.Format("{0:x2}", r.FlagZ);
+            row.Cells["histFlagN"].Value = String.Format("{0:x2}", r.FlagN);
+            row.Cells["histFlagH"].Value = String.Format("{0:x2}", r.FlagH);
+            row.Cells["histFlagC"].Value = String.Format("{0:x2}", r.FlagC);
+        }
+
 
         private string DisassembleOpcode(string format, Opcode o, int address, Memory m) {
             return o.length switch
@@ -106,6 +126,7 @@ namespace FrozenBoyDebugger {
             gb.cpu.Step();
 
             history.AppendText(DumpState() + Environment.NewLine);
+            HistoryAddRow(DisassembleOpcode(opcodeFormat, gb.cpu.opcode, gb.cpu.registers.PC, gb.cpu.memory), gb.cpu.registers);
 
             prevA = gb.cpu.registers.A;
             prevB = gb.cpu.registers.B;
@@ -132,12 +153,5 @@ namespace FrozenBoyDebugger {
             history.ScrollToCaret();
         }
 
-        private void btnSave_Click(object sender, EventArgs e) {
-            StreamWriter outputFile;
-
-            using (outputFile = new StreamWriter(Path.Combine(@"D:\Users\frozen\Documents\99_temp\GB_ROM\", "FrozenBoy_asm.txt"))) {
-
-            }
-        }
     }
 }
