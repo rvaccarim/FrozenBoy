@@ -1,11 +1,8 @@
 ﻿using System;
 using u8 = System.Byte;
 using u16 = System.UInt16;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Reflection.Emit;
+
 
 namespace FrozenBoyCore {
 

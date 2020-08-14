@@ -5,7 +5,7 @@ using System.Windows.Forms;
 using System.IO;
 using u8 = System.Byte;
 using u16 = System.UInt16;
-
+using System.Drawing;
 
 namespace FrozenBoyDebugger {
     public partial class FrmDebugger : Form {
@@ -29,11 +29,13 @@ namespace FrozenBoyDebugger {
 
         public FrmDebugger() {
             InitializeComponent();
+
+            disasmGrid.DefaultCellStyle.Font = new Font("Consolas", 9);
         }
 
         private void FrmDebugger_Load(object sender, EventArgs e) {
             Disassemble();
-            disassemblerView.SelectedIndex = 0;
+            disasmGrid.Rows[0].Selected = true;
 
             gb = new GameBoy();
 
@@ -52,7 +54,7 @@ namespace FrozenBoyDebugger {
                 if (Opcodes.unprefixed.ContainsKey(b)) {
                     Opcode opcode = Opcodes.unprefixed[b];
 
-                    disassemblerView.Items.Add(DisassembleOpcode(opcodeFormat, opcode, PC, memory));
+                    DisAsmAddRow(DisassembleOpcode(opcodeFormat, opcode, PC, memory));
 
                     addressLineMap.Add(PC, line);
                     line++;
@@ -60,14 +62,23 @@ namespace FrozenBoyDebugger {
                     PC += opcode.length;
                 }
                 else {
-                    disassemblerView.Items.Add(String.Format(opcodeFormat, String.Format("0x{0:x2}---->TODO", b), PC, b));
+                    DisAsmAddRow(String.Format(opcodeFormat, String.Format("0x{0:x2}---->TODO", b), PC, b));
+
                     addressLineMap.Add(PC, line);
                     line++;
 
                     PC++;
                 }
             }
+
         }
+
+        private void DisAsmAddRow(string value) {
+            int rowId = disasmGrid.Rows.Add();
+            DataGridViewRow row = disasmGrid.Rows[rowId];
+            row.Cells["Instruction"].Value = value;
+        }
+
 
         private string DisassembleOpcode(string format, Opcode o, int address, Memory m) {
             return o.length switch
@@ -105,7 +116,9 @@ namespace FrozenBoyDebugger {
             prevH = gb.cpu.registers.H;
             prevL = gb.cpu.registers.L;
 
-            disassemblerView.SelectedIndex = addressLineMap[gb.cpu.registers.PC];
+            disasmGrid.Rows[addressLineMap[gb.cpu.registers.PC]].Selected = true;
+            disasmGrid.CurrentCell = disasmGrid[0, addressLineMap[gb.cpu.registers.PC]];
+
         }
 
         private string DumpState() {
@@ -117,6 +130,14 @@ namespace FrozenBoyDebugger {
             history.SelectionStart = history.Text.Length;
             // scroll it automatically
             history.ScrollToCaret();
+        }
+
+        private void btnSave_Click(object sender, EventArgs e) {
+            StreamWriter outputFile;
+
+            using (outputFile = new StreamWriter(Path.Combine(@"D:\Users\frozen\Documents\99_temp\GB_ROM\", "FrozenBoy_asm.txt"))) {
+
+            }
         }
     }
 }
