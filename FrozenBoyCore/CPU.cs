@@ -10,41 +10,58 @@ using System.Reflection.Emit;
 namespace FrozenBoyCore {
 
     public class CPU {
-        public Registers regs;
+        private const string dbgFormat = "{0,-15} ;${1,-6:x4} {2}";
+
+        public Registers registers;
         public Memory memory;
-        public Instruction currentInstruction;
+        public Opcode opcode; // current Opcode
 
         public CPU(Memory memory) {
-            regs = new Registers();
+            registers = new Registers();
             this.memory = memory;
-            regs.PC = 0;
-            currentInstruction = new Instruction(regs.PC, memory);
+            registers.PC = 0;
         }
 
-        public void Next() {
-            // execute instruction
-            var opcodeSize = currentInstruction.Execute(this);
-            // dump CPU state
-            // Debug.WriteLine(this.ToString());
-            // go to the next instruction
-            regs.PC = (u16)(regs.PC + opcodeSize);
-            currentInstruction = new Instruction(regs.PC, memory);
+        public void Step() {
+            u8 opcodeValue = memory.data[registers.PC];
+
+            if (Opcodes.unprefixed.ContainsKey(opcodeValue)) {
+                opcode = Opcodes.unprefixed[opcodeValue];
+                opcode.logic.Invoke(memory, registers);
+
+                Debug.WriteLine(DumpState());
+
+                // move to the next one
+                registers.PC = (u16)(registers.PC + opcode.length);
+            }
+            else {
+                Debug.WriteLine(String.Format("Unsupported opcode: {0:x2}", opcodeValue));
+                System.Environment.Exit(0);
+            }
         }
 
-        public string GetCurrentInstruction() {
-            return currentInstruction.ToString();
-        }
 
-        public string GetState() {
-            return regs.ToString();
-        }
+        private string DumpState() {
 
-        public void Ret() {
+            return opcode.length switch
+            {
+                2 => String.Format(dbgFormat,
+                                   String.Format(opcode.asmInstruction,
+                                                 registers.PC,
+                                                 memory.data[registers.PC + 1]),
+                                   registers.PC,
+                                   registers.ToString()),
 
-        }
+                3 => String.Format(dbgFormat,
+                                   String.Format(opcode.asmInstruction,
+                                                 registers.PC,
+                                                 memory.data[registers.PC + 1],
+                                                 memory.data[registers.PC + 2]),
+                                   registers.PC,
+                                   registers.ToString()),
 
-        public override string ToString() {
-            return currentInstruction.ToString() + " " + regs.ToString();
+                _ => String.Format(dbgFormat, opcode.asmInstruction, registers.PC, registers.ToString()),
+            };
         }
     }
 }

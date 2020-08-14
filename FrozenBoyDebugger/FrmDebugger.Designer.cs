@@ -25,7 +25,7 @@
         private void InitializeComponent() {
             this.btnNext = new System.Windows.Forms.Button();
             this.history = new System.Windows.Forms.RichTextBox();
-            this.disassembly = new System.Windows.Forms.ListBox();
+            this.disassemblerView = new System.Windows.Forms.ListBox();
             this.SuspendLayout();
             // 
             // btnNext
@@ -50,20 +50,20 @@
             // 
             // disassembly
             // 
-            this.disassembly.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.disassembly.FormattingEnabled = true;
-            this.disassembly.ItemHeight = 18;
-            this.disassembly.Location = new System.Drawing.Point(12, 12);
-            this.disassembly.Name = "disassembly";
-            this.disassembly.Size = new System.Drawing.Size(389, 670);
-            this.disassembly.TabIndex = 3;
+            this.disassemblerView.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.disassemblerView.FormattingEnabled = true;
+            this.disassemblerView.ItemHeight = 18;
+            this.disassemblerView.Location = new System.Drawing.Point(12, 12);
+            this.disassemblerView.Name = "disassembly";
+            this.disassemblerView.Size = new System.Drawing.Size(389, 670);
+            this.disassemblerView.TabIndex = 3;
             // 
             // FrmDebugger
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1194, 691);
-            this.Controls.Add(this.disassembly);
+            this.Controls.Add(this.disassemblerView);
             this.Controls.Add(this.history);
             this.Controls.Add(this.btnNext);
             this.Name = "FrmDebugger";
@@ -78,6 +78,6 @@
 
         private System.Windows.Forms.Button btnNext;
         private System.Windows.Forms.RichTextBox history;
-        private System.Windows.Forms.ListBox disassembly;
+        private System.Windows.Forms.ListBox disassemblerView;
     }
 }

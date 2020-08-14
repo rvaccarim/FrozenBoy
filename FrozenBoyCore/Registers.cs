@@ -7,11 +7,12 @@ using u16 = System.UInt16;
 namespace FrozenBoyCore {
 
     public class Registers {
+        private const string cpuStateFormat = @"a={0:x2} b={1:x2} c={2:x2} d={3:x2} e={4:x2} f={5:x2} h={6:x2} l={7:x2}    Z={8} N={9} H={10} C={11}";
 
-        const int bitZeroPosition = 7;
-        const int bitSubtractPosition = 6;
-        const int bitHalfCarryPosition = 5;
-        const int bitCarryPosition = 4;
+        private const int bitZeroPosition = 7;
+        private const int bitSubtractPosition = 6;
+        private const int bitHalfCarryPosition = 5;
+        private const int bitCarryPosition = 4;
 
         public u16 PC;
         public u16 SP;
@@ -129,12 +130,9 @@ namespace FrozenBoyCore {
         }
 
         public override string ToString() {
-            string formattedStr = "";
-            formattedStr += String.Format(@"a={0:x2} b={1:x2} c={2:x2} d={3:x2} ", A, B, C, D);
-            formattedStr += String.Format(@"e={0:x2} f={1:x2} h={2:x2} l={3:x2} ", E, F, H, L);
-            formattedStr += String.Format(@"   Z={0} N={1} H={2} C={3}",
-                Convert.ToInt32(FlagZ), Convert.ToInt32(FlagN), Convert.ToInt32(FlagH), Convert.ToInt32(FlagC));
-            return formattedStr;
+            return String.Format(cpuStateFormat, A, B, C, D, E, F, H, L,
+                                                 Convert.ToInt32(FlagZ), Convert.ToInt32(FlagN),
+                                                 Convert.ToInt32(FlagH), Convert.ToInt32(FlagC));
         }
 
     }

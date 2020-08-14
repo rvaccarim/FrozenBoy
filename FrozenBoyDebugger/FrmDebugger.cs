@@ -1,24 +1,21 @@
 ﻿using FrozenBoyCore;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Text;
 using System.Windows.Forms;
+using System.IO;
 using u8 = System.Byte;
 using u16 = System.UInt16;
-using System.IO;
-using System.Reflection.Metadata.Ecma335;
+
 
 namespace FrozenBoyDebugger {
     public partial class FrmDebugger : Form {
 
+        private const string lineFormat = "{0,-15} ;${1,-6:x4} {2}";
+        private const string opcodeFormat = "{0,-15} ;${1,-6:x4}";
+
         private int PC;
         private byte[] romBytes;
-        private const string disasmFormat = "${0,-6:x4} {1,-15}";
 
-        // 8 bit Real registers
         public u8 prevA;
         public u8 prevB;
         public u8 prevC;
@@ -27,7 +24,6 @@ namespace FrozenBoyDebugger {
         public u8 prevF;
         public u8 prevH;
         public u8 prevL;
-
 
         GameBoy gb;
         Dictionary<int, int> map = new Dictionary<int, int>();
@@ -38,60 +34,10 @@ namespace FrozenBoyDebugger {
 
         private void FrmDebugger_Load(object sender, EventArgs e) {
             Disassemble();
-            disassembly.SelectedIndex = 0;
+            disassemblerView.SelectedIndex = 0;
 
             gb = new GameBoy();
 
-        }
-
-        private void BtnNext_Click(object sender, EventArgs e) {
-            history.AppendText(gb.cpu.GetCurrentInstruction() + Environment.NewLine);
-            gb.cpu.Next();
-
-            Log();
-
-            prevA = gb.cpu.regs.A;
-            prevB = gb.cpu.regs.B;
-            prevC = gb.cpu.regs.C;
-            prevD = gb.cpu.regs.D;
-            prevE = gb.cpu.regs.E;
-            prevF = gb.cpu.regs.F;
-            prevH = gb.cpu.regs.H;
-            prevL = gb.cpu.regs.L;
-
-            disassembly.SelectedIndex = map[gb.cpu.regs.PC];
-        }
-
-
-        private void Log() {
-            int aOffset = 0;
-            int bOffset = aOffset + 5;
-            int cOffset = bOffset + 5;
-            int dOffset = cOffset + 5;
-
-            string cpuStateFormat = @"a={0:x2} b={1:x2} c={2:x2} d={3:x2} e={4:x2} f={5:x2} h={6:x2} l={7:x2}    Z={8} N={9} H={10} C={11}";
-
-            string cpuState = String.Format(cpuStateFormat,
-                                            gb.cpu.regs.A, gb.cpu.regs.B, gb.cpu.regs.C, gb.cpu.regs.D,
-                                            gb.cpu.regs.E, gb.cpu.regs.F, gb.cpu.regs.H, gb.cpu.regs.L,
-                                            Convert.ToInt32(gb.cpu.regs.FlagZ), Convert.ToInt32(gb.cpu.regs.FlagN),
-                                            Convert.ToInt32(gb.cpu.regs.FlagH), Convert.ToInt32(gb.cpu.regs.FlagC));
-
-            int historyLength = history.Text.Length;
-            history.AppendText(cpuState + Environment.NewLine);
-
-            //if (gb.cpu.regs.A != prevA) {
-            //    history.SelectionStart = historyLength + aOffset;
-            //    history.SelectionLength = 4;
-            //    history.SelectionColor = Color.Red;
-            //}
-
-            //gb.cpu.regs.B = 3;
-            //if (gb.cpu.regs.B != prevB) {
-            //    history.SelectionStart = historyLength + bOffset;
-            //    history.SelectionLength = 4;
-            //    history.SelectionColor = Color.Red;
-            //}
         }
 
         private void Disassemble() {
@@ -106,31 +52,70 @@ namespace FrozenBoyDebugger {
                 if (Opcodes.unprefixed.ContainsKey(b)) {
                     Opcode opcode = Opcodes.unprefixed[b];
 
-                    switch (opcode.size) {
-                        case 2:
-                            disassembly.Items.Add(String.Format(disasmFormat, PC, String.Format(opcode.assembler, romBytes[PC + 1])));
-                            break;
-                        case 3:
-                            disassembly.Items.Add(String.Format(disasmFormat, PC, String.Format(opcode.assembler, romBytes[PC + 1], romBytes[PC + 2])));
-                            break;
-                        default:
-                            disassembly.Items.Add(String.Format(disasmFormat, PC, opcode.assembler));
-                            break;
-                    }
+                    disassemblerView.Items.Add(DisassembleOpcode(opcodeFormat, opcode, PC, romBytes));
 
                     map.Add(PC, line);
                     line++;
 
-                    PC += opcode.size;
+                    PC += opcode.length;
                 }
                 else {
-                    disassembly.Items.Add(String.Format(disasmFormat, PC, String.Format("0x{0:x2}---->TODO", b)));
+                    disassemblerView.Items.Add(String.Format(opcodeFormat, PC, String.Format("0x{0:x2}---->TODO", b)));
                     map.Add(PC, line);
                     line++;
 
                     PC++;
                 }
             }
+        }
+
+        private string DisassembleOpcode(string format, Opcode o, int address, byte[] m) {
+            return o.length switch
+            {
+                2 => String.Format(format, String.Format(o.asmInstruction, address, m[address + 1]), address),
+                3 => String.Format(format, String.Format(o.asmInstruction, m[address + 1], m[address + 2]), address),
+                _ => String.Format(format, o.asmInstruction, address),
+            };
+        }
+
+
+        private void BtnNext_Click(object sender, EventArgs e) {
+            gb.cpu.Step();
+
+            history.AppendText(DumpState() + Environment.NewLine);
+
+            prevA = gb.cpu.registers.A;
+            prevB = gb.cpu.registers.B;
+            prevC = gb.cpu.registers.C;
+            prevD = gb.cpu.registers.D;
+            prevE = gb.cpu.registers.E;
+            prevF = gb.cpu.registers.F;
+            prevH = gb.cpu.registers.H;
+            prevL = gb.cpu.registers.L;
+
+            disassemblerView.SelectedIndex = map[gb.cpu.registers.PC];
+        }
+
+        private string DumpState() {
+            return gb.cpu.opcode.length switch
+            {
+                2 => String.Format(lineFormat,
+                                   String.Format(gb.cpu.opcode.asmInstruction,
+                                                 gb.cpu.registers.PC,
+                                                 gb.cpu.memory.data[gb.cpu.registers.PC + 1]),
+                                   gb.cpu.registers.PC,
+                                   gb.cpu.registers.ToString()),
+
+                3 => String.Format(lineFormat,
+                                   String.Format(gb.cpu.opcode.asmInstruction,
+                                                 gb.cpu.registers.PC,
+                                                 gb.cpu.memory.data[gb.cpu.registers.PC + 1],
+                                                 gb.cpu.memory.data[gb.cpu.registers.PC + 2]),
+                                   gb.cpu.registers.PC,
+                                   gb.cpu.registers.ToString()),
+
+                _ => String.Format(lineFormat, gb.cpu.opcode.asmInstruction, gb.cpu.registers.PC, gb.cpu.registers.ToString()),
+            };
         }
 
         private void History_TextChanged(object sender, EventArgs e) {

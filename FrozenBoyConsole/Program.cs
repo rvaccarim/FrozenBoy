@@ -6,19 +6,19 @@ namespace FrozenBoyConsole {
     class Program {
         static void Main(string[] args) {
 
-            GameBoy gameboy = new GameBoy();
+            //GameBoy gameboy = new GameBoy();
 
-            string command = "";
-            while (command != "exit") {
-                command = Console.ReadLine();
+            //string command = "";
+            //while (command != "exit") {
+            //    command = Console.ReadLine();
 
-                if (command == "") {
-                    Console.WriteLine(gameboy.cpu.GetCurrentInstruction());
-                    gameboy.cpu.Next();
-                    Console.WriteLine(gameboy.cpu.GetState());
-                    Console.WriteLine("----------------------------------------------------------");
-                }
-            }
+            //    if (command == "") {
+            //        Console.WriteLine(gameboy.cpu.GetCurrentInstruction());
+            //        gameboy.cpu.Step();
+            //        Console.WriteLine(gameboy.cpu.GetState());
+            //        Console.WriteLine("----------------------------------------------------------");
+            //    }
+            //}
         }
     }
 }
