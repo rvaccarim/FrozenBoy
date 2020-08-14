@@ -26,7 +26,7 @@ namespace FrozenBoyDebugger {
         public u8 prevL;
 
         GameBoy gb;
-        Dictionary<int, int> map = new Dictionary<int, int>();
+        Dictionary<int, int> addressLineMap = new Dictionary<int, int>();
 
         public FrmDebugger() {
             InitializeComponent();
@@ -54,14 +54,14 @@ namespace FrozenBoyDebugger {
 
                     disassemblerView.Items.Add(DisassembleOpcode(opcodeFormat, opcode, PC, romBytes));
 
-                    map.Add(PC, line);
+                    addressLineMap.Add(PC, line);
                     line++;
 
                     PC += opcode.length;
                 }
                 else {
                     disassemblerView.Items.Add(String.Format(opcodeFormat, PC, String.Format("0x{0:x2}---->TODO", b)));
-                    map.Add(PC, line);
+                    addressLineMap.Add(PC, line);
                     line++;
 
                     PC++;
@@ -93,7 +93,7 @@ namespace FrozenBoyDebugger {
             prevH = gb.cpu.registers.H;
             prevL = gb.cpu.registers.L;
 
-            disassemblerView.SelectedIndex = map[gb.cpu.registers.PC];
+            disassemblerView.SelectedIndex = addressLineMap[gb.cpu.registers.PC];
         }
 
         private string DumpState() {

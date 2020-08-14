@@ -12,15 +12,14 @@ namespace FrozenBoyCore {
         public u8 value;
         public string asmInstruction;
         public int length;
-        //public int mcycles;
+        public int mcycles;
         public Logic logic;
 
-        //public Opcode(u8 value, string asm, int length, int mcycles, Logic logic) {
-        public Opcode(u8 value, string asm, int length, Logic logic) {
+        public Opcode(u8 value, string asmInstruction, int length, int mcycles, Logic logic) {
             this.value = value;
-            this.asmInstruction = asm;
+            this.asmInstruction = asmInstruction;
             this.length = length;
-            //this.mcycles = mcycles;
+            this.mcycles = mcycles;
             this.logic = logic;
         }
 
