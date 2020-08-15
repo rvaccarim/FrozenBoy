@@ -54,7 +54,7 @@ namespace FrozenBoyDebugger {
                 if (gb.cpu.opcodes.ContainsKey(b)) {
                     Opcode opcode = gb.cpu.opcodes[b];
 
-                    DisAsmAddRow(DisassembleOpcode(opcodeFormat, opcode, PC, memory));
+                    AddInstruction(OpcodeToStr(opcodeFormat, opcode, PC, memory));
 
                     addressLineMap.Add(PC, line);
                     line++;
@@ -62,7 +62,7 @@ namespace FrozenBoyDebugger {
                     PC += opcode.length;
                 }
                 else {
-                    DisAsmAddRow(String.Format(opcodeFormat, String.Format("0x{0:x2}---->TODO", b), PC, b));
+                    AddInstruction(String.Format(opcodeFormat, String.Format("0x{0:x2}---->TODO", b), PC, b));
 
                     addressLineMap.Add(PC, line);
                     line++;
@@ -73,13 +73,13 @@ namespace FrozenBoyDebugger {
 
         }
 
-        private void DisAsmAddRow(string value) {
+        private void AddInstruction(string value) {
             int rowId = disasmGrid.Rows.Add();
             DataGridViewRow row = disasmGrid.Rows[rowId];
             row.Cells["Instruction"].Value = value;
         }
 
-        private void HistoryAddRow(string instruction, Registers r) {
+        private void AddHistory(string instruction, Registers r) {
             int rowId = historyGrid.Rows.Add();
             DataGridViewRow row = historyGrid.Rows[rowId];
             row.Cells["histInstruction"].Value = instruction;
@@ -98,7 +98,7 @@ namespace FrozenBoyDebugger {
         }
 
 
-        private string DisassembleOpcode(string format, Opcode o, int address, Memory m) {
+        private string OpcodeToStr(string format, Opcode o, int address, Memory m) {
             return o.length switch
             {
                 2 => String.Format(format,
@@ -121,10 +121,10 @@ namespace FrozenBoyDebugger {
 
 
         private void BtnNext_Click(object sender, EventArgs e) {
-            gb.cpu.Step();
+            gb.cpu.Execute();
 
             history.AppendText(DumpState() + Environment.NewLine);
-            HistoryAddRow(DisassembleOpcode(opcodeFormat, gb.cpu.opcode, gb.cpu.regs.PC, gb.cpu.mem), gb.cpu.regs);
+            AddHistory(OpcodeToStr(opcodeFormat, gb.cpu.opcode, gb.cpu.regs.PC, gb.cpu.mem), gb.cpu.regs);
 
             prevA = gb.cpu.regs.A;
             prevB = gb.cpu.regs.B;
@@ -141,7 +141,7 @@ namespace FrozenBoyDebugger {
         }
 
         private string DumpState() {
-            return String.Format(stateFormat, DisassembleOpcode(opcodeFormat, gb.cpu.opcode, gb.cpu.regs.PC, gb.cpu.mem), gb.cpu.regs.ToString());
+            return String.Format(stateFormat, OpcodeToStr(opcodeFormat, gb.cpu.opcode, gb.cpu.regs.PC, gb.cpu.mem), gb.cpu.regs.ToString());
         }
 
         private void History_TextChanged(object sender, EventArgs e) {

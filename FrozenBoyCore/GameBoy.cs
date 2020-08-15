@@ -17,5 +17,6 @@ namespace FrozenBoyCore {
 
             cpu = new CPU(memory);
         }
+
     }
 }

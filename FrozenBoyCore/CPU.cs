@@ -27,42 +27,49 @@ namespace FrozenBoyCore {
             InitializePrefixed();
         }
 
-        public void Step() {
-            handledPC = false;
-
+        public Opcode Disassemble() {
             u8 opcodeValue = mem.data[regs.PC];
 
             if (opcodes.ContainsKey(opcodeValue)) {
-                opcode = opcodes[opcodeValue];
 
+                opcode = opcodes[opcodeValue];
                 if (opcode.value != 0xCB) {
-                    opcode.logic.Invoke();
+                    return opcode;
                 }
                 else {
                     u8 cbOpcodeValue = mem.data[regs.PC + 1];
 
                     if (cb_opcodes.ContainsKey(cbOpcodeValue)) {
-                        Opcode cb_opcode = cb_opcodes[cbOpcodeValue];
-                        cb_opcode.logic.Invoke();
+                        return cb_opcodes[cbOpcodeValue];
                     }
                     else {
                         Debug.WriteLine(String.Format("Unsupported cb_opcode: {0:x2}", cbOpcodeValue));
-                        System.Environment.Exit(0);
                     }
                 }
+            }
+            else {
+                Debug.WriteLine(String.Format("Unsupported opcode: {0:x2}", opcodeValue));
+            }
+
+            return null;
+        }
+
+        public void Execute() {
+            handledPC = false;
+            opcode = Disassemble();
+
+            if (opcode != null) {
+                opcode.logic.Invoke();
 
                 // move to the next one
                 if (!handledPC) {
                     regs.PC = (u16)(regs.PC + opcode.length);
                 }
-
             }
             else {
-                Debug.WriteLine(String.Format("Unsupported opcode: {0:x2}", opcodeValue));
                 System.Environment.Exit(0);
             }
         }
-
 
         private void InitializeUnprefixed() {
             opcodes = new Dictionary<byte, Opcode> {
