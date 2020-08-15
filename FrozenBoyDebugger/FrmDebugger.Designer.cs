@@ -215,11 +215,11 @@
             this.historyGrid.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.histInstruction,
             this.histA,
+            this.histF,
             this.histB,
             this.histC,
             this.histD,
             this.histE,
-            this.histF,
             this.histH,
             this.histL,
             this.histFlagZ,
