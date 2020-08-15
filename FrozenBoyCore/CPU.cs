@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using u8 = System.Byte;
 using u16 = System.UInt16;
+using System.Net;
 
 namespace FrozenBoyCore {
 
@@ -181,29 +182,36 @@ namespace FrozenBoyCore {
                 { 0x28, new Opcode(0x28, "JR Z, ${0:x2}",        2, 12, () => {/* */; })},
                 { 0x30, new Opcode(0x30, "JR NC, ${0:x2}",       2, 12, () => {/* */; })},
                 { 0x38, new Opcode(0x38, "JR C, ${0:x2}",        2, 12, () => {/* */; })},
-                { 0x01, new Opcode(0x01, "LD BC, ${0:x4}",       3, 12, () => {/* */; })},
+
+
+                // load direct value into register - 16 bit
+                { 0x01, new Opcode(0x01, "LD BC, ${0:x4}",       3, 12, () => { regs.BC = mem.ReadOperand16(regs.PC); })},
+                { 0x11, new Opcode(0x11, "LD DE, ${0:x4}",       3, 12, () => { regs.DE = mem.ReadOperand16(regs.PC); })},
+                { 0x21, new Opcode(0x21, "LD HL, ${0:x4}",       3, 12, () => { regs.HL = mem.ReadOperand16(regs.PC); })},
+                { 0x31, new Opcode(0x31, "LD SP, ${0:x4}",       3, 12, () => { regs.SP = mem.ReadOperand16(regs.PC); })},
+
                 { 0x02, new Opcode(0x02, "LD (BC), A",           1,  8, () => {/* */; })},
                 { 0x06, new Opcode(0x06, "LD B, ${0:x2}",        2,  8, () => {/* */; })},
                 { 0x08, new Opcode(0x08, "LD (${0:x4}), SP",     3, 20, () => {/* */; })},
                 { 0x0A, new Opcode(0x0A, "LD A, (BC)",           1,  8, () => {/* */; })},
                 { 0x0E, new Opcode(0x0E, "LD C, ${0:x2}",        2,  8, () => {/* */; })},
-                { 0x11, new Opcode(0x11, "LD DE, ${0:x4}",       3, 12, () => {/* */; })},
+
                 { 0x12, new Opcode(0x12, "LD (DE), A",           1,  8, () => {/* */; })},
                 { 0x16, new Opcode(0x16, "LD D, ${0:x2}",        2,  8, () => {/* */; })},
                 { 0x1A, new Opcode(0x1A, "LD A, (DE)",           1,  8, () => {/* */; })},
                 { 0x1E, new Opcode(0x1E, "LD E, ${0:x2}",        2,  8, () => {/* */; })},
-                { 0x21, new Opcode(0x21, "LD HL, ${0:x4}",       3, 12, () => {/* */; })},
+
                 { 0x22, new Opcode(0x22, "LD (HL+), A",          1,  8, () => {/* */; })},
                 { 0x26, new Opcode(0x26, "LD H, ${0:x2}",        2,  8, () => {/* */; })},
                 { 0x2A, new Opcode(0x2A, "LD A, (HL+)",          1,  8, () => {/* */; })},
                 { 0x2E, new Opcode(0x2E, "LD L, ${0:x2}",        2,  8, () => {/* */; })},
-                { 0x31, new Opcode(0x31, "LD SP, ${0:x4}",       3, 12, () => {/* */; })},
-                { 0x32, new Opcode(0x32, "LD (HL-), A",          1,  8, () => {/* */; })},
+
+                { 0x32, new Opcode(0x32, "LD (HL-), A",          1,  8, () => { mem.Write8(regs.HL, regs.A);  regs.HL--; })},
                 { 0x36, new Opcode(0x36, "LD (HL), ${0:x2}",     2, 12, () => {/* */; })},
                 { 0x3A, new Opcode(0x3A, "LD A, (HL-)",          1,  8, () => {/* */; })},
                 { 0x3E, new Opcode(0x3E, "LD A, ${0:x2}",        2,  8, () => {/* */; })},
                 { 0x41, new Opcode(0x41, "LD B, C",              1,  4, () => { regs.B = regs.C; })},
-                { 0x40, new Opcode(0x40, "LD B, B",              1,  4, () => {            })}, // B = B 
+                { 0x40, new Opcode(0x40, "LD B, B",              1,  4, () => { })},
                 { 0x42, new Opcode(0x42, "LD B, D",              1,  4, () => { regs.B = regs.D; })},
                 { 0x43, new Opcode(0x43, "LD B, E",              1,  4, () => { regs.B = regs.E; })},
                 { 0x44, new Opcode(0x44, "LD B, H",              1,  4, () => { regs.B = regs.H; })},
@@ -211,7 +219,7 @@ namespace FrozenBoyCore {
                 { 0x46, new Opcode(0x46, "LD B, (HL)",           1,  8, () => {/* */; })},
                 { 0x47, new Opcode(0x47, "LD B, A",              1,  4, () => {regs.B = regs.A; })},
                 { 0x48, new Opcode(0x48, "LD C, B",              1,  4, () => {regs.C = regs.B; })},
-                { 0x49, new Opcode(0x49, "LD C, C",              1,  4, () => {           })}, // C = C 
+                { 0x49, new Opcode(0x49, "LD C, C",              1,  4, () => { })},
                 { 0x4A, new Opcode(0x4A, "LD C, D",              1,  4, () => {regs.C = regs.D; })},
                 { 0x4B, new Opcode(0x4B, "LD C, E",              1,  4, () => {regs.C = regs.E; })},
                 { 0x4C, new Opcode(0x4C, "LD C, H",              1,  4, () => {regs.C = regs.H; })},
@@ -220,7 +228,7 @@ namespace FrozenBoyCore {
                 { 0x4F, new Opcode(0x4F, "LD C, A",              1,  4, () => { regs.C = regs.A; })},
                 { 0x50, new Opcode(0x50, "LD D, B",              1,  4, () => { regs.D = regs.B; })},
                 { 0x51, new Opcode(0x51, "LD D, C",              1,  4, () => { regs.D = regs.C; })},
-                { 0x52, new Opcode(0x52, "LD D, D",              1,  4, () => {            })}, // D = D 
+                { 0x52, new Opcode(0x52, "LD D, D",              1,  4, () => { })},
                 { 0x53, new Opcode(0x53, "LD D, E",              1,  4, () => { regs.D = regs.E; })},
                 { 0x54, new Opcode(0x54, "LD D, H",              1,  4, () => { regs.D = regs.H; })},
                 { 0x55, new Opcode(0x55, "LD D, L",              1,  4, () => { regs.D = regs.L; })},
@@ -229,7 +237,7 @@ namespace FrozenBoyCore {
                 { 0x58, new Opcode(0x58, "LD E, B",              1,  4, () => { regs.E = regs.B; })},
                 { 0x59, new Opcode(0x59, "LD E, C",              1,  4, () => { regs.E = regs.C; })},
                 { 0x5A, new Opcode(0x5A, "LD E, D",              1,  4, () => { regs.E = regs.D; })},
-                { 0x5B, new Opcode(0x5B, "LD E, E",              1,  4, () => {            })}, // E = E
+                { 0x5B, new Opcode(0x5B, "LD E, E",              1,  4, () => { })},
                 { 0x5C, new Opcode(0x5C, "LD E, H",              1,  4, () => { regs.E = regs.H; })},
                 { 0x5D, new Opcode(0x5D, "LD E, L",              1,  4, () => { regs.E = regs.L; })},
                 { 0x5E, new Opcode(0x5E, "LD E, (HL)",           1,  8, () => {/* */; })},
@@ -238,7 +246,7 @@ namespace FrozenBoyCore {
                 { 0x61, new Opcode(0x61, "LD H, C",              1,  4, () => { regs.H = regs.C; })},
                 { 0x62, new Opcode(0x62, "LD H, D",              1,  4, () => { regs.H = regs.D; })},
                 { 0x63, new Opcode(0x63, "LD H, E",              1,  4, () => { regs.H = regs.E; })},
-                { 0x64, new Opcode(0x64, "LD H, H",              1,  4, () => {            })}, // H = H
+                { 0x64, new Opcode(0x64, "LD H, H",              1,  4, () => { })},
                 { 0x65, new Opcode(0x65, "LD H, L",              1,  4, () => { regs.H = regs.L; })},
                 { 0x66, new Opcode(0x66, "LD H, (HL)",           1,  8, () => {/* */; })},
                 { 0x67, new Opcode(0x67, "LD H, A",              1,  4, () => { regs.H = regs.A; })},
@@ -247,7 +255,7 @@ namespace FrozenBoyCore {
                 { 0x6A, new Opcode(0x6A, "LD L, D",              1,  4, () => { regs.L = regs.D; })},
                 { 0x6B, new Opcode(0x6B, "LD L, E",              1,  4, () => { regs.L = regs.E; })},
                 { 0x6C, new Opcode(0x6C, "LD L, H",              1,  4, () => { regs.L = regs.H; })},
-                { 0x6D, new Opcode(0x6D, "LD L, L",              1,  4, () => {            })}, // H = H
+                { 0x6D, new Opcode(0x6D, "LD L, L",              1,  4, () => {  })},
                 { 0x6E, new Opcode(0x6E, "LD L, (HL)",           1,  8, () => {/* */; })},
                 { 0x6F, new Opcode(0x6F, "LD L, A",              1,  4, () => { regs.L = regs.A; })},
                 { 0x70, new Opcode(0x70, "LD (HL), B",           1,  8, () => {/* */; })},
@@ -321,6 +329,8 @@ namespace FrozenBoyCore {
                 { 0xDE, new Opcode(0xDE, "SBC A, ${0:x2}",        2,  8, () => {/* */; })},
                 { 0x37, new Opcode(0x37, "SCF",                  1,  4, () => {/* */; })},
                 { 0x10, new Opcode(0x10, "STOP",                 1,  4, () => {/* */; })},
+
+
                 { 0x90, new Opcode(0x90, "SUB A, B",             1,  4, () => {/* */; })},
                 { 0x91, new Opcode(0x91, "SUB A, C",             1,  4, () => {/* */; })},
                 { 0x92, new Opcode(0x92, "SUB A, D",             1,  4, () => {/* */; })},
@@ -411,70 +421,73 @@ namespace FrozenBoyCore {
                 { 0x3D, new Opcode(0x3D, "SRL L",                0,  8, () => { /* */; })},
                 { 0x3E, new Opcode(0x3E, "SRL (HL)",             0, 16, () => { /* */; })},
                 { 0x3F, new Opcode(0x3F, "SRL A",                0,  8, () => { /* */; })},
-                { 0x40, new Opcode(0x40, "BIT 0, B",             0,  8, () => { /* */; })},
-                { 0x41, new Opcode(0x41, "BIT 0, C",             0,  8, () => { /* */; })},
-                { 0x42, new Opcode(0x42, "BIT 0, D",             0,  8, () => { /* */; })},
-                { 0x43, new Opcode(0x43, "BIT 0, E",             0,  8, () => { /* */; })},
-                { 0x44, new Opcode(0x44, "BIT 0, H",             0,  8, () => { /* */; })},
-                { 0x45, new Opcode(0x45, "BIT 0, L",             0,  8, () => { /* */; })},
+
+                //  Test bit b in register r.
+                { 0x40, new Opcode(0x40, "BIT 0, B",             0,  8, () => { BIT(0, regs.B); })},
+                { 0x41, new Opcode(0x41, "BIT 0, C",             0,  8, () => { BIT(0, regs.C); })},
+                { 0x42, new Opcode(0x42, "BIT 0, D",             0,  8, () => { BIT(0, regs.D); })},
+                { 0x43, new Opcode(0x43, "BIT 0, E",             0,  8, () => { BIT(0, regs.E); })},
+                { 0x44, new Opcode(0x44, "BIT 0, H",             0,  8, () => { BIT(0, regs.H); })},
+                { 0x45, new Opcode(0x45, "BIT 0, L",             0,  8, () => { BIT(0, regs.L); })},
                 { 0x46, new Opcode(0x46, "BIT 0, (HL)",          0, 12, () => { /* */; })},
-                { 0x47, new Opcode(0x47, "BIT 0, A",             0,  8, () => { /* */; })},
-                { 0x48, new Opcode(0x48, "BIT 1, B",             0,  8, () => { /* */; })},
-                { 0x49, new Opcode(0x49, "BIT 1, C",             0,  8, () => { /* */; })},
-                { 0x4A, new Opcode(0x4A, "BIT 1, D",             0,  8, () => { /* */; })},
-                { 0x4B, new Opcode(0x4B, "BIT 1, E",             0,  8, () => { /* */; })},
-                { 0x4C, new Opcode(0x4C, "BIT 1, H",             0,  8, () => { /* */; })},
-                { 0x4D, new Opcode(0x4D, "BIT 1, L",             0,  8, () => { /* */; })},
+                { 0x47, new Opcode(0x47, "BIT 0, A",             0,  8, () => { BIT(0, regs.A); })},
+                { 0x48, new Opcode(0x48, "BIT 1, B",             0,  8, () => { BIT(1, regs.B); })},
+                { 0x49, new Opcode(0x49, "BIT 1, C",             0,  8, () => { BIT(1, regs.C); })},
+                { 0x4A, new Opcode(0x4A, "BIT 1, D",             0,  8, () => { BIT(1, regs.D); })},
+                { 0x4B, new Opcode(0x4B, "BIT 1, E",             0,  8, () => { BIT(1, regs.E); })},
+                { 0x4C, new Opcode(0x4C, "BIT 1, H",             0,  8, () => { BIT(1, regs.H); })},
+                { 0x4D, new Opcode(0x4D, "BIT 1, L",             0,  8, () => { BIT(1, regs.L); })},
                 { 0x4E, new Opcode(0x4E, "BIT 1, (HL)",          0, 12, () => { /* */; })},
-                { 0x4F, new Opcode(0x4F, "BIT 1, A",             0,  8, () => { /* */; })},
-                { 0x50, new Opcode(0x50, "BIT 2, B",             0,  8, () => { /* */; })},
-                { 0x51, new Opcode(0x51, "BIT 2, C",             0,  8, () => { /* */; })},
-                { 0x52, new Opcode(0x52, "BIT 2, D",             0,  8, () => { /* */; })},
-                { 0x53, new Opcode(0x53, "BIT 2, E",             0,  8, () => { /* */; })},
-                { 0x54, new Opcode(0x54, "BIT 2, H",             0,  8, () => { /* */; })},
-                { 0x55, new Opcode(0x55, "BIT 2, L",             0,  8, () => { /* */; })},
+                { 0x4F, new Opcode(0x4F, "BIT 1, A",             0,  8, () => { BIT(1, regs.A); })},
+                { 0x50, new Opcode(0x50, "BIT 2, B",             0,  8, () => { BIT(2, regs.B); })},
+                { 0x51, new Opcode(0x51, "BIT 2, C",             0,  8, () => { BIT(2, regs.C); })},
+                { 0x52, new Opcode(0x52, "BIT 2, D",             0,  8, () => { BIT(2, regs.D); })},
+                { 0x53, new Opcode(0x53, "BIT 2, E",             0,  8, () => { BIT(2, regs.E); })},
+                { 0x54, new Opcode(0x54, "BIT 2, H",             0,  8, () => { BIT(2, regs.H); })},
+                { 0x55, new Opcode(0x55, "BIT 2, L",             0,  8, () => { BIT(2, regs.L); })},
                 { 0x56, new Opcode(0x56, "BIT 2, (HL)",          0, 12, () => { /* */; })},
-                { 0x57, new Opcode(0x57, "BIT 2, A",             0,  8, () => { /* */; })},
-                { 0x58, new Opcode(0x58, "BIT 3, B",             0,  8, () => { /* */; })},
-                { 0x59, new Opcode(0x59, "BIT 3, C",             0,  8, () => { /* */; })},
-                { 0x5A, new Opcode(0x5A, "BIT 3, D",             0,  8, () => { /* */; })},
-                { 0x5B, new Opcode(0x5B, "BIT 3, E",             0,  8, () => { /* */; })},
-                { 0x5C, new Opcode(0x5C, "BIT 3, H",             0,  8, () => { /* */; })},
-                { 0x5D, new Opcode(0x5D, "BIT 3, L",             0,  8, () => { /* */; })},
+                { 0x57, new Opcode(0x57, "BIT 2, A",             0,  8, () => { BIT(2, regs.A); })},
+                { 0x58, new Opcode(0x58, "BIT 3, B",             0,  8, () => { BIT(3, regs.B); })},
+                { 0x59, new Opcode(0x59, "BIT 3, C",             0,  8, () => { BIT(3, regs.C); })},
+                { 0x5A, new Opcode(0x5A, "BIT 3, D",             0,  8, () => { BIT(3, regs.D); })},
+                { 0x5B, new Opcode(0x5B, "BIT 3, E",             0,  8, () => { BIT(3, regs.E); })},
+                { 0x5C, new Opcode(0x5C, "BIT 3, H",             0,  8, () => { BIT(3, regs.H); })},
+                { 0x5D, new Opcode(0x5D, "BIT 3, L",             0,  8, () => { BIT(3, regs.L); })},
                 { 0x5E, new Opcode(0x5E, "BIT 3, (HL)",          0, 12, () => { /* */; })},
-                { 0x5F, new Opcode(0x5F, "BIT 3, A",             0,  8, () => { /* */; })},
-                { 0x60, new Opcode(0x60, "BIT 4, B",             0,  8, () => { /* */; })},
-                { 0x61, new Opcode(0x61, "BIT 4, C",             0,  8, () => { /* */; })},
-                { 0x62, new Opcode(0x62, "BIT 4, D",             0,  8, () => { /* */; })},
-                { 0x63, new Opcode(0x63, "BIT 4, E",             0,  8, () => { /* */; })},
-                { 0x64, new Opcode(0x64, "BIT 4, H",             0,  8, () => { /* */; })},
-                { 0x65, new Opcode(0x65, "BIT 4, L",             0,  8, () => { /* */; })},
+                { 0x5F, new Opcode(0x5F, "BIT 3, A",             0,  8, () => { BIT(3, regs.A); })},
+                { 0x60, new Opcode(0x60, "BIT 4, B",             0,  8, () => { BIT(4, regs.B); })},
+                { 0x61, new Opcode(0x61, "BIT 4, C",             0,  8, () => { BIT(4, regs.C); })},
+                { 0x62, new Opcode(0x62, "BIT 4, D",             0,  8, () => { BIT(4, regs.D); })},
+                { 0x63, new Opcode(0x63, "BIT 4, E",             0,  8, () => { BIT(4, regs.E); })},
+                { 0x64, new Opcode(0x64, "BIT 4, H",             0,  8, () => { BIT(4, regs.H); })},
+                { 0x65, new Opcode(0x65, "BIT 4, L",             0,  8, () => { BIT(4, regs.L); })},
                 { 0x66, new Opcode(0x66, "BIT 4, (HL)",          0, 12, () => { /* */; })},
-                { 0x67, new Opcode(0x67, "BIT 4, A",             0,  8, () => { /* */; })},
-                { 0x68, new Opcode(0x68, "BIT 5, B",             0,  8, () => { /* */; })},
-                { 0x69, new Opcode(0x69, "BIT 5, C",             0,  8, () => { /* */; })},
-                { 0x6A, new Opcode(0x6A, "BIT 5, D",             0,  8, () => { /* */; })},
-                { 0x6B, new Opcode(0x6B, "BIT 5, E",             0,  8, () => { /* */; })},
-                { 0x6C, new Opcode(0x6C, "BIT 5, H",             0,  8, () => { /* */; })},
-                { 0x6D, new Opcode(0x6D, "BIT 5, L",             0,  8, () => { /* */; })},
+                { 0x67, new Opcode(0x67, "BIT 4, A",             0,  8, () => { BIT(4, regs.A); })},
+                { 0x68, new Opcode(0x68, "BIT 5, B",             0,  8, () => { BIT(5, regs.B); })},
+                { 0x69, new Opcode(0x69, "BIT 5, C",             0,  8, () => { BIT(5, regs.C); })},
+                { 0x6A, new Opcode(0x6A, "BIT 5, D",             0,  8, () => { BIT(5, regs.D); })},
+                { 0x6B, new Opcode(0x6B, "BIT 5, E",             0,  8, () => { BIT(5, regs.E); })},
+                { 0x6C, new Opcode(0x6C, "BIT 5, H",             0,  8, () => { BIT(5, regs.H); })},
+                { 0x6D, new Opcode(0x6D, "BIT 5, L",             0,  8, () => { BIT(5, regs.L); })},
                 { 0x6E, new Opcode(0x6E, "BIT 5, (HL)",          0, 12, () => { /* */; })},
-                { 0x6F, new Opcode(0x6F, "BIT 5, A",             0,  8, () => { /* */; })},
-                { 0x70, new Opcode(0x70, "BIT 6, B",             0,  8, () => { /* */; })},
-                { 0x71, new Opcode(0x71, "BIT 6, C",             0,  8, () => { /* */; })},
-                { 0x72, new Opcode(0x72, "BIT 6, D",             0,  8, () => { /* */; })},
-                { 0x73, new Opcode(0x73, "BIT 6, E",             0,  8, () => { /* */; })},
-                { 0x74, new Opcode(0x74, "BIT 6, H",             0,  8, () => { /* */; })},
-                { 0x75, new Opcode(0x75, "BIT 6, L",             0,  8, () => { /* */; })},
+                { 0x6F, new Opcode(0x6F, "BIT 5, A",             0,  8, () => { BIT(5, regs.A); })},
+                { 0x70, new Opcode(0x70, "BIT 6, B",             0,  8, () => { BIT(6, regs.B); })},
+                { 0x71, new Opcode(0x71, "BIT 6, C",             0,  8, () => { BIT(6, regs.C); })},
+                { 0x72, new Opcode(0x72, "BIT 6, D",             0,  8, () => { BIT(6, regs.D); })},
+                { 0x73, new Opcode(0x73, "BIT 6, E",             0,  8, () => { BIT(6, regs.E); })},
+                { 0x74, new Opcode(0x74, "BIT 6, H",             0,  8, () => { BIT(6, regs.H); })},
+                { 0x75, new Opcode(0x75, "BIT 6, L",             0,  8, () => { BIT(6, regs.L); })},
                 { 0x76, new Opcode(0x76, "BIT 6, (HL)",          0, 12, () => { /* */; })},
-                { 0x77, new Opcode(0x77, "BIT 6, A",             0,  8, () => { /* */; })},
-                { 0x78, new Opcode(0x78, "BIT 7, B",             0,  8, () => { /* */; })},
-                { 0x79, new Opcode(0x79, "BIT 7, C",             0,  8, () => { /* */; })},
-                { 0x7A, new Opcode(0x7A, "BIT 7, D",             0,  8, () => { /* */; })},
-                { 0x7B, new Opcode(0x7B, "BIT 7, E",             0,  8, () => { /* */; })},
-                { 0x7C, new Opcode(0x7C, "BIT 7, H",             0,  8, () => { /* */; })},
-                { 0x7D, new Opcode(0x7D, "BIT 7, L",             0,  8, () => { /* */; })},
-                { 0x7E, new Opcode(0x7E, "BIT 7, (HL)",          0, 12, () => { /* */; })},
-                { 0x7F, new Opcode(0x7F, "BIT 7, A",             0,  8, () => { /* */; })},
+                { 0x77, new Opcode(0x77, "BIT 6, A",             0,  8, () => { BIT(6, regs.A); })},
+                { 0x78, new Opcode(0x78, "BIT 7, B",             0,  8, () => { BIT(7, regs.B); })},
+                { 0x79, new Opcode(0x79, "BIT 7, C",             0,  8, () => { BIT(7, regs.C); })},
+                { 0x7A, new Opcode(0x7A, "BIT 7, D",             0,  8, () => { BIT(7, regs.D); })},
+                { 0x7B, new Opcode(0x7B, "BIT 7, E",             0,  8, () => { BIT(7, regs.E); })},
+                { 0x7C, new Opcode(0x7C, "BIT 7, H",             0,  8, () => { BIT(7, regs.H); })},
+                { 0x7D, new Opcode(0x7D, "BIT 7, L",             0,  8, () => { BIT(7, regs.L); })},
+                { 0x7E, new Opcode(0x7E, "BIT 7, (HL)",          0, 12, () => { /* */ })},
+                { 0x7F, new Opcode(0x7F, "BIT 7, A",             0,  8, () => { BIT(7, regs.A); })},
+
                 { 0x80, new Opcode(0x80, "RES 0, B",             0,  8, () => { /* */; })},
                 { 0x81, new Opcode(0x81, "RES 0, C",             0,  8, () => { /* */; })},
                 { 0x82, new Opcode(0x82, "RES 0, D",             0,  8, () => { /* */; })},
@@ -539,6 +552,8 @@ namespace FrozenBoyCore {
                 { 0xBD, new Opcode(0xBD, "RES 7, L",             0,  8, () => { /* */; })},
                 { 0xBE, new Opcode(0xBE, "RES 7, (HL)",          0, 16, () => { /* */; })},
                 { 0xBF, new Opcode(0xBF, "RES 7, A",             0,  8, () => { /* */; })},
+
+
                 { 0xC0, new Opcode(0xC0, "SET 0, B",             0,  8, () => { /* */; })},
                 { 0xC1, new Opcode(0xC1, "SET 0, C",             0,  8, () => { /* */; })},
                 { 0xC2, new Opcode(0xC2, "SET 0, D",             0,  8, () => { /* */; })},
@@ -606,10 +621,6 @@ namespace FrozenBoyCore {
             };
         }
 
-        public bool IsZero(u8 value) {
-            return value == 0;
-        }
-
         private bool IsHalfCarry(u8 b1, u8 b2) {
             return ((b1 & 0xF) + (b2 & 0xF)) > 0xF;
         }
@@ -620,7 +631,7 @@ namespace FrozenBoyCore {
 
         public void AND(u8 register) {
             regs.A = (u8)(regs.A & register);
-            regs.FlagZ = IsZero(regs.A);
+            regs.FlagZ = (regs.A == 0);
             regs.FlagN = false;
             regs.FlagH = true;
             regs.FlagC = false;
@@ -628,7 +639,7 @@ namespace FrozenBoyCore {
 
         public void OR(u8 register) {
             regs.A = (u8)(regs.A | register);
-            regs.FlagZ = IsZero(regs.A);
+            regs.FlagZ = (regs.A == 0);
             regs.FlagN = false;
             regs.FlagH = false;
             regs.FlagC = false;
@@ -636,7 +647,7 @@ namespace FrozenBoyCore {
 
         public void XOR(u8 reg) {
             regs.A = (u8)(regs.A ^ reg);
-            regs.FlagZ = IsZero(regs.A);
+            regs.FlagZ = (regs.A == 0);
             regs.FlagN = false;
             regs.FlagH = false;
             regs.FlagC = false;
@@ -644,7 +655,7 @@ namespace FrozenBoyCore {
 
         public void INC(ref u8 register) {
             register += 1;
-            regs.FlagZ = IsZero(register);
+            regs.FlagZ = (register == 0);
             regs.FlagN = false;
             regs.FlagH = IsHalfCarry(register, 1);
             // regs.FlagC -> unmodified
@@ -652,9 +663,18 @@ namespace FrozenBoyCore {
 
         private void DEC(ref u8 register) {
             register -= 1;
-            regs.FlagZ = IsZero(register);
+            regs.FlagZ = (register == 0);
             regs.FlagN = true;
             regs.FlagH = IsHalfCarrySub(register, 1);
+            // r.FlagC -> unmodified
+        }
+
+        // Test bit b in register r.
+        // Z - Set if bit b of register r is 0.
+        private void BIT(u8 position, u8 reg) {
+            regs.FlagZ = ((reg >> position) & 0b_0000_0001) == 0;
+            regs.FlagN = false;
+            regs.FlagH = true;
             // r.FlagC -> unmodified
         }
 

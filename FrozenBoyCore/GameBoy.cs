@@ -10,10 +10,15 @@ namespace FrozenBoyCore {
         public CPU cpu;
 
         public GameBoy() {
-            memory = new Memory {
-                // data = File.ReadAllBytes(@"D:\Users\frozen\Documents\99_temp\GB_ROM\boot_rom.gb")
-                data = File.ReadAllBytes(@"D:\Users\frozen\Documents\99_temp\GB_ROM\cpu_instrs.gb")
-            };
+            memory = new Memory();
+
+            byte[] romData = File.ReadAllBytes(@"D:\Users\frozen\Documents\99_temp\GB_ROM\boot_rom.gb");
+
+            int i = 0;
+            foreach (byte b in romData) {
+                memory.data[i] = b;
+                i++;
+            }
 
             cpu = new CPU(memory);
         }

@@ -39,6 +39,8 @@
             this.histFlagN = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.histFlagH = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.histFlagC = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.histPC = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.histSP = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.historyGrid = new System.Windows.Forms.DataGridView();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             ((System.ComponentModel.ISupportInitialize)(this.disasmGrid)).BeginInit();
@@ -204,6 +206,24 @@
             this.histFlagC.ReadOnly = true;
             this.histFlagC.Width = 54;
             // 
+            // histPC
+            // 
+            this.histPC.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            this.histPC.HeaderText = "PC";
+            this.histPC.MinimumWidth = 6;
+            this.histPC.Name = "histPC";
+            this.histPC.ReadOnly = true;
+            this.histPC.Width = 55;
+            // 
+            // histSP
+            // 
+            this.histSP.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            this.histSP.HeaderText = "SP";
+            this.histSP.MinimumWidth = 6;
+            this.histSP.Name = "histSP";
+            this.histSP.ReadOnly = true;
+            this.histSP.Width = 54;
+            // 
             // historyGrid
             // 
             this.historyGrid.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
@@ -223,7 +243,9 @@
             this.histFlagZ,
             this.histFlagN,
             this.histFlagH,
-            this.histFlagC});
+            this.histFlagC,
+            this.histPC,
+            this.histSP});
             this.historyGrid.Location = new System.Drawing.Point(3, 38);
             this.historyGrid.MultiSelect = false;
             this.historyGrid.Name = "historyGrid";
@@ -259,6 +281,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1194, 639);
             this.Controls.Add(this.splitContainer1);
+            this.KeyPreview = true;
             this.Name = "FrmDebugger";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Debugger";
@@ -293,6 +316,8 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn histFlagN;
         private System.Windows.Forms.DataGridViewTextBoxColumn histFlagH;
         private System.Windows.Forms.DataGridViewTextBoxColumn histFlagC;
+        private System.Windows.Forms.DataGridViewTextBoxColumn histPC;
+        private System.Windows.Forms.DataGridViewTextBoxColumn histSP;
         private System.Windows.Forms.SplitContainer splitContainer1;
     }
 }

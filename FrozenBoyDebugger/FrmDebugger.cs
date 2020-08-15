@@ -27,6 +27,8 @@ namespace FrozenBoyDebugger {
         public bool prevFlagN;
         public bool prevFlagH;
         public bool prevFlagC;
+        public int prevPC;
+        public int prevSP;
 
 
         GameBoy gb;
@@ -48,8 +50,8 @@ namespace FrozenBoyDebugger {
         private void Disassemble() {
 
             Memory memory = new Memory();
-            memory.data = File.ReadAllBytes(@"D:\Users\frozen\Documents\99_temp\GB_ROM\cpu_instrs.gb");
-            // memory.data = File.ReadAllBytes(@"D:\Users\frozen\Documents\99_temp\GB_ROM\boot_rom.gb");
+            // memory.data = File.ReadAllBytes(@"D:\Users\frozen\Documents\99_temp\GB_ROM\cpu_instrs.gb");
+            memory.data = File.ReadAllBytes(@"D:\Users\frozen\Documents\99_temp\GB_ROM\boot_rom.gb");
 
             int line = 0;
 
@@ -79,10 +81,25 @@ namespace FrozenBoyDebugger {
         }
 
         private void BtnNext_Click(object sender, EventArgs e) {
+            Next();
+
+        }
+
+        private void Next() {
+            int index = addressLineMap[(int)gb.cpu.regs.PC];
+            string instruction = disasmGrid.Rows[index].Cells[0].Value.ToString();
+
             gb.cpu.Execute();
 
             // history.AppendText(DumpState() + Environment.NewLine);
-            AddHistory(OpcodeToStr(opcodeFormat, gb.cpu.opcode, gb.cpu.regs.PC, gb.cpu.mem), gb.cpu.regs);
+            AddHistory(instruction, gb.cpu.regs);
+
+            disasmGrid.Rows[addressLineMap[prevPC]].Selected = true;
+            disasmGrid.CurrentCell = disasmGrid[0, addressLineMap[prevPC]];
+
+            int selectedRow = historyGrid.Rows.Count - 2;
+            historyGrid.Rows[selectedRow].Selected = true;
+            historyGrid.CurrentCell = historyGrid[0, selectedRow];
 
             prevA = gb.cpu.regs.A;
             prevB = gb.cpu.regs.B;
@@ -96,11 +113,10 @@ namespace FrozenBoyDebugger {
             prevFlagN = gb.cpu.regs.FlagN;
             prevFlagH = gb.cpu.regs.FlagH;
             prevFlagC = gb.cpu.regs.FlagC;
-
-            disasmGrid.Rows[addressLineMap[gb.cpu.regs.PC]].Selected = true;
-            disasmGrid.CurrentCell = disasmGrid[0, addressLineMap[gb.cpu.regs.PC]];
-
+            prevPC = gb.cpu.regs.PC;
+            prevSP = gb.cpu.regs.SP;
         }
+
 
         private void AddInstruction(string value) {
             int rowId = disasmGrid.Rows.Add();
@@ -148,10 +164,27 @@ namespace FrozenBoyDebugger {
 
             row.Cells["histFlagC"].Value = String.Format("{0}", Convert.ToInt32(r.FlagC));
             StyleCell(r.FlagC, prevFlagC, row.Cells["histFlagC"]);
+
+            row.Cells["histPC"].Value = String.Format("{0:x4}", r.PC);
+            StyleCell(r.PC, prevPC, row.Cells["histPC"]);
+
+            row.Cells["histSP"].Value = String.Format("{0:x4}", r.SP);
+            StyleCell(r.SP, prevSP, row.Cells["histSP"]);
         }
 
 
         private void StyleCell(u8 current, u8 previous, DataGridViewCell cell) {
+            if (current != previous) {
+                cell.Style.BackColor = Color.DarkRed;
+                cell.Style.ForeColor = Color.White;
+            }
+            else {
+                cell.Style.BackColor = Color.White;
+                cell.Style.ForeColor = Color.Black;
+            }
+        }
+
+        private void StyleCell(int current, int previous, DataGridViewCell cell) {
             if (current != previous) {
                 cell.Style.BackColor = Color.DarkRed;
                 cell.Style.ForeColor = Color.White;
@@ -177,18 +210,18 @@ namespace FrozenBoyDebugger {
             return o.length switch
             {
                 2 => String.Format(format,
-                                   String.Format(o.asmInstruction, m.ReadNext8(address)),
+                                   String.Format(o.asmInstruction, m.ReadOperand8((u16)(address))),
                                    address,
                                    o.value),
 
                 3 => String.Format(format,
-                                   String.Format(o.asmInstruction, m.ReadNext16(address)),
+                                   String.Format(o.asmInstruction, m.ReadOperand16((u16)(address))),
                                    address,
                                    o.value),
 
                 _ => String.Format(format,
                                    String.Format(o.value != 0xCB ? o.asmInstruction
-                                                                 : gb.cpu.cb_opcodes[m.ReadNext8(address)].asmInstruction),
+                                                                 : gb.cpu.cb_opcodes[m.ReadOperand8((u16)(address))].asmInstruction),
                                    address,
                                    o.value),
             };
@@ -204,6 +237,16 @@ namespace FrozenBoyDebugger {
         //    // scroll it automatically
         //    history.ScrollToCaret();
         //}
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData) {
+            if (keyData == Keys.F10) {
+                Next();
+                // Handle key at form level.
+                // Do not send event to focused control by returning true.
+                return true;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
 
     }
 }
