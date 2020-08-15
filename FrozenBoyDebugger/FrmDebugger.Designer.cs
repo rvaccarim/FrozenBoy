@@ -51,7 +51,7 @@
             // 
             // btnNext
             // 
-            this.btnNext.Location = new System.Drawing.Point(255, 12);
+            this.btnNext.Location = new System.Drawing.Point(3, 3);
             this.btnNext.Name = "btnNext";
             this.btnNext.Size = new System.Drawing.Size(94, 29);
             this.btnNext.TabIndex = 0;
@@ -83,7 +83,7 @@
             this.disasmGrid.ReadOnly = true;
             this.disasmGrid.RowHeadersWidth = 51;
             this.disasmGrid.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.disasmGrid.Size = new System.Drawing.Size(250, 588);
+            this.disasmGrid.Size = new System.Drawing.Size(250, 639);
             this.disasmGrid.TabIndex = 5;
             this.disasmGrid.Text = "dataGridView1";
             // 
@@ -206,6 +206,9 @@
             // 
             // historyGrid
             // 
+            this.historyGrid.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.historyGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.historyGrid.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.histInstruction,
@@ -221,23 +224,20 @@
             this.histFlagN,
             this.histFlagH,
             this.histFlagC});
-            this.historyGrid.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.historyGrid.Location = new System.Drawing.Point(0, 0);
+            this.historyGrid.Location = new System.Drawing.Point(3, 38);
             this.historyGrid.MultiSelect = false;
             this.historyGrid.Name = "historyGrid";
             this.historyGrid.ReadOnly = true;
             this.historyGrid.RowHeadersWidth = 51;
             this.historyGrid.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.historyGrid.Size = new System.Drawing.Size(938, 588);
+            this.historyGrid.Size = new System.Drawing.Size(937, 601);
             this.historyGrid.TabIndex = 6;
             this.historyGrid.Text = "dataGridView1";
             // 
             // splitContainer1
             // 
-            this.splitContainer1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.splitContainer1.Location = new System.Drawing.Point(1, 47);
+            this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainer1.Location = new System.Drawing.Point(0, 0);
             this.splitContainer1.Name = "splitContainer1";
             // 
             // splitContainer1.Panel1
@@ -246,8 +246,9 @@
             // 
             // splitContainer1.Panel2
             // 
+            this.splitContainer1.Panel2.Controls.Add(this.btnNext);
             this.splitContainer1.Panel2.Controls.Add(this.historyGrid);
-            this.splitContainer1.Size = new System.Drawing.Size(1192, 588);
+            this.splitContainer1.Size = new System.Drawing.Size(1194, 639);
             this.splitContainer1.SplitterDistance = 250;
             this.splitContainer1.TabIndex = 7;
             this.splitContainer1.Text = "splitContainer1";
@@ -257,7 +258,6 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1194, 639);
-            this.Controls.Add(this.btnNext);
             this.Controls.Add(this.splitContainer1);
             this.Name = "FrmDebugger";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
