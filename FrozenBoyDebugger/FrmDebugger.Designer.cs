@@ -92,6 +92,7 @@
             this.disasmGrid.TabIndex = 5;
             this.disasmGrid.Text = "dataGridView1";
 
+            this.histInstruction.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histInstruction.HeaderText = "Instruction";
             this.histInstruction.MinimumWidth = 6;
             this.histInstruction.Name = "histInstruction";
@@ -100,6 +101,7 @@
             // 
             // histA
             // 
+            this.histA.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histA.HeaderText = "A";
             this.histA.MinimumWidth = 6;
             this.histA.Name = "histA";
@@ -107,6 +109,7 @@
             // 
             // histB
             // 
+            this.histB.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histB.HeaderText = "B";
             this.histB.MinimumWidth = 6;
             this.histB.Name = "histB";
@@ -114,6 +117,7 @@
             // 
             // histC
             // 
+            this.histC.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histC.HeaderText = "C";
             this.histC.MinimumWidth = 6;
             this.histC.Name = "histC";
@@ -121,6 +125,7 @@
             // 
             // histD
             // 
+            this.histD.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histD.HeaderText = "D";
             this.histD.MinimumWidth = 6;
             this.histD.Name = "histD";
@@ -128,6 +133,7 @@
             // 
             // histE
             // 
+            this.histE.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histE.HeaderText = "E";
             this.histE.MinimumWidth = 6;
             this.histE.Name = "histE";
@@ -135,6 +141,7 @@
             // 
             // histF
             // 
+            this.histF.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histF.HeaderText = "F";
             this.histF.MinimumWidth = 6;
             this.histF.Name = "histF";
@@ -142,6 +149,7 @@
             // 
             // histH
             // 
+            this.histH.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histH.HeaderText = "H";
             this.histH.MinimumWidth = 6;
             this.histH.Name = "histH";
@@ -149,6 +157,7 @@
             // 
             // histL
             // 
+            this.histL.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histL.HeaderText = "L";
             this.histL.MinimumWidth = 6;
             this.histL.Name = "histL";
@@ -156,6 +165,7 @@
             // 
             // histFlagZ
             // 
+            this.histFlagZ.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histFlagZ.HeaderText = "FZ";
             this.histFlagZ.MinimumWidth = 6;
             this.histFlagZ.Name = "histFlagZ";
@@ -163,6 +173,7 @@
             // 
             // histFlagN
             // 
+            this.histFlagN.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histFlagN.HeaderText = "FN";
             this.histFlagN.MinimumWidth = 6;
             this.histFlagN.Name = "histFlagN";
@@ -170,6 +181,7 @@
             // 
             // histFlagH
             // 
+            this.histFlagH.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histFlagH.HeaderText = "FH";
             this.histFlagH.MinimumWidth = 6;
             this.histFlagH.Name = "histFlagH";
@@ -177,6 +189,7 @@
             // 
             // histFlagC
             // 
+            this.histFlagC.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histFlagC.HeaderText = "FC";
             this.histFlagC.MinimumWidth = 6;
             this.histFlagC.Name = "histFlagC";

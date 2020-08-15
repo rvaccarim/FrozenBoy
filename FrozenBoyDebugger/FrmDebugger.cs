@@ -29,10 +29,8 @@ namespace FrozenBoyDebugger {
 
         public FrmDebugger() {
             InitializeComponent();
-
-            disasmGrid.DefaultCellStyle.Font = new Font("Consolas", 9);
-            historyGrid.DefaultCellStyle.Font = new Font("Consolas", 9);
-
+            disasmGrid.DefaultCellStyle.Font = new Font("Consolas", 8);
+            historyGrid.DefaultCellStyle.Font = new Font("Consolas", 8);
         }
 
         private void FrmDebugger_Load(object sender, EventArgs e) {
