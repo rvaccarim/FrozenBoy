@@ -40,13 +40,18 @@
             this.histFlagH = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.histFlagC = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.historyGrid = new System.Windows.Forms.DataGridView();
+            this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             ((System.ComponentModel.ISupportInitialize)(this.disasmGrid)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.historyGrid)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
+            this.splitContainer1.Panel1.SuspendLayout();
+            this.splitContainer1.Panel2.SuspendLayout();
+            this.splitContainer1.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnNext
             // 
-            this.btnNext.Location = new System.Drawing.Point(371, 12);
+            this.btnNext.Location = new System.Drawing.Point(255, 12);
             this.btnNext.Name = "btnNext";
             this.btnNext.Size = new System.Drawing.Size(94, 29);
             this.btnNext.TabIndex = 0;
@@ -71,13 +76,14 @@
             this.disasmGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.disasmGrid.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.Instruction});
-            this.disasmGrid.Location = new System.Drawing.Point(12, 281);
+            this.disasmGrid.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.disasmGrid.Location = new System.Drawing.Point(0, 0);
             this.disasmGrid.MultiSelect = false;
             this.disasmGrid.Name = "disasmGrid";
             this.disasmGrid.ReadOnly = true;
             this.disasmGrid.RowHeadersWidth = 51;
             this.disasmGrid.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.disasmGrid.Size = new System.Drawing.Size(353, 401);
+            this.disasmGrid.Size = new System.Drawing.Size(250, 588);
             this.disasmGrid.TabIndex = 5;
             this.disasmGrid.Text = "dataGridView1";
             // 
@@ -215,24 +221,44 @@
             this.histFlagN,
             this.histFlagH,
             this.histFlagC});
-            this.historyGrid.Location = new System.Drawing.Point(372, 281);
+            this.historyGrid.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.historyGrid.Location = new System.Drawing.Point(0, 0);
             this.historyGrid.MultiSelect = false;
             this.historyGrid.Name = "historyGrid";
             this.historyGrid.ReadOnly = true;
             this.historyGrid.RowHeadersWidth = 51;
             this.historyGrid.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.historyGrid.Size = new System.Drawing.Size(810, 398);
+            this.historyGrid.Size = new System.Drawing.Size(938, 588);
             this.historyGrid.TabIndex = 6;
             this.historyGrid.Text = "dataGridView1";
+            // 
+            // splitContainer1
+            // 
+            this.splitContainer1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.splitContainer1.Location = new System.Drawing.Point(1, 47);
+            this.splitContainer1.Name = "splitContainer1";
+            // 
+            // splitContainer1.Panel1
+            // 
+            this.splitContainer1.Panel1.Controls.Add(this.disasmGrid);
+            // 
+            // splitContainer1.Panel2
+            // 
+            this.splitContainer1.Panel2.Controls.Add(this.historyGrid);
+            this.splitContainer1.Size = new System.Drawing.Size(1192, 588);
+            this.splitContainer1.SplitterDistance = 250;
+            this.splitContainer1.TabIndex = 7;
+            this.splitContainer1.Text = "splitContainer1";
             // 
             // FrmDebugger
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1194, 691);
-            this.Controls.Add(this.historyGrid);
-            this.Controls.Add(this.disasmGrid);
+            this.ClientSize = new System.Drawing.Size(1194, 639);
             this.Controls.Add(this.btnNext);
+            this.Controls.Add(this.splitContainer1);
             this.Name = "FrmDebugger";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Debugger";
@@ -240,6 +266,10 @@
             this.Load += new System.EventHandler(this.FrmDebugger_Load);
             ((System.ComponentModel.ISupportInitialize)(this.disasmGrid)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.historyGrid)).EndInit();
+            this.splitContainer1.Panel1.ResumeLayout(false);
+            this.splitContainer1.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
+            this.splitContainer1.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -263,6 +293,6 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn histFlagN;
         private System.Windows.Forms.DataGridViewTextBoxColumn histFlagH;
         private System.Windows.Forms.DataGridViewTextBoxColumn histFlagC;
-
+        private System.Windows.Forms.SplitContainer splitContainer1;
     }
 }

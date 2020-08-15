@@ -81,7 +81,7 @@ namespace FrozenBoyDebugger {
         private void BtnNext_Click(object sender, EventArgs e) {
             gb.cpu.Execute();
 
-            history.AppendText(DumpState() + Environment.NewLine);
+            // history.AppendText(DumpState() + Environment.NewLine);
             AddHistory(OpcodeToStr(opcodeFormat, gb.cpu.opcode, gb.cpu.regs.PC, gb.cpu.mem), gb.cpu.regs);
 
             prevA = gb.cpu.regs.A;
@@ -194,19 +194,16 @@ namespace FrozenBoyDebugger {
             };
         }
 
-
-
-
         private string DumpState() {
             return String.Format(stateFormat, OpcodeToStr(opcodeFormat, gb.cpu.opcode, gb.cpu.regs.PC, gb.cpu.mem), gb.cpu.regs.ToString());
         }
 
-        private void History_TextChanged(object sender, EventArgs e) {
-            // set the current caret position to the end
-            history.SelectionStart = history.Text.Length;
-            // scroll it automatically
-            history.ScrollToCaret();
-        }
+        //private void History_TextChanged(object sender, EventArgs e) {
+        //    // set the current caret position to the end
+        //    history.SelectionStart = history.Text.Length;
+        //    // scroll it automatically
+        //    history.ScrollToCaret();
+        //}
 
     }
 }
