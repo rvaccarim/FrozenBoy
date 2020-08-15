@@ -91,10 +91,10 @@ namespace FrozenBoyDebugger {
             row.Cells["histF"].Value = String.Format("{0:x2}", r.F);
             row.Cells["histH"].Value = String.Format("{0:x2}", r.H);
             row.Cells["histL"].Value = String.Format("{0:x2}", r.L);
-            row.Cells["histFlagZ"].Value = String.Format("{0:x2}", r.FlagZ);
-            row.Cells["histFlagN"].Value = String.Format("{0:x2}", r.FlagN);
-            row.Cells["histFlagH"].Value = String.Format("{0:x2}", r.FlagH);
-            row.Cells["histFlagC"].Value = String.Format("{0:x2}", r.FlagC);
+            row.Cells["histFlagZ"].Value = String.Format("{0}", Convert.ToInt32(r.FlagZ));
+            row.Cells["histFlagN"].Value = String.Format("{0}", Convert.ToInt32(r.FlagN));
+            row.Cells["histFlagH"].Value = String.Format("{0}", Convert.ToInt32(r.FlagH));
+            row.Cells["histFlagC"].Value = String.Format("{0}", Convert.ToInt32(r.FlagC));
         }
 
 

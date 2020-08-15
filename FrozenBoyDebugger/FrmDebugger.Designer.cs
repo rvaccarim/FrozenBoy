@@ -91,13 +91,15 @@
             this.disasmGrid.Size = new System.Drawing.Size(353, 670);
             this.disasmGrid.TabIndex = 5;
             this.disasmGrid.Text = "dataGridView1";
-
+            // 
+            // histInstruction
+            // 
             this.histInstruction.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histInstruction.HeaderText = "Instruction";
             this.histInstruction.MinimumWidth = 6;
             this.histInstruction.Name = "histInstruction";
-            this.histInstruction.Width = 125;
-
+            this.histInstruction.ReadOnly = true;
+            this.histInstruction.Width = 107;
             // 
             // histA
             // 
@@ -105,7 +107,8 @@
             this.histA.HeaderText = "A";
             this.histA.MinimumWidth = 6;
             this.histA.Name = "histA";
-            this.histA.Width = 125;
+            this.histA.ReadOnly = true;
+            this.histA.Width = 48;
             // 
             // histB
             // 
@@ -113,7 +116,8 @@
             this.histB.HeaderText = "B";
             this.histB.MinimumWidth = 6;
             this.histB.Name = "histB";
-            this.histB.Width = 125;
+            this.histB.ReadOnly = true;
+            this.histB.Width = 47;
             // 
             // histC
             // 
@@ -121,7 +125,8 @@
             this.histC.HeaderText = "C";
             this.histC.MinimumWidth = 6;
             this.histC.Name = "histC";
-            this.histC.Width = 125;
+            this.histC.ReadOnly = true;
+            this.histC.Width = 47;
             // 
             // histD
             // 
@@ -129,7 +134,8 @@
             this.histD.HeaderText = "D";
             this.histD.MinimumWidth = 6;
             this.histD.Name = "histD";
-            this.histD.Width = 125;
+            this.histD.ReadOnly = true;
+            this.histD.Width = 49;
             // 
             // histE
             // 
@@ -137,7 +143,8 @@
             this.histE.HeaderText = "E";
             this.histE.MinimumWidth = 6;
             this.histE.Name = "histE";
-            this.histE.Width = 125;
+            this.histE.ReadOnly = true;
+            this.histE.Width = 46;
             // 
             // histF
             // 
@@ -145,7 +152,8 @@
             this.histF.HeaderText = "F";
             this.histF.MinimumWidth = 6;
             this.histF.Name = "histF";
-            this.histF.Width = 125;
+            this.histF.ReadOnly = true;
+            this.histF.Width = 45;
             // 
             // histH
             // 
@@ -153,7 +161,8 @@
             this.histH.HeaderText = "H";
             this.histH.MinimumWidth = 6;
             this.histH.Name = "histH";
-            this.histH.Width = 125;
+            this.histH.ReadOnly = true;
+            this.histH.Width = 49;
             // 
             // histL
             // 
@@ -161,7 +170,8 @@
             this.histL.HeaderText = "L";
             this.histL.MinimumWidth = 6;
             this.histL.Name = "histL";
-            this.histL.Width = 125;
+            this.histL.ReadOnly = true;
+            this.histL.Width = 45;
             // 
             // histFlagZ
             // 
@@ -169,7 +179,8 @@
             this.histFlagZ.HeaderText = "FZ";
             this.histFlagZ.MinimumWidth = 6;
             this.histFlagZ.Name = "histFlagZ";
-            this.histFlagZ.Width = 125;
+            this.histFlagZ.ReadOnly = true;
+            this.histFlagZ.Width = 54;
             // 
             // histFlagN
             // 
@@ -177,7 +188,8 @@
             this.histFlagN.HeaderText = "FN";
             this.histFlagN.MinimumWidth = 6;
             this.histFlagN.Name = "histFlagN";
-            this.histFlagN.Width = 125;
+            this.histFlagN.ReadOnly = true;
+            this.histFlagN.Width = 56;
             // 
             // histFlagH
             // 
@@ -185,7 +197,8 @@
             this.histFlagH.HeaderText = "FH";
             this.histFlagH.MinimumWidth = 6;
             this.histFlagH.Name = "histFlagH";
-            this.histFlagH.Width = 125;
+            this.histFlagH.ReadOnly = true;
+            this.histFlagH.Width = 56;
             // 
             // histFlagC
             // 
@@ -193,7 +206,8 @@
             this.histFlagC.HeaderText = "FC";
             this.histFlagC.MinimumWidth = 6;
             this.histFlagC.Name = "histFlagC";
-            this.histFlagC.Width = 125;
+            this.histFlagC.ReadOnly = true;
+            this.histFlagC.Width = 54;
             // 
             // historyGrid
             // 
@@ -213,9 +227,12 @@
             this.histFlagH,
             this.histFlagC});
             this.historyGrid.Location = new System.Drawing.Point(372, 263);
+            this.historyGrid.MultiSelect = false;
             this.historyGrid.Name = "historyGrid";
+            this.historyGrid.ReadOnly = true;
             this.historyGrid.RowHeadersWidth = 51;
-            this.historyGrid.Size = new System.Drawing.Size(745, 416);
+            this.historyGrid.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.historyGrid.Size = new System.Drawing.Size(810, 416);
             this.historyGrid.TabIndex = 6;
             this.historyGrid.Text = "dataGridView1";
             // 
@@ -231,6 +248,7 @@
             this.Name = "FrmDebugger";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Debugger";
+            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Load += new System.EventHandler(this.FrmDebugger_Load);
             ((System.ComponentModel.ISupportInitialize)(this.disasmGrid)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.historyGrid)).EndInit();
