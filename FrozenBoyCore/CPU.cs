@@ -1,8 +1,8 @@
 ﻿using System;
-using u8 = System.Byte;
-using u16 = System.UInt16;
 using System.Diagnostics;
 using System.Collections.Generic;
+using u8 = System.Byte;
+using u16 = System.UInt16;
 
 namespace FrozenBoyCore {
 
@@ -26,6 +26,24 @@ namespace FrozenBoyCore {
             InitializeUnprefixed();
             InitializePrefixed();
         }
+
+        public void Execute() {
+            handledPC = false;
+            opcode = Disassemble();
+
+            if (opcode != null) {
+                opcode.logic.Invoke();
+
+                // move to the next one
+                if (!handledPC) {
+                    regs.PC = (u16)(regs.PC + opcode.length);
+                }
+            }
+            else {
+                System.Environment.Exit(0);
+            }
+        }
+
 
         public Opcode Disassemble() {
             u8 opcodeValue = mem.data[regs.PC];
@@ -54,22 +72,7 @@ namespace FrozenBoyCore {
             return null;
         }
 
-        public void Execute() {
-            handledPC = false;
-            opcode = Disassemble();
 
-            if (opcode != null) {
-                opcode.logic.Invoke();
-
-                // move to the next one
-                if (!handledPC) {
-                    regs.PC = (u16)(regs.PC + opcode.length);
-                }
-            }
-            else {
-                System.Environment.Exit(0);
-            }
-        }
 
         private void InitializeUnprefixed() {
             opcodes = new Dictionary<byte, Opcode> {

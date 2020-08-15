@@ -24,7 +24,6 @@
         /// </summary>
         private void InitializeComponent() {
             this.btnNext = new System.Windows.Forms.Button();
-            this.history = new System.Windows.Forms.RichTextBox();
             this.Instruction = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.disasmGrid = new System.Windows.Forms.DataGridView();
             this.histInstruction = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -55,16 +54,6 @@
             this.btnNext.UseVisualStyleBackColor = true;
             this.btnNext.Click += new System.EventHandler(this.BtnNext_Click);
             // 
-            // history
-            // 
-            this.history.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.history.Location = new System.Drawing.Point(371, 47);
-            this.history.Name = "history";
-            this.history.Size = new System.Drawing.Size(813, 199);
-            this.history.TabIndex = 1;
-            this.history.Text = "";
-            this.history.TextChanged += new System.EventHandler(this.History_TextChanged);
-            // 
             // Instruction
             // 
             this.Instruction.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
@@ -82,13 +71,13 @@
             this.disasmGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.disasmGrid.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.Instruction});
-            this.disasmGrid.Location = new System.Drawing.Point(12, 12);
+            this.disasmGrid.Location = new System.Drawing.Point(12, 281);
             this.disasmGrid.MultiSelect = false;
             this.disasmGrid.Name = "disasmGrid";
             this.disasmGrid.ReadOnly = true;
             this.disasmGrid.RowHeadersWidth = 51;
             this.disasmGrid.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.disasmGrid.Size = new System.Drawing.Size(353, 670);
+            this.disasmGrid.Size = new System.Drawing.Size(353, 401);
             this.disasmGrid.TabIndex = 5;
             this.disasmGrid.Text = "dataGridView1";
             // 
@@ -226,13 +215,13 @@
             this.histFlagN,
             this.histFlagH,
             this.histFlagC});
-            this.historyGrid.Location = new System.Drawing.Point(372, 263);
+            this.historyGrid.Location = new System.Drawing.Point(372, 281);
             this.historyGrid.MultiSelect = false;
             this.historyGrid.Name = "historyGrid";
             this.historyGrid.ReadOnly = true;
             this.historyGrid.RowHeadersWidth = 51;
             this.historyGrid.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.historyGrid.Size = new System.Drawing.Size(810, 416);
+            this.historyGrid.Size = new System.Drawing.Size(810, 398);
             this.historyGrid.TabIndex = 6;
             this.historyGrid.Text = "dataGridView1";
             // 
@@ -243,7 +232,6 @@
             this.ClientSize = new System.Drawing.Size(1194, 691);
             this.Controls.Add(this.historyGrid);
             this.Controls.Add(this.disasmGrid);
-            this.Controls.Add(this.history);
             this.Controls.Add(this.btnNext);
             this.Name = "FrmDebugger";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
@@ -259,7 +247,6 @@
         #endregion
 
         private System.Windows.Forms.Button btnNext;
-        private System.Windows.Forms.RichTextBox history;
         private System.Windows.Forms.DataGridView disasmGrid;
         private System.Windows.Forms.DataGridViewTextBoxColumn Instruction;
         private System.Windows.Forms.DataGridView historyGrid;

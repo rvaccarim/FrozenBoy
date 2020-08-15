@@ -23,6 +23,11 @@ namespace FrozenBoyDebugger {
         public u8 prevF;
         public u8 prevH;
         public u8 prevL;
+        public bool prevFlagZ;
+        public bool prevFlagN;
+        public bool prevFlagH;
+        public bool prevFlagC;
+
 
         GameBoy gb;
         Dictionary<int, int> addressLineMap = new Dictionary<int, int>();
@@ -73,6 +78,30 @@ namespace FrozenBoyDebugger {
 
         }
 
+        private void BtnNext_Click(object sender, EventArgs e) {
+            gb.cpu.Execute();
+
+            history.AppendText(DumpState() + Environment.NewLine);
+            AddHistory(OpcodeToStr(opcodeFormat, gb.cpu.opcode, gb.cpu.regs.PC, gb.cpu.mem), gb.cpu.regs);
+
+            prevA = gb.cpu.regs.A;
+            prevB = gb.cpu.regs.B;
+            prevC = gb.cpu.regs.C;
+            prevD = gb.cpu.regs.D;
+            prevE = gb.cpu.regs.E;
+            prevF = gb.cpu.regs.F;
+            prevH = gb.cpu.regs.H;
+            prevL = gb.cpu.regs.L;
+            prevFlagZ = gb.cpu.regs.FlagZ;
+            prevFlagN = gb.cpu.regs.FlagN;
+            prevFlagH = gb.cpu.regs.FlagH;
+            prevFlagC = gb.cpu.regs.FlagC;
+
+            disasmGrid.Rows[addressLineMap[gb.cpu.regs.PC]].Selected = true;
+            disasmGrid.CurrentCell = disasmGrid[0, addressLineMap[gb.cpu.regs.PC]];
+
+        }
+
         private void AddInstruction(string value) {
             int rowId = disasmGrid.Rows.Add();
             DataGridViewRow row = disasmGrid.Rows[rowId];
@@ -83,20 +112,66 @@ namespace FrozenBoyDebugger {
             int rowId = historyGrid.Rows.Add();
             DataGridViewRow row = historyGrid.Rows[rowId];
             row.Cells["histInstruction"].Value = instruction;
+
             row.Cells["histA"].Value = String.Format("{0:x2}", r.A);
+            StyleCell(r.A, prevA, row.Cells["histA"]);
+
             row.Cells["histB"].Value = String.Format("{0:x2}", r.B);
+            StyleCell(r.B, prevB, row.Cells["histB"]);
+
             row.Cells["histC"].Value = String.Format("{0:x2}", r.C);
+            StyleCell(r.C, prevC, row.Cells["histC"]);
+
             row.Cells["histD"].Value = String.Format("{0:x2}", r.D);
+            StyleCell(r.D, prevD, row.Cells["histD"]);
+
             row.Cells["histE"].Value = String.Format("{0:x2}", r.E);
+            StyleCell(r.E, prevE, row.Cells["histE"]);
+
             row.Cells["histF"].Value = String.Format("{0:x2}", r.F);
+            StyleCell(r.F, prevF, row.Cells["histF"]);
+
             row.Cells["histH"].Value = String.Format("{0:x2}", r.H);
+            StyleCell(r.H, prevH, row.Cells["histH"]);
+
             row.Cells["histL"].Value = String.Format("{0:x2}", r.L);
+            StyleCell(r.L, prevL, row.Cells["histL"]);
+
             row.Cells["histFlagZ"].Value = String.Format("{0}", Convert.ToInt32(r.FlagZ));
+            StyleCell(r.FlagZ, prevFlagZ, row.Cells["histFlagZ"]);
+
             row.Cells["histFlagN"].Value = String.Format("{0}", Convert.ToInt32(r.FlagN));
+            StyleCell(r.FlagN, prevFlagN, row.Cells["histFlagN"]);
+
             row.Cells["histFlagH"].Value = String.Format("{0}", Convert.ToInt32(r.FlagH));
+            StyleCell(r.FlagH, prevFlagH, row.Cells["histFlagH"]);
+
             row.Cells["histFlagC"].Value = String.Format("{0}", Convert.ToInt32(r.FlagC));
+            StyleCell(r.FlagC, prevFlagC, row.Cells["histFlagC"]);
         }
 
+
+        private void StyleCell(u8 current, u8 previous, DataGridViewCell cell) {
+            if (current != previous) {
+                cell.Style.BackColor = Color.DarkRed;
+                cell.Style.ForeColor = Color.White;
+            }
+            else {
+                cell.Style.BackColor = Color.White;
+                cell.Style.ForeColor = Color.Black;
+            }
+        }
+
+        private void StyleCell(bool current, bool previous, DataGridViewCell cell) {
+            if (current != previous) {
+                cell.Style.BackColor = Color.DarkRed;
+                cell.Style.ForeColor = Color.White;
+            }
+            else {
+                cell.Style.BackColor = Color.White;
+                cell.Style.ForeColor = Color.Black;
+            }
+        }
 
         private string OpcodeToStr(string format, Opcode o, int address, Memory m) {
             return o.length switch
@@ -120,25 +195,7 @@ namespace FrozenBoyDebugger {
         }
 
 
-        private void BtnNext_Click(object sender, EventArgs e) {
-            gb.cpu.Execute();
 
-            history.AppendText(DumpState() + Environment.NewLine);
-            AddHistory(OpcodeToStr(opcodeFormat, gb.cpu.opcode, gb.cpu.regs.PC, gb.cpu.mem), gb.cpu.regs);
-
-            prevA = gb.cpu.regs.A;
-            prevB = gb.cpu.regs.B;
-            prevC = gb.cpu.regs.C;
-            prevD = gb.cpu.regs.D;
-            prevE = gb.cpu.regs.E;
-            prevF = gb.cpu.regs.F;
-            prevH = gb.cpu.regs.H;
-            prevL = gb.cpu.regs.L;
-
-            disasmGrid.Rows[addressLineMap[gb.cpu.regs.PC]].Selected = true;
-            disasmGrid.CurrentCell = disasmGrid[0, addressLineMap[gb.cpu.regs.PC]];
-
-        }
 
         private string DumpState() {
             return String.Format(stateFormat, OpcodeToStr(opcodeFormat, gb.cpu.opcode, gb.cpu.regs.PC, gb.cpu.mem), gb.cpu.regs.ToString());
