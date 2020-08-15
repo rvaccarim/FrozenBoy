@@ -34,14 +34,14 @@ namespace FrozenBoyDebugger {
         }
 
         private void FrmDebugger_Load(object sender, EventArgs e) {
+            gb = new GameBoy();
             Disassemble();
             disasmGrid.Rows[0].Selected = true;
-
-            gb = new GameBoy();
 
         }
 
         private void Disassemble() {
+
             Memory memory = new Memory();
             memory.data = File.ReadAllBytes(@"D:\Users\frozen\Documents\99_temp\GB_ROM\cpu_instrs.gb");
             // memory.data = File.ReadAllBytes(@"D:\Users\frozen\Documents\99_temp\GB_ROM\boot_rom.gb");
@@ -51,8 +51,8 @@ namespace FrozenBoyDebugger {
             while (PC < memory.data.Length) {
                 byte b = memory.data[PC];
 
-                if (Opcodes.unprefixed.ContainsKey(b)) {
-                    Opcode opcode = Opcodes.unprefixed[b];
+                if (gb.cpu.opcodes.ContainsKey(b)) {
+                    Opcode opcode = gb.cpu.opcodes[b];
 
                     DisAsmAddRow(DisassembleOpcode(opcodeFormat, opcode, PC, memory));
 
@@ -113,7 +113,7 @@ namespace FrozenBoyDebugger {
 
                 _ => String.Format(format,
                                    String.Format(o.value != 0xCB ? o.asmInstruction
-                                                                 : Opcodes.prefixed[m.ReadNext8(address)].asmInstruction),
+                                                                 : gb.cpu.cb_opcodes[m.ReadNext8(address)].asmInstruction),
                                    address,
                                    o.value),
             };
@@ -124,24 +124,24 @@ namespace FrozenBoyDebugger {
             gb.cpu.Step();
 
             history.AppendText(DumpState() + Environment.NewLine);
-            HistoryAddRow(DisassembleOpcode(opcodeFormat, gb.cpu.opcode, gb.cpu.registers.PC, gb.cpu.memory), gb.cpu.registers);
+            HistoryAddRow(DisassembleOpcode(opcodeFormat, gb.cpu.opcode, gb.cpu.regs.PC, gb.cpu.mem), gb.cpu.regs);
 
-            prevA = gb.cpu.registers.A;
-            prevB = gb.cpu.registers.B;
-            prevC = gb.cpu.registers.C;
-            prevD = gb.cpu.registers.D;
-            prevE = gb.cpu.registers.E;
-            prevF = gb.cpu.registers.F;
-            prevH = gb.cpu.registers.H;
-            prevL = gb.cpu.registers.L;
+            prevA = gb.cpu.regs.A;
+            prevB = gb.cpu.regs.B;
+            prevC = gb.cpu.regs.C;
+            prevD = gb.cpu.regs.D;
+            prevE = gb.cpu.regs.E;
+            prevF = gb.cpu.regs.F;
+            prevH = gb.cpu.regs.H;
+            prevL = gb.cpu.regs.L;
 
-            disasmGrid.Rows[addressLineMap[gb.cpu.registers.PC]].Selected = true;
-            disasmGrid.CurrentCell = disasmGrid[0, addressLineMap[gb.cpu.registers.PC]];
+            disasmGrid.Rows[addressLineMap[gb.cpu.regs.PC]].Selected = true;
+            disasmGrid.CurrentCell = disasmGrid[0, addressLineMap[gb.cpu.regs.PC]];
 
         }
 
         private string DumpState() {
-            return String.Format(stateFormat, DisassembleOpcode(opcodeFormat, gb.cpu.opcode, gb.cpu.registers.PC, gb.cpu.memory), gb.cpu.registers.ToString());
+            return String.Format(stateFormat, DisassembleOpcode(opcodeFormat, gb.cpu.opcode, gb.cpu.regs.PC, gb.cpu.mem), gb.cpu.regs.ToString());
         }
 
         private void History_TextChanged(object sender, EventArgs e) {

@@ -5,7 +5,7 @@ using System.Text;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 
-public delegate void Logic(Memory memory, Registers registers);
+public delegate void Logic();
 
 namespace FrozenBoyCore {
     public class Opcode {
