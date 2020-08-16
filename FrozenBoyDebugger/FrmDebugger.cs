@@ -224,7 +224,7 @@ namespace FrozenBoyDebugger {
 
                 _ => String.Format(format,
                                    String.Format(o.value != 0xCB ? o.asmInstruction
-                                                                 : gb.cpu.cb_opcodes[m.ReadParm8((u16)(address))].asmInstruction),
+                                                                 : gb.cpu.cbOpcodes[m.ReadParm8((u16)(address))].asmInstruction),
                                    address,
                                    o.value),
             };
