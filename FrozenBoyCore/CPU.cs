@@ -3,8 +3,7 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using u8 = System.Byte;
 using u16 = System.UInt16;
-using System.Net;
-using System.Text.Json;
+using System.ComponentModel;
 
 namespace FrozenBoyCore {
 
@@ -87,21 +86,22 @@ namespace FrozenBoyCore {
                 { 0x8E, new Opcode(0x8E, "ADC A, (HL)",          1,  8, () => {throw new NotImplementedException(); })},
                 { 0x8F, new Opcode(0x8F, "ADC A, A",             1,  4, () => {throw new NotImplementedException(); })},
                 { 0xCE, new Opcode(0xCE, "ADC A, ${0:x2}",       2,  8, () => {throw new NotImplementedException(); })},
+
                 { 0x09, new Opcode(0x09, "ADD HL, BC",           1,  8, () => {throw new NotImplementedException(); })},
                 { 0x19, new Opcode(0x19, "ADD HL, DE",           1,  8, () => {throw new NotImplementedException(); })},
                 { 0x29, new Opcode(0x29, "ADD HL, HL",           1,  8, () => {throw new NotImplementedException(); })},
                 { 0x39, new Opcode(0x39, "ADD HL, SP",           1,  8, () => {throw new NotImplementedException(); })},
-                { 0x80, new Opcode(0x80, "ADD A, B",             1,  4, () => {throw new NotImplementedException(); })},
-                { 0x81, new Opcode(0x81, "ADD A, C",             1,  4, () => {throw new NotImplementedException(); })},
-                { 0x82, new Opcode(0x82, "ADD A, D",             1,  4, () => {throw new NotImplementedException(); })},
-                { 0x83, new Opcode(0x83, "ADD A, E",             1,  4, () => {throw new NotImplementedException(); })},
-                { 0x84, new Opcode(0x84, "ADD A, H",             1,  4, () => {throw new NotImplementedException(); })},
-                { 0x85, new Opcode(0x85, "ADD A, L",             1,  4, () => {throw new NotImplementedException(); })},
-                { 0x86, new Opcode(0x86, "ADD A, (HL)",          1,  8, () => {throw new NotImplementedException(); })},
-                { 0x87, new Opcode(0x87, "ADD A, A",             1,  4, () => {throw new NotImplementedException(); })},
-                { 0xC6, new Opcode(0xC6, "ADD A, ${0:x2}",       2,  8, () => {throw new NotImplementedException(); })},
-                { 0xE8, new Opcode(0xE8, "ADD SP, ${0:x2}",      2, 16, () => {throw new NotImplementedException(); })},
 
+                { 0x80, new Opcode(0x80, "ADD A, B",             1,  4, () => { ADD(regs.B); })},
+                { 0x81, new Opcode(0x81, "ADD A, C",             1,  4, () => { ADD(regs.C); })},
+                { 0x82, new Opcode(0x82, "ADD A, D",             1,  4, () => { ADD(regs.D); })},
+                { 0x83, new Opcode(0x83, "ADD A, E",             1,  4, () => { ADD(regs.E); })},
+                { 0x84, new Opcode(0x84, "ADD A, H",             1,  4, () => { ADD(regs.H); })},
+                { 0x85, new Opcode(0x85, "ADD A, L",             1,  4, () => { ADD(regs.L); })},
+                { 0x86, new Opcode(0x86, "ADD A, (HL)",          1,  8, () => { ADD(mem.Read8(regs.HL)); })},
+                { 0x87, new Opcode(0x87, "ADD A, A",             1,  4, () => { ADD(regs.A); })},
+                { 0xC6, new Opcode(0xC6, "ADD A, ${0:x2}",       2,  8, () => { ADD(mem.ReadParm8(regs.PC)); })},
+                { 0xE8, new Opcode(0xE8, "ADD SP, ${0:x2}",      2, 16, () => { regs.SP = ADD_Signed8(regs.SP, mem.ReadParm8(regs.PC)); })},
 
                 { 0xA0, new Opcode(0xA0, "AND B",                1,  4, () => { AND(regs.B); })},
                 { 0xA1, new Opcode(0xA1, "AND C",                1,  4, () => { AND(regs.C); })},
@@ -118,7 +118,9 @@ namespace FrozenBoyCore {
                 { 0xCD, new Opcode(0xCD, "CALL ${0:x4}",         3, 24, () => {throw new NotImplementedException(); })},
                 { 0xD4, new Opcode(0xD4, "CALL NC, ${0:x4}",     3, 24, () => {throw new NotImplementedException(); })},
                 { 0xDC, new Opcode(0xDC, "CALL C, ${0:x4}",      3, 24, () => {throw new NotImplementedException(); })},
+
                 { 0x3F, new Opcode(0x3F, "CCF",                  1,  4, () => {throw new NotImplementedException(); })},
+
                 { 0xB8, new Opcode(0xB8, "CP B",                 1,  4, () => {throw new NotImplementedException(); })},
                 { 0xB9, new Opcode(0xB9, "CP C",                 1,  4, () => {throw new NotImplementedException(); })},
                 { 0xBA, new Opcode(0xBA, "CP D",                 1,  4, () => {throw new NotImplementedException(); })},
@@ -128,7 +130,9 @@ namespace FrozenBoyCore {
                 { 0xBE, new Opcode(0xBE, "CP (HL)",              1,  8, () => {throw new NotImplementedException(); })},
                 { 0xBF, new Opcode(0xBF, "CP A",                 1,  4, () => {throw new NotImplementedException(); })},
                 { 0xFE, new Opcode(0xFE, "CP ${0:x2}",           2,  8, () => {throw new NotImplementedException(); })},
+
                 { 0x2F, new Opcode(0x2F, "CPL",                  1,  4, () => {throw new NotImplementedException(); })},
+
                 { 0x27, new Opcode(0x27, "DAA",                  1,  4, () => {throw new NotImplementedException(); })},
                                                              
                 // DEC - 8 bit                                
@@ -299,24 +303,29 @@ namespace FrozenBoyCore {
                 { 0xD1, new Opcode(0xD1, "POP DE",               1, 12, () => {throw new NotImplementedException(); })},
                 { 0xE1, new Opcode(0xE1, "POP HL",               1, 12, () => {throw new NotImplementedException(); })},
                 { 0xF1, new Opcode(0xF1, "POP AF",               1, 12, () => {throw new NotImplementedException(); })},
+
                 { 0xC5, new Opcode(0xC5, "PUSH BC",              1, 16, () => {throw new NotImplementedException(); })},
                 { 0xD5, new Opcode(0xD5, "PUSH DE",              1, 16, () => {throw new NotImplementedException(); })},
                 { 0xE5, new Opcode(0xE5, "PUSH HL",              1, 16, () => {throw new NotImplementedException(); })},
                 { 0xF5, new Opcode(0xF5, "PUSH AF",              1, 16, () => {throw new NotImplementedException(); })},
+
                 { 0xC0, new Opcode(0xC0, "RET NZ",               1, 20, () => {throw new NotImplementedException(); })},
                 { 0xC8, new Opcode(0xC8, "RET Z",                1, 20, () => {throw new NotImplementedException(); })},
                 { 0xD0, new Opcode(0xD0, "RET NC",               1, 20, () => {throw new NotImplementedException(); })},
                 { 0xD8, new Opcode(0xD8, "RET C",                1, 20, () => {throw new NotImplementedException(); })},
+
                 { 0xC9, new Opcode(0xC9, "RET",                  1, 16, () => {throw new NotImplementedException(); })},
                 { 0xD9, new Opcode(0xD9, "RETI",                 1, 16, () => {throw new NotImplementedException(); })},
                 { 0x17, new Opcode(0x17, "RLA",                  1,  4, () => {throw new NotImplementedException(); })},
                 { 0x07, new Opcode(0x07, "RLCA",                 1,  4, () => {throw new NotImplementedException(); })},
                 { 0x1F, new Opcode(0x1F, "RRA",                  1,  4, () => {throw new NotImplementedException(); })},
                 { 0x0F, new Opcode(0x0F, "RRCA",                 1,  4, () => {throw new NotImplementedException(); })},
+
                 { 0xC7, new Opcode(0xC7, "RST 00",               1, 16, () => {throw new NotImplementedException(); })},
                 { 0xD7, new Opcode(0xD7, "RST 10",               1, 16, () => {throw new NotImplementedException(); })},
                 { 0xE7, new Opcode(0xE7, "RST 20",               1, 16, () => {throw new NotImplementedException(); })},
                 { 0xF7, new Opcode(0xF7, "RST 30",               1, 16, () => {throw new NotImplementedException(); })},
+
                 { 0x98, new Opcode(0x98, "SBC A, B",             1,  4, () => {throw new NotImplementedException(); })},
                 { 0x99, new Opcode(0x99, "SBC A, C",             1,  4, () => {throw new NotImplementedException(); })},
                 { 0x9A, new Opcode(0x9A, "SBC A, D",             1,  4, () => {throw new NotImplementedException(); })},
@@ -325,19 +334,20 @@ namespace FrozenBoyCore {
                 { 0x9D, new Opcode(0x9D, "SBC A, L",             1,  4, () => {throw new NotImplementedException(); })},
                 { 0x9E, new Opcode(0x9E, "SBC A, (HL)",          1,  8, () => {throw new NotImplementedException(); })},
                 { 0x9F, new Opcode(0x9F, "SBC A, A",             1,  4, () => {throw new NotImplementedException(); })},
-                { 0xDE, new Opcode(0xDE, "SBC A, ${0:x2}",        2,  8, () => {throw new NotImplementedException(); })},
+                { 0xDE, new Opcode(0xDE, "SBC A, ${0:x2}",       2,  8, () => {throw new NotImplementedException(); })},
+
                 { 0x37, new Opcode(0x37, "SCF",                  1,  4, () => {throw new NotImplementedException(); })},
                 { 0x10, new Opcode(0x10, "STOP",                 1,  4, () => {throw new NotImplementedException(); })},
 
-                { 0x90, new Opcode(0x90, "SUB A, B",             1,  4, () => {throw new NotImplementedException(); })},
-                { 0x91, new Opcode(0x91, "SUB A, C",             1,  4, () => {throw new NotImplementedException(); })},
-                { 0x92, new Opcode(0x92, "SUB A, D",             1,  4, () => {throw new NotImplementedException(); })},
-                { 0x93, new Opcode(0x93, "SUB A, E",             1,  4, () => {throw new NotImplementedException(); })},
-                { 0x94, new Opcode(0x94, "SUB A, H",             1,  4, () => {throw new NotImplementedException(); })},
-                { 0x95, new Opcode(0x95, "SUB A, L",             1,  4, () => {throw new NotImplementedException(); })},
-                { 0x96, new Opcode(0x96, "SUB A, (HL)",          1,  8, () => {throw new NotImplementedException(); })},
-                { 0x97, new Opcode(0x97, "SUB A, A",             1,  4, () => {throw new NotImplementedException(); })},
-                { 0xD6, new Opcode(0xD6, "SUB ${0:x2}",          2,  8, () => {throw new NotImplementedException(); })},
+                { 0x90, new Opcode(0x90, "SUB A, B",             1,  4, () => { SUB(regs.B); })},
+                { 0x91, new Opcode(0x91, "SUB A, C",             1,  4, () => { SUB(regs.C); })},
+                { 0x92, new Opcode(0x92, "SUB A, D",             1,  4, () => { SUB(regs.D); })},
+                { 0x93, new Opcode(0x93, "SUB A, E",             1,  4, () => { SUB(regs.E); })},
+                { 0x94, new Opcode(0x94, "SUB A, H",             1,  4, () => { SUB(regs.H); })},
+                { 0x95, new Opcode(0x95, "SUB A, L",             1,  4, () => { SUB(regs.L); })},
+                { 0x96, new Opcode(0x96, "SUB A, (HL)",          1,  8, () => { SUB(mem.ReadParm8(regs.HL)); })},
+                { 0x97, new Opcode(0x97, "SUB A, A",             1,  4, () => { SUB(regs.A); })},
+                { 0xD6, new Opcode(0xD6, "SUB ${0:x2}",          2,  8, () => { SUB(mem.Read8(regs.PC)); })},
 
                 { 0xA8, new Opcode(0xA8, "XOR B",                1,  4, () => { XOR(regs.B); })},
                 { 0xA9, new Opcode(0xA9, "XOR C",                1,  4, () => { XOR(regs.C); })},
@@ -354,14 +364,16 @@ namespace FrozenBoyCore {
 
         private Dictionary<byte, Opcode> InitializeCB() {
             return new Dictionary<byte, Opcode> {
-                { 0x00, new Opcode(0x00, "RLC B",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x01, new Opcode(0x01, "RLC C",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x02, new Opcode(0x02, "RLC D",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x03, new Opcode(0x03, "RLC E",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x04, new Opcode(0x04, "RLC H",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x05, new Opcode(0x05, "RLC L",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x06, new Opcode(0x06, "RLC (HL)",             2, 16, () => { throw new NotImplementedException(); })},
-                { 0x07, new Opcode(0x07, "RLC A",                2,  8, () => { throw new NotImplementedException(); })},
+                // rotate left (one position)
+                { 0x00, new Opcode(0x00, "RLC B",                2,  8, () => { regs.B = RLC(regs.B); })},
+                { 0x01, new Opcode(0x01, "RLC C",                2,  8, () => { regs.C = RLC(regs.C); })},
+                { 0x02, new Opcode(0x02, "RLC D",                2,  8, () => { regs.D = RLC(regs.D); })},
+                { 0x03, new Opcode(0x03, "RLC E",                2,  8, () => { regs.E = RLC(regs.E); })},
+                { 0x04, new Opcode(0x04, "RLC H",                2,  8, () => { regs.H = RLC(regs.H); })},
+                { 0x05, new Opcode(0x05, "RLC L",                2,  8, () => { regs.L = RLC(regs.L); })},
+                { 0x06, new Opcode(0x06, "RLC (HL)",             2, 16, () => { mem.Write8(regs.HL, RLC(mem.Read8(regs.HL))); })},
+                { 0x07, new Opcode(0x07, "RLC A",                2,  8, () => { regs.A = RLC(regs.A); })},
+
                 { 0x08, new Opcode(0x08, "RRC B",                2,  8, () => { throw new NotImplementedException(); })},
                 { 0x09, new Opcode(0x09, "RRC C",                2,  8, () => { throw new NotImplementedException(); })},
                 { 0x0A, new Opcode(0x0A, "RRC D",                2,  8, () => { throw new NotImplementedException(); })},
@@ -370,6 +382,7 @@ namespace FrozenBoyCore {
                 { 0x0D, new Opcode(0x0D, "RRC L",                2,  8, () => { throw new NotImplementedException(); })},
                 { 0x0E, new Opcode(0x0E, "RRC (HL)",             2, 16, () => { throw new NotImplementedException(); })},
                 { 0x0F, new Opcode(0x0F, "RRC A",                2,  8, () => { throw new NotImplementedException(); })},
+
                 { 0x10, new Opcode(0x10, "RL B",                 2,  8, () => { throw new NotImplementedException(); })},
                 { 0x11, new Opcode(0x11, "RL C",                 2,  8, () => { throw new NotImplementedException(); })},
                 { 0x12, new Opcode(0x12, "RL D",                 2,  8, () => { throw new NotImplementedException(); })},
@@ -378,6 +391,7 @@ namespace FrozenBoyCore {
                 { 0x15, new Opcode(0x15, "RL L",                 2,  8, () => { throw new NotImplementedException(); })},
                 { 0x16, new Opcode(0x16, "RL (HL)",              2, 16, () => { throw new NotImplementedException(); })},
                 { 0x17, new Opcode(0x17, "RL A",                 2,  8, () => { throw new NotImplementedException(); })},
+
                 { 0x18, new Opcode(0x18, "RR B",                 2,  8, () => { throw new NotImplementedException(); })},
                 { 0x19, new Opcode(0x19, "RR C",                 2,  8, () => { throw new NotImplementedException(); })},
                 { 0x1A, new Opcode(0x1A, "RR D",                 2,  8, () => { throw new NotImplementedException(); })},
@@ -386,6 +400,7 @@ namespace FrozenBoyCore {
                 { 0x1D, new Opcode(0x1D, "RR L",                 2,  8, () => { throw new NotImplementedException(); })},
                 { 0x1E, new Opcode(0x1E, "RR (HL)",              2, 16, () => { throw new NotImplementedException(); })},
                 { 0x1F, new Opcode(0x1F, "RR A",                 2,  8, () => { throw new NotImplementedException(); })},
+
                 { 0x20, new Opcode(0x20, "SLA B",                2,  8, () => { throw new NotImplementedException(); })},
                 { 0x21, new Opcode(0x21, "SLA C",                2,  8, () => { throw new NotImplementedException(); })},
                 { 0x22, new Opcode(0x22, "SLA D",                2,  8, () => { throw new NotImplementedException(); })},
@@ -488,6 +503,7 @@ namespace FrozenBoyCore {
                 { 0x7E, new Opcode(0x7E, "BIT 7, (HL)",          2, 12, () => { BIT(mem.Read8(regs.HL), 7); })},
                 { 0x7F, new Opcode(0x7F, "BIT 7, A",             2,  8, () => { BIT(regs.A, 7); })},
 
+                // Reset bit in value
                 { 0x80, new Opcode(0x80, "RES 0, B",             2,  8, () => { regs.B = RES(regs.B, 0); })},
                 { 0x81, new Opcode(0x81, "RES 0, C",             2,  8, () => { regs.C = RES(regs.C, 0); })},
                 { 0x82, new Opcode(0x82, "RES 0, D",             2,  8, () => { regs.D = RES(regs.D, 0); })},
@@ -553,6 +569,7 @@ namespace FrozenBoyCore {
                 { 0xBE, new Opcode(0xBE, "RES 7, (HL)",          2, 16, () => { mem.Write8(regs.HL, RES(mem.Read8(regs.HL), 7)); })},
                 { 0xBF, new Opcode(0xBF, "RES 7, A",             2,  8, () => { regs.A = RES(regs.A, 7); })},
 
+                // Set bit in value
                 { 0xC0, new Opcode(0xC0, "SET 0, B",             2,  8, () => { regs.B = SET(regs.B, 0); })},
                 { 0xC1, new Opcode(0xC1, "SET 0, C",             2,  8, () => { regs.C = SET(regs.C, 0); })},
                 { 0xC2, new Opcode(0xC2, "SET 0, D",             2,  8, () => { regs.D = SET(regs.D, 0); })},
@@ -620,16 +637,6 @@ namespace FrozenBoyCore {
             };
         }
 
-        public static int TwosComplementByteToInt(u8 rawValue) {
-            // If a positive value, return it
-            if ((rawValue & 0x80) == 0) {
-                return rawValue;
-            }
-
-            // Otherwise perform the 2's complement math on the value
-            return (byte)(~(rawValue - 0x01)) * -1;
-        }
-
         private void JP(u16 address) {
             regs.PC = address;
             handledPC = true;
@@ -644,16 +651,26 @@ namespace FrozenBoyCore {
 
         private void JR(u8 offset) {
             // +2 because it's the size of the opcode
-            regs.PC = (u16)(regs.PC + 2 + TwosComplementByteToInt(offset));
+            regs.PC = (u16)(regs.PC + 2 + ToSigned(offset));
             handledPC = true;
         }
 
         private void JR_FLAG(bool flag, u8 offset) {
             if (flag) {
                 // +2 because it's the size of opcode
-                regs.PC = (u16)(regs.PC + 2 + TwosComplementByteToInt(offset));
+                regs.PC = (u16)(regs.PC + 2 + ToSigned(offset));
                 handledPC = true;
             }
+        }
+
+        public static int ToSigned(u8 rawValue) {
+            // If a positive value, return it
+            if ((rawValue & 0x80) == 0) {
+                return rawValue;
+            }
+
+            // Otherwise perform the 2's complement math on the value
+            return (byte)(~(rawValue - 0x01)) * -1;
         }
 
         private bool IsHalfCarry(u8 b1, u8 b2) {
@@ -662,6 +679,10 @@ namespace FrozenBoyCore {
 
         private bool IsHalfCarrySub(byte b1, byte b2) {
             return (b1 & 0xF) < (b2 & 0xF);
+        }
+
+        private bool IsCarry(int value) {
+            return (value >> 8) != 0;
         }
 
         public void AND(u8 value) {
@@ -688,7 +709,35 @@ namespace FrozenBoyCore {
             regs.FlagC = false;
         }
 
-        public u8 INC(u8 value) {
+        private void ADD(u8 value) {
+            int result = regs.A + value;
+            regs.FlagZ = (result == 0);
+            regs.FlagN = false;
+            regs.FlagH = IsHalfCarry(regs.A, value);
+            regs.FlagC = IsCarry(result);
+            regs.A = (u8)result;
+        }
+
+        private void SUB(u8 value) {
+            int result = regs.A - value;
+            regs.FlagZ = (result == 0);
+            regs.FlagN = true;
+            regs.FlagH = IsHalfCarrySub(regs.A, value);
+            regs.FlagC = IsCarry(result);
+            regs.A = (u8)result;
+        }
+
+        // n = one byte signed immediate value(#).
+        private u16 ADD_Signed8(u16 value16, u8 value8) {
+            int result = (u8)value16 + value8;
+            regs.FlagZ = false;
+            regs.FlagN = false;
+            regs.FlagH = IsHalfCarry((u8)value16, value8);
+            regs.FlagC = IsCarry(result);
+            return (u16)result;
+        }
+
+        private u8 INC(u8 value) {
             value += 1;
             regs.FlagZ = (value == 0);
             regs.FlagN = false;
@@ -721,8 +770,17 @@ namespace FrozenBoyCore {
         }
 
         // Reset bit in value
-        private byte RES(byte value, int bitPosition) {
+        private byte RES(u8 value, int bitPosition) {
             return (byte)(value & ~(0b_0000_0001 << bitPosition));
+        }
+
+        private u8 RLC(u8 value) {
+            byte result = (byte)((value << 1) | (value >> 7));
+            regs.FlagZ = (result == 0);
+            regs.FlagN = false;
+            regs.FlagH = false;
+            regs.FlagC = ((value & (0b_0000_0001 << 7)) == (0b_0000_0001 << 7));
+            return result;
         }
     }
 }

@@ -93,15 +93,18 @@ namespace FrozenBoyDebugger {
         }
 
         private void Next() {
-            int index = addressLineMap[(int)gb.cpu.regs.PC];
-            string instruction = disasmGrid.Rows[index].Cells[0].Value.ToString();
-            disasmGrid.Rows[index].Selected = true;
-            disasmGrid.CurrentCell = disasmGrid[0, index];
 
             gb.cpu.Execute();
 
+            // update UI
+            int index = addressLineMap[(int)gb.cpu.regs.PC];
+            disasmGrid.Rows[index].Selected = true;
+            disasmGrid.CurrentCell = disasmGrid[0, index];
+
+            string instruction = disasmGrid.Rows[addressLineMap[prevPC]].Cells[0].Value.ToString();
             AddHistory(instruction, gb.cpu.regs);
 
+            // backup 
             prevA = gb.cpu.regs.A;
             prevB = gb.cpu.regs.B;
             prevC = gb.cpu.regs.C;
