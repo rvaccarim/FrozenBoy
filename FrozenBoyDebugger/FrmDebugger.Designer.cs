@@ -226,6 +226,9 @@
             // 
             // historyGrid
             // 
+            this.historyGrid.AllowUserToAddRows = false;
+            this.historyGrid.AllowUserToDeleteRows = false;
+            this.historyGrid.AllowUserToResizeColumns = false;
             this.historyGrid.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
             | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
@@ -246,6 +249,7 @@
             this.histFlagC,
             this.histPC,
             this.histSP});
+            this.historyGrid.Enabled = false;
             this.historyGrid.Location = new System.Drawing.Point(3, 38);
             this.historyGrid.MultiSelect = false;
             this.historyGrid.Name = "historyGrid";
@@ -255,6 +259,7 @@
             this.historyGrid.Size = new System.Drawing.Size(937, 601);
             this.historyGrid.TabIndex = 6;
             this.historyGrid.Text = "dataGridView1";
+            this.historyGrid.SelectionChanged += new System.EventHandler(this.HistoryGrid_SelectionChanged);
             // 
             // splitContainer1
             // 

@@ -30,7 +30,6 @@ namespace FrozenBoyDebugger {
         public int prevPC;
         public int prevSP;
 
-
         GameBoy gb;
         Dictionary<int, int> addressLineMap = new Dictionary<int, int>();
 
@@ -38,6 +37,9 @@ namespace FrozenBoyDebugger {
             InitializeComponent();
             disasmGrid.DefaultCellStyle.Font = new Font("Consolas", 8);
             historyGrid.DefaultCellStyle.Font = new Font("Consolas", 8);
+            // disable the annoying lateral arrow
+            // historyGrid.RowTemplate.Height = 16;
+            historyGrid.RowHeadersWidth = 4;
         }
 
         private void FrmDebugger_Load(object sender, EventArgs e) {
@@ -59,14 +61,19 @@ namespace FrozenBoyDebugger {
                 byte b = memory.data[PC];
 
                 if (gb.cpu.opcodes.ContainsKey(b)) {
-                    Opcode opcode = gb.cpu.opcodes[b];
+                    addressLineMap.Add(PC, line);
 
+                    Opcode opcode = gb.cpu.opcodes[b];
                     AddInstruction(OpcodeToStr(opcodeFormat, opcode, PC, memory));
 
-                    addressLineMap.Add(PC, line);
-                    line++;
+                    if (opcode.value == 0xCB) {
+                        PC += 2;
+                    }
+                    else {
+                        PC += opcode.length;
+                    }
 
-                    PC += opcode.length;
+                    line++;
                 }
                 else {
                     AddInstruction(String.Format(opcodeFormat, String.Format("0x{0:x2}---->TODO", b), PC, b));
@@ -88,18 +95,12 @@ namespace FrozenBoyDebugger {
         private void Next() {
             int index = addressLineMap[(int)gb.cpu.regs.PC];
             string instruction = disasmGrid.Rows[index].Cells[0].Value.ToString();
+            disasmGrid.Rows[index].Selected = true;
+            disasmGrid.CurrentCell = disasmGrid[0, index];
 
             gb.cpu.Execute();
 
-            // history.AppendText(DumpState() + Environment.NewLine);
             AddHistory(instruction, gb.cpu.regs);
-
-            disasmGrid.Rows[addressLineMap[prevPC]].Selected = true;
-            disasmGrid.CurrentCell = disasmGrid[0, addressLineMap[prevPC]];
-
-            int selectedRow = historyGrid.Rows.Count - 2;
-            historyGrid.Rows[selectedRow].Selected = true;
-            historyGrid.CurrentCell = historyGrid[0, selectedRow];
 
             prevA = gb.cpu.regs.A;
             prevB = gb.cpu.regs.B;
@@ -125,6 +126,8 @@ namespace FrozenBoyDebugger {
         }
 
         private void AddHistory(string instruction, Registers r) {
+            // history.AppendText(DumpState() + Environment.NewLine);
+
             int rowId = historyGrid.Rows.Add();
             DataGridViewRow row = historyGrid.Rows[rowId];
             row.Cells["histInstruction"].Value = instruction;
@@ -210,18 +213,18 @@ namespace FrozenBoyDebugger {
             return o.length switch
             {
                 2 => String.Format(format,
-                                   String.Format(o.asmInstruction, m.ReadOperand8((u16)(address))),
+                                   String.Format(o.asmInstruction, m.ReadParm8((u16)(address))),
                                    address,
                                    o.value),
 
                 3 => String.Format(format,
-                                   String.Format(o.asmInstruction, m.ReadOperand16((u16)(address))),
+                                   String.Format(o.asmInstruction, m.ReadParm16((u16)(address))),
                                    address,
                                    o.value),
 
                 _ => String.Format(format,
                                    String.Format(o.value != 0xCB ? o.asmInstruction
-                                                                 : gb.cpu.cb_opcodes[m.ReadOperand8((u16)(address))].asmInstruction),
+                                                                 : gb.cpu.cb_opcodes[m.ReadParm8((u16)(address))].asmInstruction),
                                    address,
                                    o.value),
             };
@@ -248,5 +251,8 @@ namespace FrozenBoyDebugger {
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
+        private void HistoryGrid_SelectionChanged(object sender, EventArgs e) {
+            historyGrid.ClearSelection();
+        }
     }
 }
