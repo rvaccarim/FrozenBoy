@@ -39,25 +39,41 @@ namespace FrozenBoyDebugger {
         public FrmDebugger() {
             InitializeComponent();
             disasmGrid.DefaultCellStyle.Font = new Font("Consolas", 8);
+
+            SetAlignment(historyGrid);
             historyGrid.DefaultCellStyle.Font = new Font("Consolas", 8);
-            // disable the annoying lateral arrow
-            // historyGrid.RowTemplate.Height = 16;
             historyGrid.RowHeadersWidth = 4;
         }
 
         private void FrmDebugger_Load(object sender, EventArgs e) {
             gb = new GameBoy();
-            Disassemble();
+
+            string romName = @"boot\boot_rom.gb";
+            //string romName = @"blargg\cpu_instrs\cpu_instrs.gb");
+            //string romName = @"blargg\cpu_instrs\individual\11-op a,(hl).gb");
+
+            this.Text = "Debugger - " + romName;
+            Disassemble(romName);
             disasmGrid.Rows[0].Selected = true;
 
         }
 
-        private void Disassemble() {
+        private void SetAlignment(DataGridView d) {
+            var col = historyGrid.Columns;
+
+            for (int i = 0; i < col.Count; i++) {
+                d.Columns[i].SortMode = DataGridViewColumnSortMode.NotSortable;
+                d.Columns[i].HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            }
+        }
+
+
+        private void Disassemble(String romName) {
+            System.Windows.Forms.Cursor.Current = System.Windows.Forms.Cursors.WaitCursor;
 
             Memory memory = new Memory();
-            memory.data = File.ReadAllBytes(romPath + @"boot\boot_rom.gb");
-            // memory.data = File.ReadAllBytes(romPath + @"blargg\cpu_instrs\cpu_instrs.gb");
-            // memory.data = File.ReadAllBytes(romPath + @"blargg\cpu_instrs\individual\11-op a,(hl).gb");
+            memory.data = File.ReadAllBytes(romPath + romName);
+
 
             using (StreamWriter outputFile = new StreamWriter(@"D:\Users\frozen\Documents\99_temp\GB_Debugger\11-op a,(hl).gb.txt")) {
 
@@ -96,10 +112,36 @@ namespace FrozenBoyDebugger {
                     }
                 }
             }
+
+            System.Windows.Forms.Cursor.Current = System.Windows.Forms.Cursors.Default;
         }
 
         private void BtnNext_Click(object sender, EventArgs e) {
             Next();
+
+            // outside in order not to delay RunTo
+            historyGrid.FirstDisplayedScrollingRowIndex = historyGrid.RowCount - 1;
+        }
+
+        private void BtnRunTo_Click(object sender, EventArgs e) {
+            System.Windows.Forms.Cursor.Current = System.Windows.Forms.Cursors.WaitCursor;
+
+            u16 address = Convert.ToUInt16(txtRunTo.Text, 16);
+            int count = 0;
+            while (gb.cpu.regs.PC != address) {
+                Next();
+
+                if (count == 800) {
+                    Application.DoEvents();
+                    historyGrid.FirstDisplayedScrollingRowIndex = historyGrid.RowCount - 1;
+                    count = 0;
+                }
+
+                count++;
+            }
+
+            historyGrid.FirstDisplayedScrollingRowIndex = historyGrid.RowCount - 1;
+            System.Windows.Forms.Cursor.Current = System.Windows.Forms.Cursors.Default;
         }
 
         private void Next() {
@@ -128,6 +170,8 @@ namespace FrozenBoyDebugger {
             prevFlagC = gb.cpu.regs.FlagC;
             prevPC = gb.cpu.regs.PC;
             prevSP = gb.cpu.regs.SP;
+
+
         }
 
 
@@ -266,5 +310,7 @@ namespace FrozenBoyDebugger {
         private void HistoryGrid_SelectionChanged(object sender, EventArgs e) {
             historyGrid.ClearSelection();
         }
+
+
     }
 }

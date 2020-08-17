@@ -43,6 +43,8 @@
             this.histSP = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.historyGrid = new System.Windows.Forms.DataGridView();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.txtRunTo = new System.Windows.Forms.TextBox();
+            this.btnRunTo = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.disasmGrid)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.historyGrid)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -63,9 +65,10 @@
             // 
             // Instruction
             // 
-            this.Instruction.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            // this.Instruction.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
             this.Instruction.HeaderText = "Instruction";
             this.Instruction.MinimumWidth = 6;
+            this.Instruction.MinimumWidth = 320;
             this.Instruction.Name = "Instruction";
             this.Instruction.ReadOnly = true;
             this.Instruction.Resizable = System.Windows.Forms.DataGridViewTriState.True;
@@ -85,45 +88,50 @@
             this.disasmGrid.ReadOnly = true;
             this.disasmGrid.RowHeadersWidth = 51;
             this.disasmGrid.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.disasmGrid.Size = new System.Drawing.Size(250, 639);
+            this.disasmGrid.Size = new System.Drawing.Size(226, 639);
             this.disasmGrid.TabIndex = 5;
             this.disasmGrid.Text = "dataGridView1";
             // 
             // histInstruction
             // 
-            this.histInstruction.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            // this.histInstruction.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histInstruction.HeaderText = "Instruction";
             this.histInstruction.MinimumWidth = 6;
             this.histInstruction.Name = "histInstruction";
             this.histInstruction.ReadOnly = true;
-            this.histInstruction.Width = 107;
+            this.histInstruction.Width = 320;
             // 
             // histA
             // 
-            this.histA.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            // this.histA.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histA.HeaderText = "A";
             this.histA.MinimumWidth = 6;
             this.histA.Name = "histA";
             this.histA.ReadOnly = true;
-            this.histA.Width = 48;
+            this.histA.Width = 47;
+            this.histA.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
             // 
             // histB
             // 
-            this.histB.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            // this.histB.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histB.HeaderText = "B";
             this.histB.MinimumWidth = 6;
             this.histB.Name = "histB";
             this.histB.ReadOnly = true;
             this.histB.Width = 47;
+            this.histB.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+
             // 
             // histC
             // 
-            this.histC.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            // this.histC.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histC.HeaderText = "C";
             this.histC.MinimumWidth = 6;
             this.histC.Name = "histC";
             this.histC.ReadOnly = true;
             this.histC.Width = 47;
+            this.histC.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+
             // 
             // histD
             // 
@@ -132,97 +140,119 @@
             this.histD.MinimumWidth = 6;
             this.histD.Name = "histD";
             this.histD.ReadOnly = true;
-            this.histD.Width = 49;
+            this.histD.Width = 47;
+            this.histD.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+
             // 
             // histE
             // 
-            this.histE.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            // this.histE.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histE.HeaderText = "E";
             this.histE.MinimumWidth = 6;
             this.histE.Name = "histE";
             this.histE.ReadOnly = true;
-            this.histE.Width = 46;
+            this.histE.Width = 47;
+            this.histE.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+
             // 
             // histF
             // 
-            this.histF.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            // this.histF.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histF.HeaderText = "F";
             this.histF.MinimumWidth = 6;
             this.histF.Name = "histF";
             this.histF.ReadOnly = true;
-            this.histF.Width = 45;
+            this.histF.Width = 47;
+            this.histF.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+
             // 
             // histH
             // 
-            this.histH.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            // this.histH.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histH.HeaderText = "H";
             this.histH.MinimumWidth = 6;
             this.histH.Name = "histH";
             this.histH.ReadOnly = true;
-            this.histH.Width = 49;
+            this.histH.Width = 47;
+            this.histH.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+
             // 
             // histL
             // 
-            this.histL.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            // this.histL.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histL.HeaderText = "L";
             this.histL.MinimumWidth = 6;
             this.histL.Name = "histL";
             this.histL.ReadOnly = true;
-            this.histL.Width = 45;
+            this.histL.Width = 47;
+            this.histL.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+
             // 
             // histFlagZ
             // 
-            this.histFlagZ.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            // this.histFlagZ.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histFlagZ.HeaderText = "FZ";
             this.histFlagZ.MinimumWidth = 6;
             this.histFlagZ.Name = "histFlagZ";
             this.histFlagZ.ReadOnly = true;
-            this.histFlagZ.Width = 54;
+            this.histFlagZ.Width = 47;
+            this.histFlagZ.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+
             // 
             // histFlagN
             // 
-            this.histFlagN.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            // this.histFlagN.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histFlagN.HeaderText = "FN";
             this.histFlagN.MinimumWidth = 6;
             this.histFlagN.Name = "histFlagN";
             this.histFlagN.ReadOnly = true;
-            this.histFlagN.Width = 56;
+            this.histFlagN.Width = 47;
+            this.histFlagN.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+
             // 
             // histFlagH
             // 
-            this.histFlagH.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            // this.histFlagH.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histFlagH.HeaderText = "FH";
             this.histFlagH.MinimumWidth = 6;
             this.histFlagH.Name = "histFlagH";
             this.histFlagH.ReadOnly = true;
-            this.histFlagH.Width = 56;
+            this.histFlagH.Width = 47;
+            this.histFlagH.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+
             // 
             // histFlagC
             // 
-            this.histFlagC.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            // this.histFlagC.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histFlagC.HeaderText = "FC";
             this.histFlagC.MinimumWidth = 6;
             this.histFlagC.Name = "histFlagC";
             this.histFlagC.ReadOnly = true;
-            this.histFlagC.Width = 54;
+            this.histFlagC.Width = 47;
+            this.histFlagC.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+
             // 
             // histPC
             // 
-            this.histPC.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            // this.histPC.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histPC.HeaderText = "PC";
             this.histPC.MinimumWidth = 6;
             this.histPC.Name = "histPC";
             this.histPC.ReadOnly = true;
-            this.histPC.Width = 55;
+            this.histPC.Width = 47;
+            this.histPC.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+
             // 
             // histSP
             // 
-            this.histSP.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            // this.histSP.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histSP.HeaderText = "SP";
             this.histSP.MinimumWidth = 6;
             this.histSP.Name = "histSP";
             this.histSP.ReadOnly = true;
-            this.histSP.Width = 54;
+            this.histSP.Width = 47;
+            this.histSP.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+
             // 
             // historyGrid
             // 
@@ -249,16 +279,16 @@
             this.histFlagC,
             this.histPC,
             this.histSP});
-            this.historyGrid.Enabled = false;
+            // 
             this.historyGrid.Location = new System.Drawing.Point(3, 38);
             this.historyGrid.MultiSelect = false;
             this.historyGrid.Name = "historyGrid";
             this.historyGrid.ReadOnly = true;
             this.historyGrid.RowHeadersWidth = 51;
             this.historyGrid.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.historyGrid.Size = new System.Drawing.Size(937, 601);
+            this.historyGrid.Size = new System.Drawing.Size(850, 601);
             this.historyGrid.TabIndex = 6;
-            this.historyGrid.Text = "dataGridView1";
+            this.historyGrid.Text = "historyGrid";
             this.historyGrid.SelectionChanged += new System.EventHandler(this.HistoryGrid_SelectionChanged);
             // 
             // splitContainer1
@@ -273,19 +303,39 @@
             // 
             // splitContainer1.Panel2
             // 
+            this.splitContainer1.Panel2.Controls.Add(this.txtRunTo);
+            this.splitContainer1.Panel2.Controls.Add(this.btnRunTo);
             this.splitContainer1.Panel2.Controls.Add(this.btnNext);
             this.splitContainer1.Panel2.Controls.Add(this.historyGrid);
-            this.splitContainer1.Size = new System.Drawing.Size(1194, 639);
-            this.splitContainer1.SplitterDistance = 250;
+            this.splitContainer1.Size = new System.Drawing.Size(1083, 639);
+            this.splitContainer1.SplitterDistance = 226;
             this.splitContainer1.TabIndex = 7;
             this.splitContainer1.Text = "splitContainer1";
+            // 
+            // txtRunTo
+            // 
+            this.txtRunTo.Location = new System.Drawing.Point(212, 3);
+            this.txtRunTo.Name = "txtRunTo";
+            this.txtRunTo.Size = new System.Drawing.Size(89, 27);
+            this.txtRunTo.TabIndex = 7;
+            // 
+            // btnRunTo
+            // 
+            this.btnRunTo.Location = new System.Drawing.Point(112, 3);
+            this.btnRunTo.Name = "btnRunTo";
+            this.btnRunTo.Size = new System.Drawing.Size(94, 29);
+            this.btnRunTo.TabIndex = 0;
+            this.btnRunTo.Text = "Run to";
+            this.btnRunTo.UseVisualStyleBackColor = true;
+            this.btnRunTo.Click += new System.EventHandler(this.BtnRunTo_Click);
             // 
             // FrmDebugger
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1194, 639);
+            this.ClientSize = new System.Drawing.Size(1083, 639);
             this.Controls.Add(this.splitContainer1);
+            this.DoubleBuffered = true;
             this.KeyPreview = true;
             this.Name = "FrmDebugger";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
@@ -296,6 +346,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.historyGrid)).EndInit();
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
+            this.splitContainer1.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
             this.ResumeLayout(false);
@@ -324,5 +375,7 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn histPC;
         private System.Windows.Forms.DataGridViewTextBoxColumn histSP;
         private System.Windows.Forms.SplitContainer splitContainer1;
+        private System.Windows.Forms.TextBox txtRunTo;
+        private System.Windows.Forms.Button btnRunTo;
     }
 }
