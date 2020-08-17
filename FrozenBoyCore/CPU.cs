@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using u8 = System.Byte;
 using u16 = System.UInt16;
-using System.ComponentModel;
+
 
 namespace FrozenBoyCore {
 
@@ -73,8 +73,8 @@ namespace FrozenBoyCore {
             return null;
         }
 
-        private Dictionary<byte, Opcode> InitializeOpcodes() {
-            return new Dictionary<byte, Opcode> {
+        private Dictionary<u8, Opcode> InitializeOpcodes() {
+            return new Dictionary<u8, Opcode> {
                 { 0xCB, new Opcode(0xCB, "CB PREFIX",            1,  4, () => { })},
 
                 // ==================================================================================================================
@@ -148,7 +148,7 @@ namespace FrozenBoyCore {
                 // ==================================================================================================================
                 // DEC Family
                 // ==================================================================================================================                
-                // DEC - 8 bit                                
+                // DEC 8 bit                                
                 { 0x05, new Opcode(0x05, "DEC B",                1,  4, () => { regs.B = DEC(regs.B); })},
                 { 0x0D, new Opcode(0x0D, "DEC C",                1,  4, () => { regs.C = DEC(regs.C); })},
                 { 0x15, new Opcode(0x15, "DEC D",                1,  4, () => { regs.D = DEC(regs.D); })},
@@ -157,7 +157,7 @@ namespace FrozenBoyCore {
                 { 0x2D, new Opcode(0x2D, "DEC L",                1,  4, () => { regs.L = DEC(regs.L); })},
                 { 0x35, new Opcode(0x35, "DEC (HL)",             1, 12, () => { mem.Write8(regs.HL, DEC(mem.Read8(regs.HL))); })},
                 { 0x3D, new Opcode(0x3D, "DEC A",                1,  4, () => { regs.A = DEC(regs.A); })},                                                          
-                // DEC XX                                        
+                // DEC 16 bit                                  
                 { 0x0B, new Opcode(0x0B, "DEC BC",               1,  8, () => { regs.BC--; })},
                 { 0x1B, new Opcode(0x1B, "DEC DE",               1,  8, () => { regs.DE--; })},
                 { 0x2B, new Opcode(0x2B, "DEC HL",               1,  8, () => { regs.HL--; })},
@@ -339,6 +339,7 @@ namespace FrozenBoyCore {
 
                 { 0xC9, new Opcode(0xC9, "RET",                  1, 16, () => {throw new NotImplementedException(); })},
                 { 0xD9, new Opcode(0xD9, "RETI",                 1, 16, () => {throw new NotImplementedException(); })},
+
                 { 0x17, new Opcode(0x17, "RLA",                  1,  4, () => {throw new NotImplementedException(); })},
                 { 0x07, new Opcode(0x07, "RLCA",                 1,  4, () => {throw new NotImplementedException(); })},
                 { 0x1F, new Opcode(0x1F, "RRA",                  1,  4, () => {throw new NotImplementedException(); })},
@@ -385,8 +386,8 @@ namespace FrozenBoyCore {
         }
 
 
-        private Dictionary<byte, Opcode> InitializeCB() {
-            return new Dictionary<byte, Opcode> {
+        private Dictionary<u8, Opcode> InitializeCB() {
+            return new Dictionary<u8, Opcode> {
                 // rotate left (one position)
                 { 0x00, new Opcode(0x00, "RLC B",                2,  8, () => { regs.B = RLC(regs.B); })},
                 { 0x01, new Opcode(0x01, "RLC C",                2,  8, () => { regs.C = RLC(regs.C); })},
@@ -397,68 +398,75 @@ namespace FrozenBoyCore {
                 { 0x06, new Opcode(0x06, "RLC (HL)",             2, 16, () => { mem.Write8(regs.HL, RLC(mem.Read8(regs.HL))); })},
                 { 0x07, new Opcode(0x07, "RLC A",                2,  8, () => { regs.A = RLC(regs.A); })},
 
-                { 0x08, new Opcode(0x08, "RRC B",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x09, new Opcode(0x09, "RRC C",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x0A, new Opcode(0x0A, "RRC D",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x0B, new Opcode(0x0B, "RRC E",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x0C, new Opcode(0x0C, "RRC H",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x0D, new Opcode(0x0D, "RRC L",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x0E, new Opcode(0x0E, "RRC (HL)",             2, 16, () => { throw new NotImplementedException(); })},
-                { 0x0F, new Opcode(0x0F, "RRC A",                2,  8, () => { throw new NotImplementedException(); })},
+                // rotate right (one position)
+                { 0x08, new Opcode(0x08, "RRC B",                2,  8, () => { regs.B = RRC(regs.B); })},
+                { 0x09, new Opcode(0x09, "RRC C",                2,  8, () => { regs.C = RRC(regs.C); })},
+                { 0x0A, new Opcode(0x0A, "RRC D",                2,  8, () => { regs.D = RRC(regs.D); })},
+                { 0x0B, new Opcode(0x0B, "RRC E",                2,  8, () => { regs.E = RRC(regs.E); })},
+                { 0x0C, new Opcode(0x0C, "RRC H",                2,  8, () => { regs.H = RRC(regs.H); })},
+                { 0x0D, new Opcode(0x0D, "RRC L",                2,  8, () => { regs.L = RRC(regs.L); })},
+                { 0x0E, new Opcode(0x0E, "RRC (HL)",             2, 16, () => { mem.Write8(regs.HL, RRC(mem.Read8(regs.HL))); })},
+                { 0x0F, new Opcode(0x0F, "RRC A",                2,  8, () => { regs.A = RRC(regs.A); })},
 
-                { 0x10, new Opcode(0x10, "RL B",                 2,  8, () => { throw new NotImplementedException(); })},
-                { 0x11, new Opcode(0x11, "RL C",                 2,  8, () => { throw new NotImplementedException(); })},
-                { 0x12, new Opcode(0x12, "RL D",                 2,  8, () => { throw new NotImplementedException(); })},
-                { 0x13, new Opcode(0x13, "RL E",                 2,  8, () => { throw new NotImplementedException(); })},
-                { 0x14, new Opcode(0x14, "RL H",                 2,  8, () => { throw new NotImplementedException(); })},
-                { 0x15, new Opcode(0x15, "RL L",                 2,  8, () => { throw new NotImplementedException(); })},
-                { 0x16, new Opcode(0x16, "RL (HL)",              2, 16, () => { throw new NotImplementedException(); })},
-                { 0x17, new Opcode(0x17, "RL A",                 2,  8, () => { throw new NotImplementedException(); })},
+                // Rotate n left through Carry flag
+                { 0x10, new Opcode(0x10, "RL B",                 2,  8, () => { regs.B = RL(regs.B); })},
+                { 0x11, new Opcode(0x11, "RL C",                 2,  8, () => { regs.C = RL(regs.C); })},
+                { 0x12, new Opcode(0x12, "RL D",                 2,  8, () => { regs.D = RL(regs.D); })},
+                { 0x13, new Opcode(0x13, "RL E",                 2,  8, () => { regs.E = RL(regs.E); })},
+                { 0x14, new Opcode(0x14, "RL H",                 2,  8, () => { regs.H = RL(regs.H); })},
+                { 0x15, new Opcode(0x15, "RL L",                 2,  8, () => { regs.L = RL(regs.L); })},
+                { 0x16, new Opcode(0x16, "RL (HL)",              2, 16, () => { mem.Write8(regs.HL, RL(mem.Read8(regs.HL))); })},
+                { 0x17, new Opcode(0x17, "RL A",                 2,  8, () => { regs.A = RL(regs.A); })},
 
-                { 0x18, new Opcode(0x18, "RR B",                 2,  8, () => { throw new NotImplementedException(); })},
-                { 0x19, new Opcode(0x19, "RR C",                 2,  8, () => { throw new NotImplementedException(); })},
-                { 0x1A, new Opcode(0x1A, "RR D",                 2,  8, () => { throw new NotImplementedException(); })},
-                { 0x1B, new Opcode(0x1B, "RR E",                 2,  8, () => { throw new NotImplementedException(); })},
-                { 0x1C, new Opcode(0x1C, "RR H",                 2,  8, () => { throw new NotImplementedException(); })},
-                { 0x1D, new Opcode(0x1D, "RR L",                 2,  8, () => { throw new NotImplementedException(); })},
-                { 0x1E, new Opcode(0x1E, "RR (HL)",              2, 16, () => { throw new NotImplementedException(); })},
-                { 0x1F, new Opcode(0x1F, "RR A",                 2,  8, () => { throw new NotImplementedException(); })},
+                // Rotate n right through Carry flag.
+                { 0x18, new Opcode(0x18, "RR B",                 2,  8, () => { regs.B = RR(regs.B); })},
+                { 0x19, new Opcode(0x19, "RR C",                 2,  8, () => { regs.C = RR(regs.C); })},
+                { 0x1A, new Opcode(0x1A, "RR D",                 2,  8, () => { regs.D = RR(regs.D); })},
+                { 0x1B, new Opcode(0x1B, "RR E",                 2,  8, () => { regs.E = RR(regs.E); })},
+                { 0x1C, new Opcode(0x1C, "RR H",                 2,  8, () => { regs.H = RR(regs.H); })},
+                { 0x1D, new Opcode(0x1D, "RR L",                 2,  8, () => { regs.L = RR(regs.L); })},
+                { 0x1E, new Opcode(0x1E, "RR (HL)",              2, 16, () => { mem.Write8(regs.HL, RR(mem.Read8(regs.HL))); })},
+                { 0x1F, new Opcode(0x1F, "RR A",                 2,  8, () => { regs.A = RR(regs.A); })},
 
-                { 0x20, new Opcode(0x20, "SLA B",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x21, new Opcode(0x21, "SLA C",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x22, new Opcode(0x22, "SLA D",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x23, new Opcode(0x23, "SLA E",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x24, new Opcode(0x24, "SLA H",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x25, new Opcode(0x25, "SLA L",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x26, new Opcode(0x26, "SLA (HL)",             2, 16, () => { throw new NotImplementedException(); })},
-                { 0x27, new Opcode(0x27, "SLA A",                2,  8, () => { throw new NotImplementedException(); })},
+                // Shift n left into Carry. LSB of n set to 0
+                { 0x20, new Opcode(0x20, "SLA B",                2,  8, () => { regs.B = SLA(regs.B); })},
+                { 0x21, new Opcode(0x21, "SLA C",                2,  8, () => { regs.C = SLA(regs.C); })},
+                { 0x22, new Opcode(0x22, "SLA D",                2,  8, () => { regs.D = SLA(regs.D); })},
+                { 0x23, new Opcode(0x23, "SLA E",                2,  8, () => { regs.E = SLA(regs.E); })},
+                { 0x24, new Opcode(0x24, "SLA H",                2,  8, () => { regs.H = SLA(regs.H); })},
+                { 0x25, new Opcode(0x25, "SLA L",                2,  8, () => { regs.L = SLA(regs.L); })},
+                { 0x26, new Opcode(0x26, "SLA (HL)",             2, 16, () => { mem.Write8(regs.HL, SLA(mem.Read8(regs.HL))); })},
+                { 0x27, new Opcode(0x27, "SLA A",                2,  8, () => { regs.A = SLA(regs.A); })},
 
-                { 0x28, new Opcode(0x28, "SRA B",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x29, new Opcode(0x29, "SRA C",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x2A, new Opcode(0x2A, "SRA D",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x2B, new Opcode(0x2B, "SRA E",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x2C, new Opcode(0x2C, "SRA H",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x2D, new Opcode(0x2D, "SRA L",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x2E, new Opcode(0x2E, "SRA (HL)",             2, 16, () => { throw new NotImplementedException(); })},
-                { 0x2F, new Opcode(0x2F, "SRA A",                2,  8, () => { throw new NotImplementedException(); })},
+                // Shift n right into Carry
+                { 0x28, new Opcode(0x28, "SRA B",                2,  8, () => { regs.B = SRA(regs.B); })},
+                { 0x29, new Opcode(0x29, "SRA C",                2,  8, () => { regs.C = SRA(regs.C); })},
+                { 0x2A, new Opcode(0x2A, "SRA D",                2,  8, () => { regs.D = SRA(regs.D); })},
+                { 0x2B, new Opcode(0x2B, "SRA E",                2,  8, () => { regs.E = SRA(regs.E); })},
+                { 0x2C, new Opcode(0x2C, "SRA H",                2,  8, () => { regs.H = SRA(regs.H); })},
+                { 0x2D, new Opcode(0x2D, "SRA L",                2,  8, () => { regs.L = SRA(regs.L); })},
+                { 0x2E, new Opcode(0x2E, "SRA (HL)",             2, 16, () => { mem.Write8(regs.HL, SRA(mem.Read8(regs.HL))); })},
+                { 0x2F, new Opcode(0x2F, "SRA A",                2,  8, () => { regs.A = SRA(regs.A); })},
 
-                { 0x30, new Opcode(0x30, "SWAP B",               2,  8, () => { throw new NotImplementedException(); })},
-                { 0x31, new Opcode(0x31, "SWAP C",               2,  8, () => { throw new NotImplementedException(); })},
-                { 0x32, new Opcode(0x32, "SWAP D",               2,  8, () => { throw new NotImplementedException(); })},
-                { 0x33, new Opcode(0x33, "SWAP E",               2,  8, () => { throw new NotImplementedException(); })},
-                { 0x34, new Opcode(0x34, "SWAP H",               2,  8, () => { throw new NotImplementedException(); })},
-                { 0x35, new Opcode(0x35, "SWAP L",               2,  8, () => { throw new NotImplementedException(); })},
-                { 0x36, new Opcode(0x36, "SWAP (HL)",            2, 16, () => { throw new NotImplementedException(); })},
-                { 0x37, new Opcode(0x37, "SWAP A",               2,  8, () => { throw new NotImplementedException(); })},
+                // Swap upper & lower nibles of n
+                { 0x30, new Opcode(0x30, "SWAP B",               2,  8, () => { regs.B = SWAP(regs.B); })},
+                { 0x31, new Opcode(0x31, "SWAP C",               2,  8, () => { regs.C = SWAP(regs.C); })},
+                { 0x32, new Opcode(0x32, "SWAP D",               2,  8, () => { regs.D = SWAP(regs.D); })},
+                { 0x33, new Opcode(0x33, "SWAP E",               2,  8, () => { regs.E = SWAP(regs.E); })},
+                { 0x34, new Opcode(0x34, "SWAP H",               2,  8, () => { regs.H = SWAP(regs.H); })},
+                { 0x35, new Opcode(0x35, "SWAP L",               2,  8, () => { regs.L = SWAP(regs.L); })},
+                { 0x36, new Opcode(0x36, "SWAP (HL)",            2, 16, () => { mem.Write8(regs.HL, SWAP(mem.Read8(regs.HL))); })},
+                { 0x37, new Opcode(0x37, "SWAP A",               2,  8, () => { regs.A = SWAP(regs.A); })},
 
-                { 0x38, new Opcode(0x38, "SRL B",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x39, new Opcode(0x39, "SRL C",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x3A, new Opcode(0x3A, "SRL D",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x3B, new Opcode(0x3B, "SRL E",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x3C, new Opcode(0x3C, "SRL H",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x3D, new Opcode(0x3D, "SRL L",                2,  8, () => { throw new NotImplementedException(); })},
-                { 0x3E, new Opcode(0x3E, "SRL (HL)",             2, 16, () => { throw new NotImplementedException(); })},
-                { 0x3F, new Opcode(0x3F, "SRL A",                2,  8, () => { throw new NotImplementedException(); })},
+                // Shift n right into Carry. MSB set to 0
+                { 0x38, new Opcode(0x38, "SRL B",                2,  8, () => { regs.B = SRL(regs.B); })},
+                { 0x39, new Opcode(0x39, "SRL C",                2,  8, () => { regs.C = SRL(regs.C); })},
+                { 0x3A, new Opcode(0x3A, "SRL D",                2,  8, () => { regs.D = SRL(regs.D); })},
+                { 0x3B, new Opcode(0x3B, "SRL E",                2,  8, () => { regs.E = SRL(regs.E); })},
+                { 0x3C, new Opcode(0x3C, "SRL H",                2,  8, () => { regs.H = SRL(regs.H); })},
+                { 0x3D, new Opcode(0x3D, "SRL L",                2,  8, () => { regs.L = SRL(regs.L); })},
+                { 0x3E, new Opcode(0x3E, "SRL (HL)",             2, 16, () => { mem.Write8(regs.HL, SRL(mem.Read8(regs.HL))); })},
+                { 0x3F, new Opcode(0x3F, "SRL A",                2,  8, () => { regs.A = SRL(regs.A); })},
                                                                  
                 // Test bit b in register r                    
                 { 0x40, new Opcode(0x40, "BIT 0, B",             2,  8, () => { BIT(regs.B, 0); })},
@@ -802,8 +810,72 @@ namespace FrozenBoyCore {
             regs.FlagZ = (result == 0);
             regs.FlagN = false;
             regs.FlagH = false;
-            regs.FlagC = ((value & (0b_0000_0001 << 7)) == (0b_0000_0001 << 7));
+            regs.FlagC = (value & (0b_0000_0001 << 7)) == (0b_0000_0001 << 7);
             return result;
         }
+
+        private u8 RRC(u8 value) {
+            u8 result = (u8)((value >> 1) | (value << 7));
+            regs.FlagZ = (result == 0);
+            regs.FlagN = false;
+            regs.FlagH = false;
+            regs.FlagC = (value & 0x1) == 1;
+            return result;
+        }
+
+        private u8 RL(u8 value) {
+            u8 result = (u8)((value << 1) | (regs.FlagC ? 1 : 0));
+            regs.FlagZ = (result == 0);
+            regs.FlagN = false;
+            regs.FlagH = false;
+            regs.FlagC = (value & (0b_0000_0001 << 7)) == (0b_0000_0001 << 7);
+            return result;
+        }
+
+        private u8 RR(u8 value) {
+            u8 result = (u8)((value >> 1) | (regs.FlagC ? 1 << 7 : 0));
+            regs.FlagZ = (result == 0);
+            regs.FlagN = false;
+            regs.FlagH = false;
+            regs.FlagC = (value & 1) == 1;
+            return result;
+        }
+
+        private u8 SRA(byte value) {
+            u8 result = (u8)((value >> 1) | (value & 0x80));
+            regs.FlagZ = (result == 0);
+            regs.FlagN = false;
+            regs.FlagH = false;
+            regs.FlagC = (value & 1) == 1;
+            return result;
+        }
+
+        private u8 SLA(byte value) {
+            u8 result = (u8)(value << 1);
+            regs.FlagZ = (result == 0);
+            regs.FlagN = false;
+            regs.FlagH = false;
+            regs.FlagC = (value & (1 << 7)) == (1 << 7);
+            return result;
+        }
+
+        private u8 SWAP(byte value) {
+            u8 result = (u8)((value & 0xF0) >> 4 | (value & 0x0F) << 4);
+            regs.FlagZ = (result == 0);
+            regs.FlagN = false;
+            regs.FlagH = false;
+            regs.FlagC = false;
+            return result;
+        }
+
+        private u8 SRL(u8 value) {
+            byte result = (byte)(value >> 1);
+            regs.FlagZ = (result == 0);
+            regs.FlagN = false;
+            regs.FlagH = false;
+            regs.FlagC = (value & 0x1) == 1;
+            return result;
+        }
+
     }
 }

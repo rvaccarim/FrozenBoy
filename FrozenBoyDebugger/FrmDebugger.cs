@@ -10,6 +10,9 @@ using System.Drawing;
 namespace FrozenBoyDebugger {
     public partial class FrmDebugger : Form {
 
+        private const string romPath = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\";
+        private const string debugPath = @"D:\Users\frozen\Documents\99_temp\GB_Debugger\";
+
         private const string opcodeFormat = "{0,-15} ;${1,-6:x4} O=0x{2:x2}";
         private const string stateFormat = "{0}   {1}";
 
@@ -52,39 +55,47 @@ namespace FrozenBoyDebugger {
         private void Disassemble() {
 
             Memory memory = new Memory();
-            // memory.data = File.ReadAllBytes(@"D:\Users\frozen\Documents\99_temp\GB_ROM\cpu_instrs.gb");
-            memory.data = File.ReadAllBytes(@"D:\Users\frozen\Documents\99_temp\GB_ROM\boot_rom.gb");
+            // memory.data = File.ReadAllBytes(romPath + @"boot\boot_rom.gb");
+            // memory.data = File.ReadAllBytes(romPath + @"blargg\cpu_instrs\cpu_instrs.gb");
+            memory.data = File.ReadAllBytes(romPath + @"blargg\cpu_instrs\individual\11-op a,(hl).gb");
 
-            int line = 0;
+            using (StreamWriter outputFile = new StreamWriter(@"D:\Users\frozen\Documents\99_temp\GB_Debugger\11-op a,(hl).gb.txt")) {
 
-            while (PC < memory.data.Length) {
-                byte b = memory.data[PC];
+                int line = 0;
 
-                if (gb.cpu.opcodes.ContainsKey(b)) {
-                    addressLineMap.Add(PC, line);
+                while (PC < memory.data.Length) {
+                    byte b = memory.data[PC];
 
-                    Opcode opcode = gb.cpu.opcodes[b];
-                    AddInstruction(OpcodeToStr(opcodeFormat, opcode, PC, memory));
+                    if (gb.cpu.opcodes.ContainsKey(b)) {
+                        addressLineMap.Add(PC, line);
 
-                    if (opcode.value == 0xCB) {
-                        PC += 2;
+                        Opcode opcode = gb.cpu.opcodes[b];
+                        string lineStr = OpcodeToStr(opcodeFormat, opcode, PC, memory);
+
+                        AddInstruction(lineStr);
+                        outputFile.WriteLine(lineStr);
+
+                        if (opcode.value == 0xCB) {
+                            PC += 2;
+                        }
+                        else {
+                            PC += opcode.length;
+                        }
+
+                        line++;
                     }
                     else {
-                        PC += opcode.length;
+                        string lineStr = String.Format(opcodeFormat, String.Format("0x{0:x2}---->TODO", b), PC, b);
+                        AddInstruction(lineStr);
+                        outputFile.WriteLine(lineStr);
+
+                        addressLineMap.Add(PC, line);
+                        line++;
+
+                        PC++;
                     }
-
-                    line++;
-                }
-                else {
-                    AddInstruction(String.Format(opcodeFormat, String.Format("0x{0:x2}---->TODO", b), PC, b));
-
-                    addressLineMap.Add(PC, line);
-                    line++;
-
-                    PC++;
                 }
             }
-
         }
 
         private void BtnNext_Click(object sender, EventArgs e) {
@@ -93,7 +104,6 @@ namespace FrozenBoyDebugger {
         }
 
         private void Next() {
-
             gb.cpu.Execute();
 
             // update UI
