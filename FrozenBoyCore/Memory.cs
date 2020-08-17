@@ -33,6 +33,11 @@ namespace FrozenBoyCore {
             data[address] = value;
         }
 
+        public void Write16(u16 address, u16 value) {
+            data[address + 1] = (u8)((value & 0b_11111111_00000000) >> 8);
+            data[address] = (u8)(value & 0b_00000000_11111111);
+        }
+
     }
 
 }
