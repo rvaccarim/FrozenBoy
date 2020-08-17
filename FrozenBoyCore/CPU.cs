@@ -75,6 +75,8 @@ namespace FrozenBoyCore {
 
         private Dictionary<u8, Opcode> InitializeOpcodes() {
             return new Dictionary<u8, Opcode> {
+
+                { 0x00, new Opcode(0x00, "NOP",                  1,  4, () => { })},
                 { 0xCB, new Opcode(0xCB, "CB PREFIX",            1,  4, () => { })},
 
                 // ==================================================================================================================
@@ -157,14 +159,16 @@ namespace FrozenBoyCore {
                 // ==================================================================================================================
                 // CALL
                 // ==================================================================================================================
-                { 0xC4, new Opcode(0xC4, "CALL NZ, ${0:x4}",     3, 24, () => {throw new NotImplementedException(); })},
-                { 0xCC, new Opcode(0xCC, "CALL Z, ${0:x4}",      3, 24, () => {throw new NotImplementedException(); })},
-                { 0xCD, new Opcode(0xCD, "CALL ${0:x4}",         3, 24, () => {throw new NotImplementedException(); })},
-                { 0xD4, new Opcode(0xD4, "CALL NC, ${0:x4}",     3, 24, () => {throw new NotImplementedException(); })},
-                { 0xDC, new Opcode(0xDC, "CALL C, ${0:x4}",      3, 24, () => {throw new NotImplementedException(); })},
+                // Push address of next instruction onto stack and then jump to address nn.
+                { 0xCD, new Opcode(0xCD, "CALL ${0:x4}",         3, 24, () => { CALL(mem.ReadParm16(regs.PC)); })},
+                // Call address n if following condition is true
+                { 0xC4, new Opcode(0xC4, "CALL NZ, ${0:x4}",     3, 24, () => { CALL_FLAG(!regs.FlagZ, mem.ReadParm16(regs.PC)); })},
+                { 0xCC, new Opcode(0xCC, "CALL Z, ${0:x4}",      3, 24, () => { CALL_FLAG( regs.FlagZ, mem.ReadParm16(regs.PC)); })},
+                { 0xD4, new Opcode(0xD4, "CALL NC, ${0:x4}",     3, 24, () => { CALL_FLAG(!regs.FlagC, mem.ReadParm16(regs.PC)); })},
+                { 0xDC, new Opcode(0xDC, "CALL C, ${0:x4}",      3, 24, () => { CALL_FLAG( regs.FlagC, mem.ReadParm16(regs.PC)); })},
 
-                { 0x3F, new Opcode(0x3F, "CCF",                  1,  4, () => {throw new NotImplementedException(); })},
-
+                // Complement carry flag
+                { 0x3F, new Opcode(0x3F, "CCF",                  1,  4, () => { regs.FlagC = !regs.FlagC; regs.FlagN = false; regs.FlagH = false; })},
 
                 // ==================================================================================================================
                 // COMPARE
@@ -309,7 +313,6 @@ namespace FrozenBoyCore {
                 { 0xF0, new Opcode(0xF0, "LDH A, (${0:x2})",     2, 12, () => {throw new NotImplementedException(); })},
                 { 0xF2, new Opcode(0xF2, "LDH A, (C)",           1,  8, () => {throw new NotImplementedException(); })},
 
-                { 0x00, new Opcode(0x00, "NOP",                  1,  4, () => { })},
 
                 // ==================================================================================================================
                 // STACK
@@ -338,10 +341,16 @@ namespace FrozenBoyCore {
                 { 0x1F, new Opcode(0x1F, "RRA",                  1,  4, () => {throw new NotImplementedException(); })},
                 { 0x0F, new Opcode(0x0F, "RRCA",                 1,  4, () => {throw new NotImplementedException(); })},
 
-                { 0xC7, new Opcode(0xC7, "RST 00",               1, 16, () => {throw new NotImplementedException(); })},
-                { 0xD7, new Opcode(0xD7, "RST 10",               1, 16, () => {throw new NotImplementedException(); })},
-                { 0xE7, new Opcode(0xE7, "RST 20",               1, 16, () => {throw new NotImplementedException(); })},
-                { 0xF7, new Opcode(0xF7, "RST 30",               1, 16, () => {throw new NotImplementedException(); })},
+                // Restart - Push present address onto stack
+                // Jump to address n
+                { 0xC7, new Opcode(0xC7, "RST 00",               1, 16, () => { RST(0x0); })},
+                { 0xCF, new Opcode(0xCF, "RST 08",               1, 16, () => { RST(0x8); })},
+                { 0xD7, new Opcode(0xD7, "RST 10",               1, 16, () => { RST(0x10); })},
+                { 0xDF, new Opcode(0xDF, "RST 18",               1, 16, () => { RST(0x18); })},
+                { 0xE7, new Opcode(0xE7, "RST 20",               1, 16, () => { RST(0x20); })},
+                { 0xEF, new Opcode(0xEF, "RST 28",               1, 16, () => { RST(0x28); })},
+                { 0xF7, new Opcode(0xF7, "RST 30",               1, 16, () => { RST(0x30); })},
+                { 0xFF, new Opcode(0xFF, "RST 38",               1, 16, () => { RST(0x38); })},
 
                 { 0x37, new Opcode(0x37, "SCF",                  1,  4, () => {throw new NotImplementedException(); })},
 
@@ -671,6 +680,23 @@ namespace FrozenBoyCore {
             };
         }
 
+        private void CALL(u16 address) {
+            // push address of next instruction, call opcode size = 2
+            PUSH((ushort)(regs.PC + 2));
+            regs.PC = address;
+            handledPC = true;
+        }
+
+
+        private void CALL_FLAG(bool flag, u16 address) {
+            if (flag) {
+                // push address of next instruction, call opcode size = 2
+                PUSH((ushort)(regs.PC + 2));
+                regs.PC = address;
+                handledPC = true;
+            }
+        }
+
         private void JP(u16 address) {
             regs.PC = address;
             handledPC = true;
@@ -695,6 +721,11 @@ namespace FrozenBoyCore {
                 regs.PC = (u16)(regs.PC + 2 + ToSigned(offset));
                 handledPC = true;
             }
+        }
+
+        private void RST(u8 b) {
+            PUSH(regs.PC);
+            regs.PC = b;
         }
 
         public static int ToSigned(u8 rawValue) {
