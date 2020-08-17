@@ -157,15 +157,25 @@ namespace FrozenBoyCore {
                 { 0xEE, new Opcode(0xEE, "XOR ${0:x2}",          2,  8, () => { XOR(mem.ReadParm8(regs.PC)); })},
 
                 // ==================================================================================================================
-                // CALL
+                // CALL AND RETURN
                 // ==================================================================================================================
                 // Push address of next instruction onto stack and then jump to address nn.
-                { 0xCD, new Opcode(0xCD, "CALL ${0:x4}",         3, 24, () => { CALL(mem.ReadParm16(regs.PC)); })},
+                { 0xCD, new Opcode(0xCD, "CALL ${0:x4}",         3, 24, () => { CALL(true, mem.ReadParm16(regs.PC)); })},
                 // Call address n if following condition is true
-                { 0xC4, new Opcode(0xC4, "CALL NZ, ${0:x4}",     3, 24, () => { CALL_FLAG(!regs.FlagZ, mem.ReadParm16(regs.PC)); })},
-                { 0xCC, new Opcode(0xCC, "CALL Z, ${0:x4}",      3, 24, () => { CALL_FLAG( regs.FlagZ, mem.ReadParm16(regs.PC)); })},
-                { 0xD4, new Opcode(0xD4, "CALL NC, ${0:x4}",     3, 24, () => { CALL_FLAG(!regs.FlagC, mem.ReadParm16(regs.PC)); })},
-                { 0xDC, new Opcode(0xDC, "CALL C, ${0:x4}",      3, 24, () => { CALL_FLAG( regs.FlagC, mem.ReadParm16(regs.PC)); })},
+                { 0xC4, new Opcode(0xC4, "CALL NZ, ${0:x4}",     3, 24, () => { CALL(!regs.FlagZ, mem.ReadParm16(regs.PC)); })},
+                { 0xCC, new Opcode(0xCC, "CALL Z, ${0:x4}",      3, 24, () => { CALL( regs.FlagZ, mem.ReadParm16(regs.PC)); })},
+                { 0xD4, new Opcode(0xD4, "CALL NC, ${0:x4}",     3, 24, () => { CALL(!regs.FlagC, mem.ReadParm16(regs.PC)); })},
+                { 0xDC, new Opcode(0xDC, "CALL C, ${0:x4}",      3, 24, () => { CALL( regs.FlagC, mem.ReadParm16(regs.PC)); })},
+                // Return - Pop two bytes from stack & jump to that address.
+                { 0xC0, new Opcode(0xC0, "RET NZ",               1, 20, () => { RET(!regs.FlagZ); })},
+                { 0xC8, new Opcode(0xC8, "RET Z",                1, 20, () => { RET( regs.FlagZ); })},
+                { 0xD0, new Opcode(0xD0, "RET NC",               1, 20, () => { RET(!regs.FlagC); })},
+                { 0xD8, new Opcode(0xD8, "RET C",                1, 20, () => { RET( regs.FlagC); })},
+                { 0xC9, new Opcode(0xC9, "RET",                  1, 16, () => { RET(true); })},
+                // Pop two bytes from stack & jump to that address then enable interrupts
+                { 0xD9, new Opcode(0xD9, "RETI",                 1, 16, () => { RET(true); regs.IME = true;  })},
+
+
 
                 // Complement carry flag
                 { 0x3F, new Opcode(0x3F, "CCF",                  1,  4, () => { regs.FlagC = !regs.FlagC; regs.FlagN = false; regs.FlagH = false; })},
@@ -195,12 +205,12 @@ namespace FrozenBoyCore {
                 // JUMP FAMILY
                 // ==================================================================================================================
                 // JP - Jump to location
-                { 0xC3, new Opcode(0xC3, "JP ${0:x4}",           3, 16, () => { JP(mem.ReadParm16(regs.PC)); })},
-                { 0xE9, new Opcode(0xE9, "JP (HL)",              1,  4, () => { JP(regs.HL); })},
-                { 0xC2, new Opcode(0xC2, "JP NZ, ${0:x4}",       3, 16, () => { JP_FLAG(!regs.FlagZ, mem.ReadParm16(regs.PC)); })},
-                { 0xCA, new Opcode(0xCA, "JP Z, ${0:x4}",        3, 16, () => { JP_FLAG( regs.FlagZ, mem.ReadParm16(regs.PC)); })},
-                { 0xD2, new Opcode(0xD2, "JP NC, ${0:x4}",       3, 16, () => { JP_FLAG(!regs.FlagC, mem.ReadParm16(regs.PC)); })},
-                { 0xDA, new Opcode(0xDA, "JP C, ${0:x4}",        3, 16, () => { JP_FLAG( regs.FlagC, mem.ReadParm16(regs.PC)); })},
+                { 0xC3, new Opcode(0xC3, "JP ${0:x4}",           3, 16, () => { JP(true, mem.ReadParm16(regs.PC)); })},
+                { 0xE9, new Opcode(0xE9, "JP (HL)",              1,  4, () => { JP(true, regs.HL); })},
+                { 0xC2, new Opcode(0xC2, "JP NZ, ${0:x4}",       3, 16, () => { JP(!regs.FlagZ, mem.ReadParm16(regs.PC)); })},
+                { 0xCA, new Opcode(0xCA, "JP Z, ${0:x4}",        3, 16, () => { JP( regs.FlagZ, mem.ReadParm16(regs.PC)); })},
+                { 0xD2, new Opcode(0xD2, "JP NC, ${0:x4}",       3, 16, () => { JP(!regs.FlagC, mem.ReadParm16(regs.PC)); })},
+                { 0xDA, new Opcode(0xDA, "JP C, ${0:x4}",        3, 16, () => { JP( regs.FlagC, mem.ReadParm16(regs.PC)); })},
                 // Jump to location relative to the current location
                 { 0x18, new Opcode(0x18, "JR ${0:x2}",           2, 12, () => { JR(mem.ReadParm8(regs.PC)); })},
                 { 0x20, new Opcode(0x20, "JR NZ, ${0:x2}",       2, 12, () => { JR_FLAG(!regs.FlagZ, mem.ReadParm8(regs.PC)); })},
@@ -328,13 +338,6 @@ namespace FrozenBoyCore {
                 { 0xE5, new Opcode(0xE5, "PUSH HL",              1, 16, () => { PUSH(regs.HL); })},
                 { 0xF5, new Opcode(0xF5, "PUSH AF",              1, 16, () => { PUSH(regs.AF); })},
 
-                { 0xC0, new Opcode(0xC0, "RET NZ",               1, 20, () => {throw new NotImplementedException(); })},
-                { 0xC8, new Opcode(0xC8, "RET Z",                1, 20, () => {throw new NotImplementedException(); })},
-                { 0xD0, new Opcode(0xD0, "RET NC",               1, 20, () => {throw new NotImplementedException(); })},
-                { 0xD8, new Opcode(0xD8, "RET C",                1, 20, () => {throw new NotImplementedException(); })},
-
-                { 0xC9, new Opcode(0xC9, "RET",                  1, 16, () => {throw new NotImplementedException(); })},
-                { 0xD9, new Opcode(0xD9, "RETI",                 1, 16, () => {throw new NotImplementedException(); })},
 
                 { 0x17, new Opcode(0x17, "RLA",                  1,  4, () => {throw new NotImplementedException(); })},
                 { 0x07, new Opcode(0x07, "RLCA",                 1,  4, () => {throw new NotImplementedException(); })},
@@ -396,7 +399,6 @@ namespace FrozenBoyCore {
 
             };
         }
-
 
         private Dictionary<u8, Opcode> InitializeCB() {
             return new Dictionary<u8, Opcode> {
@@ -680,15 +682,7 @@ namespace FrozenBoyCore {
             };
         }
 
-        private void CALL(u16 address) {
-            // push address of next instruction, call opcode size = 2
-            PUSH((ushort)(regs.PC + 2));
-            regs.PC = address;
-            handledPC = true;
-        }
-
-
-        private void CALL_FLAG(bool flag, u16 address) {
+        private void CALL(bool flag, u16 address) {
             if (flag) {
                 // push address of next instruction, call opcode size = 2
                 PUSH((ushort)(regs.PC + 2));
@@ -697,12 +691,15 @@ namespace FrozenBoyCore {
             }
         }
 
-        private void JP(u16 address) {
-            regs.PC = address;
-            handledPC = true;
+        private void RET(bool flag) {
+            if (flag) {
+                // Pop two bytes from stack & jump to that address.
+                regs.PC = POP();
+                handledPC = true;
+            }
         }
 
-        private void JP_FLAG(bool flag, u16 address) {
+        private void JP(bool flag, u16 address) {
             if (flag) {
                 regs.PC = address;
                 handledPC = true;
