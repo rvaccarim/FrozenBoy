@@ -16,8 +16,7 @@ namespace FrozenBoyCore {
 
         // Opcode related stuff
         public Opcode opcode;
-        public bool handledPC;
-
+        public u16 opLocation;
 
         public CPU(Memory memory) {
             regs = new Registers();
@@ -29,16 +28,14 @@ namespace FrozenBoyCore {
         }
 
         public void Execute() {
-            handledPC = false;
+            opLocation = regs.PC;
             opcode = Disassemble();
+
+            // points to the next one even if we haven't executed it yet
+            regs.PC = (u16)(regs.PC + opcode.length);
 
             if (opcode != null) {
                 opcode.logic.Invoke();
-
-                // move to the next one
-                if (!handledPC) {
-                    regs.PC = (u16)(regs.PC + opcode.length);
-                }
             }
             else {
                 System.Environment.Exit(0);
@@ -56,7 +53,7 @@ namespace FrozenBoyCore {
                     return opcode;
                 }
                 else {
-                    u8 cbOpcodeValue = mem.ReadParm8(regs.PC);
+                    u8 cbOpcodeValue = Parm8();
 
                     if (cbOpcodes.ContainsKey(cbOpcodeValue)) {
                         return cbOpcodes[cbOpcodeValue];
@@ -91,7 +88,7 @@ namespace FrozenBoyCore {
                 { 0x8D, new Opcode(0x8D, "ADC A, L",             1,  4, () => { ADC(regs.L); })},
                 { 0x8E, new Opcode(0x8E, "ADC A, (HL)",          1,  8, () => { ADC(mem.Read8(regs.HL)); })},
                 { 0x8F, new Opcode(0x8F, "ADC A, A",             1,  4, () => { ADC(regs.A); })},
-                { 0xCE, new Opcode(0xCE, "ADC A, ${0:x2}",       2,  8, () => { ADC(mem.ReadParm8(regs.PC)); })},
+                { 0xCE, new Opcode(0xCE, "ADC A, ${0:x2}",       2,  8, () => { ADC(Parm8()); })},
                 // Add 16 bit
                 { 0x09, new Opcode(0x09, "ADD HL, BC",           1,  8, () => { ADD_HL(regs.BC); })},
                 { 0x19, new Opcode(0x19, "ADD HL, DE",           1,  8, () => { ADD_HL(regs.DE); })},
@@ -106,8 +103,8 @@ namespace FrozenBoyCore {
                 { 0x85, new Opcode(0x85, "ADD A, L",             1,  4, () => { ADD(regs.L); })},
                 { 0x86, new Opcode(0x86, "ADD A, (HL)",          1,  8, () => { ADD(mem.Read8(regs.HL)); })},
                 { 0x87, new Opcode(0x87, "ADD A, A",             1,  4, () => { ADD(regs.A); })},
-                { 0xC6, new Opcode(0xC6, "ADD A, ${0:x2}",       2,  8, () => { ADD(mem.ReadParm8(regs.PC)); })},
-                { 0xE8, new Opcode(0xE8, "ADD SP, ${0:x2}",      2, 16, () => { regs.SP = ADD_Signed8(regs.SP, mem.ReadParm8(regs.PC)); })},
+                { 0xC6, new Opcode(0xC6, "ADD A, ${0:x2}",       2,  8, () => { ADD(Parm8()); })},
+                { 0xE8, new Opcode(0xE8, "ADD SP, ${0:x2}",      2, 16, () => { regs.SP = ADD_Signed8(regs.SP, Parm8()); })},
                 // INC - 8 bit                                  
                 { 0x04, new Opcode(0x04, "INC B",                1,  4, () => { regs.B = INC(regs.B); })},
                 { 0x0C, new Opcode(0x0C, "INC C",                1,  4, () => { regs.C = INC(regs.C); })},
@@ -134,7 +131,7 @@ namespace FrozenBoyCore {
                 { 0xA5, new Opcode(0xA5, "AND L",                1,  4, () => { AND(regs.L); })},
                 { 0xA6, new Opcode(0xA6, "AND (HL)",             1,  8, () => { AND(mem.Read8(regs.HL)); })},
                 { 0xA7, new Opcode(0xA7, "AND A",                1,  4, () => { AND(regs.A); })},
-                { 0xE6, new Opcode(0xE6, "AND ${0:x2}",          2,  8, () => { AND(mem.ReadParm8(regs.PC)); })},
+                { 0xE6, new Opcode(0xE6, "AND ${0:x2}",          2,  8, () => { AND(Parm8()); })},
                 // OR
                 { 0xB0, new Opcode(0xB0, "OR B",                 1,  4, () => { OR(regs.B); })},
                 { 0xB1, new Opcode(0xB1, "OR C",                 1,  4, () => { OR(regs.C); })},
@@ -144,7 +141,7 @@ namespace FrozenBoyCore {
                 { 0xB5, new Opcode(0xB5, "OR L",                 1,  4, () => { OR(regs.L); })},
                 { 0xB6, new Opcode(0xB6, "OR (HL)",              1,  8, () => { OR(mem.Read8(regs.HL)); })},
                 { 0xB7, new Opcode(0xB7, "OR A",                 1,  4, () => { OR(regs.A); })},
-                { 0xF6, new Opcode(0xF6, "OR ${0:x2}",           2,  8, () => { OR(mem.ReadParm8(regs.PC)); })},
+                { 0xF6, new Opcode(0xF6, "OR ${0:x2}",           2,  8, () => { OR(Parm8()); })},
                 // XOR
                 { 0xA8, new Opcode(0xA8, "XOR B",                1,  4, () => { XOR(regs.B); })},
                 { 0xA9, new Opcode(0xA9, "XOR C",                1,  4, () => { XOR(regs.C); })},
@@ -154,18 +151,17 @@ namespace FrozenBoyCore {
                 { 0xAD, new Opcode(0xAD, "XOR L",                1,  4, () => { XOR(regs.L); })},
                 { 0xAE, new Opcode(0xAE, "XOR (HL)",             1,  8, () => { XOR(mem.Read8(regs.HL)); ; })},
                 { 0xAF, new Opcode(0xAF, "XOR A",                1,  4, () => { XOR(regs.A); })},
-                { 0xEE, new Opcode(0xEE, "XOR ${0:x2}",          2,  8, () => { XOR(mem.ReadParm8(regs.PC)); })},
+                { 0xEE, new Opcode(0xEE, "XOR ${0:x2}",          2,  8, () => { XOR(Parm8()); })},
 
                 // ==================================================================================================================
                 // CALL AND RETURN
                 // ==================================================================================================================
                 // Push address of next instruction onto stack and then jump to address nn.
-                { 0xCD, new Opcode(0xCD, "CALL ${0:x4}",         3, 24, () => { CALL(true, mem.ReadParm16(regs.PC)); })},
-                // Call address n if following condition is true
-                { 0xC4, new Opcode(0xC4, "CALL NZ, ${0:x4}",     3, 24, () => { CALL(!regs.FlagZ, mem.ReadParm16(regs.PC)); })},
-                { 0xCC, new Opcode(0xCC, "CALL Z, ${0:x4}",      3, 24, () => { CALL( regs.FlagZ, mem.ReadParm16(regs.PC)); })},
-                { 0xD4, new Opcode(0xD4, "CALL NC, ${0:x4}",     3, 24, () => { CALL(!regs.FlagC, mem.ReadParm16(regs.PC)); })},
-                { 0xDC, new Opcode(0xDC, "CALL C, ${0:x4}",      3, 24, () => { CALL( regs.FlagC, mem.ReadParm16(regs.PC)); })},
+                { 0xCD, new Opcode(0xCD, "CALL ${0:x4}",         3, 24, () => { CALL(true, Parm16()); })},
+                { 0xC4, new Opcode(0xC4, "CALL NZ, ${0:x4}",     3, 24, () => { CALL(!regs.FlagZ, Parm16()); })},
+                { 0xCC, new Opcode(0xCC, "CALL Z, ${0:x4}",      3, 24, () => { CALL( regs.FlagZ, Parm16()); })},
+                { 0xD4, new Opcode(0xD4, "CALL NC, ${0:x4}",     3, 24, () => { CALL(!regs.FlagC, Parm16()); })},
+                { 0xDC, new Opcode(0xDC, "CALL C, ${0:x4}",      3, 24, () => { CALL( regs.FlagC, Parm16()); })},
                 // Return - Pop two bytes from stack & jump to that address.
                 { 0xC0, new Opcode(0xC0, "RET NZ",               1, 20, () => { RET(!regs.FlagZ); })},
                 { 0xC8, new Opcode(0xC8, "RET Z",                1, 20, () => { RET( regs.FlagZ); })},
@@ -192,7 +188,7 @@ namespace FrozenBoyCore {
                 { 0xBD, new Opcode(0xBD, "CP L",                 1,  4, () => { CP(regs.L); })},
                 { 0xBE, new Opcode(0xBE, "CP (HL)",              1,  8, () => { CP(mem.Read8(regs.HL)); })},
                 { 0xBF, new Opcode(0xBF, "CP A",                 1,  4, () => { CP(regs.A); })},
-                { 0xFE, new Opcode(0xFE, "CP ${0:x2}",           2,  8, () => { CP(mem.ReadParm8(regs.PC)); })},
+                { 0xFE, new Opcode(0xFE, "CP ${0:x2}",           2,  8, () => { CP(Parm8()); })},
 
 
                 { 0x2F, new Opcode(0x2F, "CPL",                  1,  4, () => {throw new NotImplementedException(); })},
@@ -205,36 +201,36 @@ namespace FrozenBoyCore {
                 // JUMP FAMILY
                 // ==================================================================================================================
                 // JP - Jump to location
-                { 0xC3, new Opcode(0xC3, "JP ${0:x4}",           3, 16, () => { JP(true, mem.ReadParm16(regs.PC)); })},
+                { 0xC3, new Opcode(0xC3, "JP ${0:x4}",           3, 16, () => { JP(true, Parm16()); })},
                 { 0xE9, new Opcode(0xE9, "JP (HL)",              1,  4, () => { JP(true, regs.HL); })},
-                { 0xC2, new Opcode(0xC2, "JP NZ, ${0:x4}",       3, 16, () => { JP(!regs.FlagZ, mem.ReadParm16(regs.PC)); })},
-                { 0xCA, new Opcode(0xCA, "JP Z, ${0:x4}",        3, 16, () => { JP( regs.FlagZ, mem.ReadParm16(regs.PC)); })},
-                { 0xD2, new Opcode(0xD2, "JP NC, ${0:x4}",       3, 16, () => { JP(!regs.FlagC, mem.ReadParm16(regs.PC)); })},
-                { 0xDA, new Opcode(0xDA, "JP C, ${0:x4}",        3, 16, () => { JP( regs.FlagC, mem.ReadParm16(regs.PC)); })},
+                { 0xC2, new Opcode(0xC2, "JP NZ, ${0:x4}",       3, 16, () => { JP(!regs.FlagZ, Parm16()); })},
+                { 0xCA, new Opcode(0xCA, "JP Z, ${0:x4}",        3, 16, () => { JP( regs.FlagZ, Parm16()); })},
+                { 0xD2, new Opcode(0xD2, "JP NC, ${0:x4}",       3, 16, () => { JP(!regs.FlagC, Parm16()); })},
+                { 0xDA, new Opcode(0xDA, "JP C, ${0:x4}",        3, 16, () => { JP( regs.FlagC, Parm16()); })},
                 // Jump to location relative to the current location
-                { 0x18, new Opcode(0x18, "JR ${0:x2}",           2, 12, () => { JR(mem.ReadParm8(regs.PC)); })},
-                { 0x20, new Opcode(0x20, "JR NZ, ${0:x2}",       2, 12, () => { JR_FLAG(!regs.FlagZ, mem.ReadParm8(regs.PC)); })},
-                { 0x28, new Opcode(0x28, "JR Z, ${0:x2}",        2, 12, () => { JR_FLAG( regs.FlagZ, mem.ReadParm8(regs.PC)); })},
-                { 0x30, new Opcode(0x30, "JR NC, ${0:x2}",       2, 12, () => { JR_FLAG(!regs.FlagC, mem.ReadParm8(regs.PC)); })},
-                { 0x38, new Opcode(0x38, "JR C, ${0:x2}",        2, 12, () => { JR_FLAG( regs.FlagC, mem.ReadParm8(regs.PC)); })},
+                { 0x18, new Opcode(0x18, "JR ${0:x2}",           2, 12, () => { JR(true, Parm8()); })},
+                { 0x20, new Opcode(0x20, "JR NZ, ${0:x2}",       2, 12, () => { JR(!regs.FlagZ, Parm8()); })},
+                { 0x28, new Opcode(0x28, "JR Z, ${0:x2}",        2, 12, () => { JR( regs.FlagZ, Parm8()); })},
+                { 0x30, new Opcode(0x30, "JR NC, ${0:x2}",       2, 12, () => { JR(!regs.FlagC, Parm8()); })},
+                { 0x38, new Opcode(0x38, "JR C, ${0:x2}",        2, 12, () => { JR( regs.FlagC, Parm8()); })},
 
                 // ==================================================================================================================
                 // LOAD FANILY
                 // ==================================================================================================================
                 // load direct value into register - 8 bit
-                { 0x06, new Opcode(0x06, "LD B, ${0:x2}",        2,  8, () => { regs.B = mem.ReadParm8(regs.PC); })},
-                { 0x0E, new Opcode(0x0E, "LD C, ${0:x2}",        2,  8, () => { regs.C = mem.ReadParm8(regs.PC); })},
-                { 0x16, new Opcode(0x16, "LD D, ${0:x2}",        2,  8, () => { regs.D = mem.ReadParm8(regs.PC); })},
-                { 0x1E, new Opcode(0x1E, "LD E, ${0:x2}",        2,  8, () => { regs.E = mem.ReadParm8(regs.PC); })},
-                { 0x26, new Opcode(0x26, "LD H, ${0:x2}",        2,  8, () => { regs.H = mem.ReadParm8(regs.PC); })},
-                { 0x2E, new Opcode(0x2E, "LD L, ${0:x2}",        2,  8, () => { regs.L = mem.ReadParm8(regs.PC); })},
-                { 0x36, new Opcode(0x36, "LD (HL), ${0:x2}",     2, 12, () => { mem.Write8(regs.HL, mem.ReadParm8(regs.PC)); })},
-                { 0x3E, new Opcode(0x3E, "LD A, ${0:x2}",        2,  8, () => { regs.A = mem.ReadParm8(regs.PC); })},         
+                { 0x06, new Opcode(0x06, "LD B, ${0:x2}",        2,  8, () => { regs.B = Parm8(); })},
+                { 0x0E, new Opcode(0x0E, "LD C, ${0:x2}",        2,  8, () => { regs.C = Parm8(); })},
+                { 0x16, new Opcode(0x16, "LD D, ${0:x2}",        2,  8, () => { regs.D = Parm8(); })},
+                { 0x1E, new Opcode(0x1E, "LD E, ${0:x2}",        2,  8, () => { regs.E = Parm8(); })},
+                { 0x26, new Opcode(0x26, "LD H, ${0:x2}",        2,  8, () => { regs.H = Parm8(); })},
+                { 0x2E, new Opcode(0x2E, "LD L, ${0:x2}",        2,  8, () => { regs.L = Parm8(); })},
+                { 0x36, new Opcode(0x36, "LD (HL), ${0:x2}",     2, 12, () => { mem.Write8(regs.HL, Parm8()); })},
+                { 0x3E, new Opcode(0x3E, "LD A, ${0:x2}",        2,  8, () => { regs.A = Parm8(); })},         
                 // load direct value into register - 16 bit
-                { 0x01, new Opcode(0x01, "LD BC, ${0:x4}",       3, 12, () => { regs.BC = mem.ReadParm16(regs.PC); })},
-                { 0x11, new Opcode(0x11, "LD DE, ${0:x4}",       3, 12, () => { regs.DE = mem.ReadParm16(regs.PC); })},
-                { 0x21, new Opcode(0x21, "LD HL, ${0:x4}",       3, 12, () => { regs.HL = mem.ReadParm16(regs.PC); })},
-                { 0x31, new Opcode(0x31, "LD SP, ${0:x4}",       3, 12, () => { regs.SP = mem.ReadParm16(regs.PC); })},
+                { 0x01, new Opcode(0x01, "LD BC, ${0:x4}",       3, 12, () => { regs.BC = Parm16(); })},
+                { 0x11, new Opcode(0x11, "LD DE, ${0:x4}",       3, 12, () => { regs.DE = Parm16(); })},
+                { 0x21, new Opcode(0x21, "LD HL, ${0:x4}",       3, 12, () => { regs.HL = Parm16(); })},
+                { 0x31, new Opcode(0x31, "LD SP, ${0:x4}",       3, 12, () => { regs.SP = Parm16(); })},
                 // load register to register
                 { 0x41, new Opcode(0x41, "LD B, C",              1,  4, () => { regs.B = regs.C; })},
                 { 0x40, new Opcode(0x40, "LD B, B",              1,  4, () => { })},
@@ -383,9 +379,9 @@ namespace FrozenBoyCore {
                 { 0x9B, new Opcode(0x9B, "SBC A, E",             1,  4, () => { SBC(regs.E); })},
                 { 0x9C, new Opcode(0x9C, "SBC A, H",             1,  4, () => { SBC(regs.H); })},
                 { 0x9D, new Opcode(0x9D, "SBC A, L",             1,  4, () => { SBC(regs.L); })},
-                { 0x9E, new Opcode(0x9E, "SBC A, (HL)",          1,  8, () => { SBC(mem.ReadParm8(regs.HL)); })},
+                { 0x9E, new Opcode(0x9E, "SBC A, (HL)",          1,  8, () => { SBC(mem.Read8(regs.HL)); })},
                 { 0x9F, new Opcode(0x9F, "SBC A, A",             1,  4, () => { SBC(regs.A); })},
-                { 0xDE, new Opcode(0xDE, "SBC A, ${0:x2}",       2,  8, () => { SBC(mem.Read8(regs.PC)); })},
+                { 0xDE, new Opcode(0xDE, "SBC A, ${0:x2}",       2,  8, () => { SBC(Parm8()); })},
                 // Subtract value from A
                 { 0x90, new Opcode(0x90, "SUB A, B",             1,  4, () => { SUB(regs.B); })},
                 { 0x91, new Opcode(0x91, "SUB A, C",             1,  4, () => { SUB(regs.C); })},
@@ -393,9 +389,9 @@ namespace FrozenBoyCore {
                 { 0x93, new Opcode(0x93, "SUB A, E",             1,  4, () => { SUB(regs.E); })},
                 { 0x94, new Opcode(0x94, "SUB A, H",             1,  4, () => { SUB(regs.H); })},
                 { 0x95, new Opcode(0x95, "SUB A, L",             1,  4, () => { SUB(regs.L); })},
-                { 0x96, new Opcode(0x96, "SUB A, (HL)",          1,  8, () => { SUB(mem.ReadParm8(regs.HL)); })},
+                { 0x96, new Opcode(0x96, "SUB A, (HL)",          1,  8, () => { SUB(mem.Read8(regs.HL)); })},
                 { 0x97, new Opcode(0x97, "SUB A, A",             1,  4, () => { SUB(regs.A); })},
-                { 0xD6, new Opcode(0xD6, "SUB ${0:x2}",          2,  8, () => { SUB(mem.Read8(regs.PC)); })},
+                { 0xD6, new Opcode(0xD6, "SUB ${0:x2}",          2,  8, () => { SUB(Parm8()); })},
 
             };
         }
@@ -687,7 +683,6 @@ namespace FrozenBoyCore {
                 // push address of next instruction, call opcode size = 2
                 PUSH((ushort)(regs.PC + 2));
                 regs.PC = address;
-                handledPC = true;
             }
         }
 
@@ -695,28 +690,19 @@ namespace FrozenBoyCore {
             if (flag) {
                 // Pop two bytes from stack & jump to that address.
                 regs.PC = POP();
-                handledPC = true;
             }
         }
 
         private void JP(bool flag, u16 address) {
             if (flag) {
                 regs.PC = address;
-                handledPC = true;
             }
         }
 
-        private void JR(u8 offset) {
-            // +2 because it's the size of the opcode
-            regs.PC = (u16)(regs.PC + 2 + ToSigned(offset));
-            handledPC = true;
-        }
-
-        private void JR_FLAG(bool flag, u8 offset) {
+        private void JR(bool flag, u8 offset) {
             if (flag) {
                 // +2 because it's the size of opcode
-                regs.PC = (u16)(regs.PC + 2 + ToSigned(offset));
-                handledPC = true;
+                regs.PC = (u16)(opLocation + 2 + ToSigned(offset));
             }
         }
 
@@ -941,15 +927,23 @@ namespace FrozenBoyCore {
             return result;
         }
 
+        private void PUSH(u16 value) {
+            regs.SP -= 2;
+            mem.Write16(regs.SP, value);
+        }
+
         private u16 POP() {
             u16 value = mem.Read16(regs.SP);
             regs.SP += 2;
             return value;
         }
 
-        private void PUSH(u16 value) {
-            regs.SP -= 2;
-            mem.Write16(regs.SP, value);
+        public u8 Parm8() {
+            return (u8)mem.Read8((u16)(opLocation + 1));
+        }
+
+        public u16 Parm16() {
+            return (u16)mem.Read16((u16)(opLocation + 1));
         }
     }
 }

@@ -13,19 +13,9 @@ namespace FrozenBoyCore {
             return data[address];
         }
 
-        public u8 ReadParm8(u16 address) {
-            return data[address + 1];
-        }
-
         public u16 Read16(u16 address) {
             u8 a = data[address];
             u8 b = data[address + 1];
-            return (u16)(b << 8 | a);
-        }
-
-        public u16 ReadParm16(u16 address) {
-            u8 a = data[address + 1];
-            u8 b = data[address + 2];
             return (u16)(b << 8 | a);
         }
 

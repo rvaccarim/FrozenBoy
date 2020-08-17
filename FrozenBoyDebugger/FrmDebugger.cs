@@ -16,7 +16,7 @@ namespace FrozenBoyDebugger {
         private const string opcodeFormat = "{0,-15} ;${1,-6:x4} O=0x{2:x2}";
         private const string stateFormat = "{0}   {1}";
 
-        private int PC;
+        private int i;
 
         public u8 prevA;
         public u8 prevB;
@@ -55,44 +55,44 @@ namespace FrozenBoyDebugger {
         private void Disassemble() {
 
             Memory memory = new Memory();
-            // memory.data = File.ReadAllBytes(romPath + @"boot\boot_rom.gb");
+            memory.data = File.ReadAllBytes(romPath + @"boot\boot_rom.gb");
             // memory.data = File.ReadAllBytes(romPath + @"blargg\cpu_instrs\cpu_instrs.gb");
-            memory.data = File.ReadAllBytes(romPath + @"blargg\cpu_instrs\individual\11-op a,(hl).gb");
+            // memory.data = File.ReadAllBytes(romPath + @"blargg\cpu_instrs\individual\11-op a,(hl).gb");
 
             using (StreamWriter outputFile = new StreamWriter(@"D:\Users\frozen\Documents\99_temp\GB_Debugger\11-op a,(hl).gb.txt")) {
 
                 int line = 0;
 
-                while (PC < memory.data.Length) {
-                    byte b = memory.data[PC];
+                while (i < memory.data.Length) {
+                    byte b = memory.data[i];
 
                     if (gb.cpu.opcodes.ContainsKey(b)) {
-                        addressLineMap.Add(PC, line);
+                        addressLineMap.Add(i, line);
 
                         Opcode opcode = gb.cpu.opcodes[b];
-                        string lineStr = OpcodeToStr(opcodeFormat, opcode, PC, memory);
+                        string lineStr = OpcodeToStr(opcodeFormat, opcode, i, memory);
 
                         AddInstruction(lineStr);
                         outputFile.WriteLine(lineStr);
 
                         if (opcode.value == 0xCB) {
-                            PC += 2;
+                            i += 2;
                         }
                         else {
-                            PC += opcode.length;
+                            i += opcode.length;
                         }
 
                         line++;
                     }
                     else {
-                        string lineStr = String.Format(opcodeFormat, String.Format("0x{0:x2}---->TODO", b), PC, b);
+                        string lineStr = String.Format(opcodeFormat, String.Format("0x{0:x2}---->TODO", b), i, b);
                         AddInstruction(lineStr);
                         outputFile.WriteLine(lineStr);
 
-                        addressLineMap.Add(PC, line);
+                        addressLineMap.Add(i, line);
                         line++;
 
-                        PC++;
+                        i++;
                     }
                 }
             }
@@ -100,7 +100,6 @@ namespace FrozenBoyDebugger {
 
         private void BtnNext_Click(object sender, EventArgs e) {
             Next();
-
         }
 
         private void Next() {
@@ -226,18 +225,18 @@ namespace FrozenBoyDebugger {
             return o.length switch
             {
                 2 => String.Format(format,
-                                   String.Format(o.asmInstruction, m.ReadParm8((u16)(address))),
+                                   String.Format(o.asmInstruction, m.Read8((u16)(address + 1))),
                                    address,
                                    o.value),
 
                 3 => String.Format(format,
-                                   String.Format(o.asmInstruction, m.ReadParm16((u16)(address))),
+                                   String.Format(o.asmInstruction, m.Read16((u16)(address + 1))),
                                    address,
                                    o.value),
 
                 _ => String.Format(format,
                                    String.Format(o.value != 0xCB ? o.asmInstruction
-                                                                 : gb.cpu.cbOpcodes[m.ReadParm8((u16)(address))].asmInstruction),
+                                                                 : gb.cpu.cbOpcodes[m.Read8((u16)(address + 1))].asmInstruction),
                                    address,
                                    o.value),
             };

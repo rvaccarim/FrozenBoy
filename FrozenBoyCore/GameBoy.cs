@@ -12,7 +12,8 @@ namespace FrozenBoyCore {
 
         public GameBoy() {
             memory = new Memory();
-            byte[] romData = File.ReadAllBytes(romPath + @"blargg\cpu_instrs\individual\11-op a,(hl).gb");
+            byte[] romData = File.ReadAllBytes(romPath + @"boot\boot_rom.gb");
+            // byte[] romData = File.ReadAllBytes(romPath + @"blargg\cpu_instrs\individual\11-op a,(hl).gb");
 
             int i = 0;
             foreach (byte b in romData) {
