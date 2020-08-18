@@ -5,7 +5,9 @@ using u8 = System.Byte;
 using u16 = System.UInt16;
 
 namespace FrozenBoyCore {
-    public class Memory {
+
+    // MMU = Memory Management Unit
+    public class MMU {
         // 0xFFFF = 65536
         public u8[] data = new u8[0xFFFF];
 

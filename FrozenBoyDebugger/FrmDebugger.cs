@@ -71,22 +71,21 @@ namespace FrozenBoyDebugger {
         private void Disassemble(String romName) {
             System.Windows.Forms.Cursor.Current = System.Windows.Forms.Cursors.WaitCursor;
 
-            Memory memory = new Memory();
-            memory.data = File.ReadAllBytes(romPath + romName);
+            MMU mmu = new MMU();
+            mmu.data = File.ReadAllBytes(romPath + romName);
 
-
-            using (StreamWriter outputFile = new StreamWriter(@"D:\Users\frozen\Documents\99_temp\GB_Debugger\11-op a,(hl).gb.txt")) {
+            using (StreamWriter outputFile = new StreamWriter(@"D:\Users\frozen\Documents\99_temp\GB_Debugger\" + romName + ".gb.txt")) {
 
                 int line = 0;
 
-                while (i < memory.data.Length) {
-                    byte b = memory.data[i];
+                while (i < mmu.data.Length) {
+                    byte b = mmu.data[i];
 
                     if (gb.cpu.opcodes.ContainsKey(b)) {
                         addressLineMap.Add(i, line);
 
                         Opcode opcode = gb.cpu.opcodes[b];
-                        string lineStr = OpcodeToStr(opcodeFormat, opcode, i, memory);
+                        string lineStr = OpcodeToStr(opcodeFormat, opcode, i, mmu);
 
                         AddInstruction(lineStr);
                         outputFile.WriteLine(lineStr);
@@ -265,7 +264,7 @@ namespace FrozenBoyDebugger {
             }
         }
 
-        private string OpcodeToStr(string format, Opcode o, int address, Memory m) {
+        private string OpcodeToStr(string format, Opcode o, int address, MMU m) {
             return o.length switch
             {
                 2 => String.Format(format,
@@ -287,7 +286,7 @@ namespace FrozenBoyDebugger {
         }
 
         private string DumpState() {
-            return String.Format(stateFormat, OpcodeToStr(opcodeFormat, gb.cpu.opcode, gb.cpu.regs.PC, gb.cpu.mem), gb.cpu.regs.ToString());
+            return String.Format(stateFormat, OpcodeToStr(opcodeFormat, gb.cpu.opcode, gb.cpu.regs.PC, gb.cpu.mmu), gb.cpu.regs.ToString());
         }
 
         //private void History_TextChanged(object sender, EventArgs e) {
