@@ -23,8 +23,6 @@ namespace FrozenBoyCore {
         public bool IME_Scheduled = true;
         public bool halted = false;
 
-        private int cycles = 0;
-
 
         public CPU(MMU mmu) {
             this.mmu = mmu;
@@ -44,7 +42,7 @@ namespace FrozenBoyCore {
         }
 
         public int ExecuteNext() {
-            cycles = 0;
+            int cycles = 0;
 
             opLocation = regs.PC;
             opcode = Disassemble();
@@ -58,35 +56,6 @@ namespace FrozenBoyCore {
 
                 HandleInterrupts();
 
-                // Check for interrupts
-                //if (IME) {
-                //    // IE and IF are positions in memory
-                //    // IE = granular interrupt enabler. When bits are set, the corresponding interrupt can be triggered
-                //    // IF = When bits are set, an interrupt has happened
-                //    // They use the same bit positions
-                //    // 
-                //    // Bit When 0  When 1
-                //    // 0   Vblank off  Vblank on
-                //    // 1   LCD stat off LCD stat on
-                //    // 2   Timer off   Timer on
-                //    // 3   Serial off  Serial on
-                //    // 4   Joypad off  Joypad on
-                //    if ((mmu.IE & mmu.IF) != 0) {
-                //        for (int bitPos = 0; bitPos < 5; bitPos++) {
-                //            if ((((mmu.IE & mmu.IF) >> bitPos) & 0b_0000_0001) == 1) {
-                //                // preserve it so RETI knows where to return control
-                //                PUSH(regs.PC);
-                //                // jump to the ISR handler address
-                //                regs.PC = mmu.ISR_Address[bitPos];
-
-                //                // disable interruptions and clear the bit of the one we've just processed
-                //                IME = false;
-                //                mmu.IF = RES(mmu.IF, 0); // RSR = reset
-                //                break;
-                //            }
-                //        }
-                //    }
-                //}
             }
             else {
                 System.Environment.Exit(0);
@@ -96,9 +65,7 @@ namespace FrozenBoyCore {
             prevOpcode = opcode;
 
             return cycles;
-
         }
-
 
         private void HandleInterrupts() {
             // IE and IF are positions in memory
@@ -107,11 +74,11 @@ namespace FrozenBoyCore {
             // They use the same bit positions
             // 
             // Bit When 0  When 1
-            // 0   Vblank off  Vblank on
-            // 1   LCD stat off LCD stat on
-            // 2   Timer off   Timer on
-            // 3   Serial off  Serial on
-            // 4   Joypad off  Joypad on
+            // 0   Vblank 
+            // 1   LCD stat
+            // 2   Timer 
+            // 3   Serial Link 
+            // 4   Joypad 
 
             for (int bitPos = 0; bitPos < 5; bitPos++) {
                 if ((((mmu.IE & mmu.IF) >> bitPos) & 0x1) == 1) {
@@ -160,7 +127,7 @@ namespace FrozenBoyCore {
             return null;
         }
 
-        private void Stop() {
+        private void STOP() {
             throw new NotImplementedException();
         }
 
@@ -488,7 +455,7 @@ namespace FrozenBoyCore {
                 // ==================================================================================================================
                 { 0x00, new Opcode(0x00, "NOP",                  1,  4, () => { })},
                 // 
-                { 0x10, new Opcode(0x10, "STOP",                 1,  4, () => { Stop(); })},
+                { 0x10, new Opcode(0x10, "STOP",                 1,  4, () => { STOP(); })},
                 //
                 { 0xCB, new Opcode(0xCB, "CB PREFIX",            1,  4, () => { })},
                 // CPL - Complement A register. (Flip all bits.)
