@@ -3,9 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
 using System.IO;
+using System.Drawing;
 using u8 = System.Byte;
 using u16 = System.UInt16;
-using System.Drawing;
 
 namespace FrozenBoyDebugger {
     public partial class FrmDebugger : Form {
@@ -48,7 +48,7 @@ namespace FrozenBoyDebugger {
         }
 
         private void FrmDebugger_Load(object sender, EventArgs e) {
-            string romName = @"02-interrupts.gb";
+            string romName = @"01-special.gb";
 
             string romFilename = romPath + romName;
             string disasmFilename = debugPath + romName + ".disasm.txt";

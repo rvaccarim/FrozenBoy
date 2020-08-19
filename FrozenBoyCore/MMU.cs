@@ -11,7 +11,7 @@ namespace FrozenBoyCore {
     public class MMU {
         // 0xFFFF = 65535
         public u8[] data = new u8[0xFFFF + 1];
-        string linkPortText = "";
+        public string linkPortText = "";
 
         //public u8[] boot;                     //     0 ->   255, 0x0000 -> 0x00FF, after boot it's used for Restart and Interrupt Vectors
         //public u8[] cartridge_header;         //   256 ->   335, 0x0100 -> 0x014F
