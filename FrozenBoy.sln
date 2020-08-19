@@ -11,8 +11,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FrozenBoyConsole", "FrozenB
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FrozenBoyTest", "FrozenBoyTest\FrozenBoyTest.csproj", "{DB99A704-9B6E-4A2B-8D14-3A893564890E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FrozenBoyDebugger", "FrozenBoyDebugger\FrozenBoyDebugger.csproj", "{CFE33399-F495-4684-99EB-34F6ABC979FB}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,10 +33,6 @@ Global
 		{DB99A704-9B6E-4A2B-8D14-3A893564890E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DB99A704-9B6E-4A2B-8D14-3A893564890E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DB99A704-9B6E-4A2B-8D14-3A893564890E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CFE33399-F495-4684-99EB-34F6ABC979FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CFE33399-F495-4684-99EB-34F6ABC979FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CFE33399-F495-4684-99EB-34F6ABC979FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CFE33399-F495-4684-99EB-34F6ABC979FB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

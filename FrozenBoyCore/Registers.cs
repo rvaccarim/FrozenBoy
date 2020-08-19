@@ -15,7 +15,6 @@ namespace FrozenBoyCore {
 
         public u16 PC;
         public u16 SP;
-        public bool IME; // interrupt master enable
 
         // 8 bit Real registers
         public u8 A;

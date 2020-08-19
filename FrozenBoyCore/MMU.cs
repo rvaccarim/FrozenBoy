@@ -13,6 +13,22 @@ namespace FrozenBoyCore {
         public u8[] data = new u8[0xFFFF + 1];
         public string linkPortText = "";
 
+        // FFFF - IE - Interrupt Enable
+        // When bits are set, the corresponding interrupt can be triggered
+        public u8 IE { get { return data[0xFFFF]; } set { data[0xFFFF] = value; } }
+
+        // When bits are set, an interrupt has happened
+        // FF0F - IF - Interrupt Flag (R/W)
+        public u8 IF { get { return data[0xFF0F]; } set { data[0xFF0F] = value; } }
+
+        // ISR addresses
+        public List<u16> ISR_Address = new List<u16> {
+                { 0x0040 },    // Vblank
+                { 0x0048 },    // LCD Status
+                { 0x0050 },    // TimerOverflow
+                { 0x0058 },    // SerialLink
+                { 0x0060 } };  // JoypadPress,
+
         //public u8[] boot;                     //     0 ->   255, 0x0000 -> 0x00FF, after boot it's used for Restart and Interrupt Vectors
         //public u8[] cartridge_header;         //   256 ->   335, 0x0100 -> 0x014F
         //public u8[] cartridge_bank0;          //   336 -> 16383, 0x0150 -> 0x3FFF 

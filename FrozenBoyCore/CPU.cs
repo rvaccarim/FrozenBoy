@@ -19,7 +19,12 @@ namespace FrozenBoyCore {
         public Opcode prevOpcode;
         public u16 opLocation;
 
-        public bool halted;
+        public bool IME;  // Interrupt Master Enable Register, it's a master switch for all interruptions
+        public bool IME_Scheduled = true;
+        public bool halted = false;
+
+        private int cycles = 0;
+
 
         public CPU(MMU mmu) {
             this.mmu = mmu;
@@ -32,25 +37,99 @@ namespace FrozenBoyCore {
                 PC = 0x100,
                 SP = 0xFFFE
             };
+            IME = false;
 
             opcodes = InitializeOpcodes();
             cbOpcodes = InitializeCB();
         }
 
-        public void Execute() {
+        public int ExecuteNext() {
+            cycles = 0;
+
             opLocation = regs.PC;
             opcode = Disassemble();
 
             if (opcode != null) {
                 // points to the next one even if we haven't executed it yet
                 regs.PC = (u16)(regs.PC + opcode.length);
+
+                // execute opcode
                 opcode.logic.Invoke();
+
+                HandleInterrupts();
+
+                // Check for interrupts
+                //if (IME) {
+                //    // IE and IF are positions in memory
+                //    // IE = granular interrupt enabler. When bits are set, the corresponding interrupt can be triggered
+                //    // IF = When bits are set, an interrupt has happened
+                //    // They use the same bit positions
+                //    // 
+                //    // Bit When 0  When 1
+                //    // 0   Vblank off  Vblank on
+                //    // 1   LCD stat off LCD stat on
+                //    // 2   Timer off   Timer on
+                //    // 3   Serial off  Serial on
+                //    // 4   Joypad off  Joypad on
+                //    if ((mmu.IE & mmu.IF) != 0) {
+                //        for (int bitPos = 0; bitPos < 5; bitPos++) {
+                //            if ((((mmu.IE & mmu.IF) >> bitPos) & 0b_0000_0001) == 1) {
+                //                // preserve it so RETI knows where to return control
+                //                PUSH(regs.PC);
+                //                // jump to the ISR handler address
+                //                regs.PC = mmu.ISR_Address[bitPos];
+
+                //                // disable interruptions and clear the bit of the one we've just processed
+                //                IME = false;
+                //                mmu.IF = RES(mmu.IF, 0); // RSR = reset
+                //                break;
+                //            }
+                //        }
+                //    }
+                //}
             }
             else {
                 System.Environment.Exit(0);
             }
 
+            cycles += opcode.mcycles;
             prevOpcode = opcode;
+
+            return cycles;
+
+        }
+
+
+        private void HandleInterrupts() {
+            // IE and IF are positions in memory
+            // IE = granular interrupt enabler. When bits are set, the corresponding interrupt can be triggered
+            // IF = When bits are set, an interrupt has happened
+            // They use the same bit positions
+            // 
+            // Bit When 0  When 1
+            // 0   Vblank off  Vblank on
+            // 1   LCD stat off LCD stat on
+            // 2   Timer off   Timer on
+            // 3   Serial off  Serial on
+            // 4   Joypad off  Joypad on
+
+            for (int bitPos = 0; bitPos < 5; bitPos++) {
+                if ((((mmu.IE & mmu.IF) >> bitPos) & 0x1) == 1) {
+                    if (halted) {
+                        regs.PC++;
+                        halted = false;
+                    }
+                    if (IME) {
+                        PUSH(regs.PC);
+                        regs.PC = mmu.ISR_Address[bitPos];
+                        IME = false;
+                        mmu.IF = RES(mmu.IF, bitPos);
+                    }
+                }
+            }
+
+            IME |= IME_Scheduled;
+            IME_Scheduled = false;
         }
 
 
@@ -81,11 +160,18 @@ namespace FrozenBoyCore {
             return null;
         }
 
-
         private void Stop() {
             throw new NotImplementedException();
         }
 
+        private void HALT() {
+            if (!IME) {
+                if ((mmu.IE & mmu.IF & 0x1F) == 0) {
+                    halted = true;
+                    regs.PC--;
+                }
+            }
+        }
 
         private Dictionary<u8, Opcode> InitializeOpcodes() {
             return new Dictionary<u8, Opcode> {
@@ -182,7 +268,7 @@ namespace FrozenBoyCore {
                 { 0xD8, new Opcode(0xD8, "RET C",                1, 20, () => { RET( regs.FlagC); })},
                 { 0xC9, new Opcode(0xC9, "RET",                  1, 16, () => { RET(true); })},
                 // Pop two bytes from stack & jump to that address then enable interrupts
-                { 0xD9, new Opcode(0xD9, "RETI",                 1, 16, () => { RET(true); regs.IME = true; })},
+                { 0xD9, new Opcode(0xD9, "RETI",                 1, 16, () => { RET(true); IME = true; })},
 
                 // ==================================================================================================================
                 // COMPARE
@@ -201,8 +287,10 @@ namespace FrozenBoyCore {
                 // ==================================================================================================================
                 // INTERRUPTS
                 // ==================================================================================================================
-                { 0xF3, new Opcode(0xF3, "DI",                   1,  4, () => { regs.IME = false; })},
-                { 0xFB, new Opcode(0xFB, "EI",                   1,  4, () => { regs.IME = true; })},
+                // Disables interrupt handling by setting IME=0 
+                { 0xF3, new Opcode(0xF3, "DI",                   1,  4, () => { IME = false; })},
+                // Schedules interrupt handling to be enabled
+                { 0xFB, new Opcode(0xFB, "EI",                   1,  4, () => { IME_Scheduled = true; })},
                                         
                 // ==================================================================================================================
                 // JUMP FAMILY
@@ -411,9 +499,8 @@ namespace FrozenBoyCore {
                 { 0x37, new Opcode(0x37, "SCF",                  1,  4, () => { regs.FlagN = false; regs.FlagH = false; regs.FlagC = true; })},
                 // Complement carry flag
                 { 0x3F, new Opcode(0x3F, "CCF",                  1,  4, () => { regs.FlagC = !regs.FlagC; regs.FlagN = false; regs.FlagH = false; })},
-                //
-                { 0x76, new Opcode(0x76, "HALT",                 1,  4, () => { halted = true; })},
                 // Halt CPU & LCD display until button pressed.
+                { 0x76, new Opcode(0x76, "HALT",                 1,  4, () => { HALT(); })},
             };
         }
 
@@ -699,10 +786,57 @@ namespace FrozenBoyCore {
             };
         }
 
+        //private void HALT() {
+        //    if (!IME) {
+        //        if ((mmu.IE & mmu.IF & 0x1F) == 0) {
+        //            halted = true;
+        //            regs.PC--;
+        //        }
+        //        else {
+        //            halted = true;
+        //        }
+        //    }
+        //}
+
+        //public void UpdateIME() {
+        //    IME |= IMEEnabler;
+        //    IMEEnabler = false;
+        //}
+
         private void PUSH(u16 value) {
             regs.SP -= 2;
             mmu.Write16(regs.SP, value);
         }
+
+        //private void handleInterrupts() {
+        //    u8 IE = mmu.IE;
+        //    u8 IF = mmu.IF;
+
+        //    for (int i = 0; i < 5; i++) {
+        //        if ((((IE & IF) >> i) & 0x1) == 1) {
+        //            ExecuteInterrupt(i);
+        //        }
+        //    }
+
+        //    UpdateIME();
+        //}
+
+        //public void ExecuteInterrupt(int b) {
+        //    if (halted) {
+        //        regs.PC++;
+        //        halted = false;
+        //    }
+        //    if (IME) {
+        //        PUSH(regs.PC);
+        //        regs.PC = (ushort)(0x40 + (8 * b));
+        //        IME = false;
+        //        mmu.IF = bitClear(b, mmu.IF);
+        //    }
+        //}
+
+        //public static byte bitClear(int n, byte v) {
+        //    return v &= (byte)~(1 << n);
+        //}
 
         private u16 POP() {
             u16 value = mmu.Read16(regs.SP);

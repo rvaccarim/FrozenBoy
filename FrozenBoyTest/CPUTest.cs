@@ -106,7 +106,7 @@ namespace FrozenBoyTest {
             int prevPC = gb.cpu.regs.PC;
 
             while (true) {
-                gb.cpu.Execute();
+                gb.cpu.ExecuteNext();
 
                 string instruction = OpcodeToStr(gb, opcodeFormat, gb.cpu.prevOpcode, prevPC, gb.cpu.mmu);
                 outputFile.WriteLine(String.Format(stateFormat, instruction.Substring(16), gb.cpu.regs.ToString()));
