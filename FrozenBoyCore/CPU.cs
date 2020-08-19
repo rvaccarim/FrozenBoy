@@ -801,15 +801,13 @@ namespace FrozenBoyCore {
             regs.HL = (u16)result;
         }
 
-
         // n = one byte signed immediate value(#).
         private u16 ADD_Signed8(u16 value16, u8 value8) {
-            int result = (u8)value16 + value8;
             regs.FlagZ = false;
             regs.FlagN = false;
-            regs.FlagH = ((u8)value16 & 0b_0000_1111) + (value8 & 0b_0000_1111) > 0b_0000_1111;
-            regs.FlagC = HasCarry(result);
-            return (u16)result;
+            regs.FlagH = ((value16 & 0xF) + (value8 & 0xF)) > 0xF;
+            regs.FlagC = HasCarry((byte)value16 + value8);
+            return (ushort)(value16 + (sbyte)value8);
         }
 
         private void ADC(u8 value) {

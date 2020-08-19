@@ -35,7 +35,7 @@ namespace FrozenBoyCore {
 
             set {
                 A = (u8)((value & 0b_11111111_00000000) >> 8);
-                F = (u8)(value & 0b_00000000_11111111);
+                F = (u8)(value & 0b_00000000_11110000);
             }
         }
 
