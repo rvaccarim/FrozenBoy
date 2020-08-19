@@ -18,5 +18,13 @@ namespace FrozenBoyCore {
             cpu = new CPU(mmu);
         }
 
+        public void Run() {
+            int cpuCycles = 0;
+
+            while (true) {
+                cpuCycles = cpu.ExecuteNext();
+            }
+        }
+
     }
 }
