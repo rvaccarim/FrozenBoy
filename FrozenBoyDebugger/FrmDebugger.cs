@@ -10,13 +10,15 @@ using System.Drawing;
 namespace FrozenBoyDebugger {
     public partial class FrmDebugger : Form {
 
-        private const string romPath = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\";
-        private const string debugPath = @"D:\Users\frozen\Documents\99_temp\GB_Debugger\";
+        private StreamWriter dumpFile;
+        private const string romPath = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\blargg\cpu_instrs\individual\";
+        private const string debugPath = @"D:\Users\frozen\Documents\99_temp\GB_Debug\";
 
         private const string opcodeFormat = "{0,-15} ;${1,-6:x4} O=0x{2:x2}";
-        private const string stateFormat = "{0}   {1}";
+        // private const string stateFormat = "{0}   {1}->{2:x4}";
+        private const string stateFormat = "{0}   {1} {2:x2}";
 
-        private int i;
+        private int PC;
 
         public u8 prevA;
         public u8 prevB;
@@ -46,15 +48,20 @@ namespace FrozenBoyDebugger {
         }
 
         private void FrmDebugger_Load(object sender, EventArgs e) {
-            gb = new GameBoy();
+            string romName = @"09-op r,r.gb";
 
-            string romName = @"boot\boot_rom.gb";
-            //string romName = @"blargg\cpu_instrs\cpu_instrs.gb");
-            //string romName = @"blargg\cpu_instrs\individual\11-op a,(hl).gb");
+            string romFilename = romPath + romName;
+            string disasmFilename = debugPath + romName + ".disasm.txt";
+            string dumpFilename = debugPath + romName + ".dump.frozenBoy.txt";
+
+            dumpFile = new StreamWriter(dumpFilename);
+            gb = new GameBoy(romFilename);
+            prevPC = gb.cpu.regs.PC;
 
             this.Text = "Debugger - " + romName;
-            Disassemble(romName);
-            disasmGrid.Rows[0].Selected = true;
+            // Disassemble(romFilename, disasmFilename);
+            // disasmGrid.Rows[0].Selected = true;
+            // MessageBox.Show("Done!");
 
         }
 
@@ -67,59 +74,84 @@ namespace FrozenBoyDebugger {
             }
         }
 
+        //private void Disassemble(string romFilename, string disasmFilename) {
+        //    System.Windows.Forms.Cursor.Current = System.Windows.Forms.Cursors.WaitCursor;
 
-        private void Disassemble(String romName) {
-            System.Windows.Forms.Cursor.Current = System.Windows.Forms.Cursors.WaitCursor;
+        //    MMU mmu = new MMU();
 
-            MMU mmu = new MMU();
-            mmu.data = File.ReadAllBytes(romPath + romName);
+        //    List<DataGridViewRow> rows = new List<DataGridViewRow>();
+        //    mmu.data = File.ReadAllBytes(romFilename);
 
-            using (StreamWriter outputFile = new StreamWriter(@"D:\Users\frozen\Documents\99_temp\GB_Debugger\" + romName + ".gb.txt")) {
+        //    using (StreamWriter disasmFile = new StreamWriter(disasmFilename)) {
+        //        int line = 0;
 
-                int line = 0;
+        //        while (PC < mmu.data.Length) {
+        //            byte b = mmu.data[PC];
 
-                while (i < mmu.data.Length) {
-                    byte b = mmu.data[i];
+        //            if (gb.cpu.opcodes.ContainsKey(b)) {
+        //                addressLineMap.Add(PC, line);
 
-                    if (gb.cpu.opcodes.ContainsKey(b)) {
-                        addressLineMap.Add(i, line);
+        //                Opcode opcode = gb.cpu.opcodes[b];
+        //                string instruction = OpcodeToStr(opcodeFormat, opcode, PC, mmu);
 
-                        Opcode opcode = gb.cpu.opcodes[b];
-                        string lineStr = OpcodeToStr(opcodeFormat, opcode, i, mmu);
+        //                AddInstruction(rows, instruction);
+        //                disasmFile.WriteLine(instruction);
 
-                        AddInstruction(lineStr);
-                        outputFile.WriteLine(lineStr);
+        //                if (opcode.value == 0xCB) {
+        //                    PC += 2;
+        //                }
+        //                else {
+        //                    PC += opcode.length;
+        //                }
 
-                        if (opcode.value == 0xCB) {
-                            i += 2;
-                        }
-                        else {
-                            i += opcode.length;
-                        }
+        //                line++;
+        //            }
+        //            else {
+        //                string lineStr = String.Format(opcodeFormat, String.Format("0x{0:x2}---->TODO", b), PC, b);
+        //                AddInstruction(rows, lineStr);
+        //                disasmFile.WriteLine(lineStr);
 
-                        line++;
+        //                addressLineMap.Add(PC, line);
+        //                line++;
+
+        //                PC++;
+        //            }
+        //        }
+        //    }
+
+        //    disasmGrid.Rows.AddRange(rows.ToArray());
+
+        //    int index = addressLineMap[gb.cpu.regs.PC];
+        //    disasmGrid.Rows[index].Selected = true;
+        //    disasmGrid.CurrentCell = disasmGrid[0, index];
+
+        //    System.Windows.Forms.Cursor.Current = System.Windows.Forms.Cursors.Default;
+        //}
+
+        private void BtnRun_Click(object sender, EventArgs e) {
+            int count = 0;
+            while (true) {
+                Next();
+
+                if (chkInteractive.Checked) {
+                    if (count == 800) {
+                        Application.DoEvents();
+                        historyGrid.FirstDisplayedScrollingRowIndex = historyGrid.RowCount - 1;
+                        count = 0;
                     }
-                    else {
-                        string lineStr = String.Format(opcodeFormat, String.Format("0x{0:x2}---->TODO", b), i, b);
-                        AddInstruction(lineStr);
-                        outputFile.WriteLine(lineStr);
 
-                        addressLineMap.Add(i, line);
-                        line++;
-
-                        i++;
-                    }
+                    count++;
                 }
             }
-
-            System.Windows.Forms.Cursor.Current = System.Windows.Forms.Cursors.Default;
         }
 
         private void BtnNext_Click(object sender, EventArgs e) {
             Next();
 
-            // outside in order not to delay RunTo
-            historyGrid.FirstDisplayedScrollingRowIndex = historyGrid.RowCount - 1;
+            if (chkInteractive.Checked) {
+                // outside in order not to delay RunTo
+                historyGrid.FirstDisplayedScrollingRowIndex = historyGrid.RowCount - 1;
+            }
         }
 
         private void BtnRunTo_Click(object sender, EventArgs e) {
@@ -130,13 +162,15 @@ namespace FrozenBoyDebugger {
             while (gb.cpu.regs.PC != address) {
                 Next();
 
-                if (count == 800) {
-                    Application.DoEvents();
-                    historyGrid.FirstDisplayedScrollingRowIndex = historyGrid.RowCount - 1;
-                    count = 0;
-                }
+                if (chkInteractive.Checked) {
+                    if (count == 800) {
+                        Application.DoEvents();
+                        historyGrid.FirstDisplayedScrollingRowIndex = historyGrid.RowCount - 1;
+                        count = 0;
+                    }
 
-                count++;
+                    count++;
+                }
             }
 
             historyGrid.FirstDisplayedScrollingRowIndex = historyGrid.RowCount - 1;
@@ -146,13 +180,17 @@ namespace FrozenBoyDebugger {
         private void Next() {
             gb.cpu.Execute();
 
-            // update UI
-            int index = addressLineMap[(int)gb.cpu.regs.PC];
-            disasmGrid.Rows[index].Selected = true;
-            disasmGrid.CurrentCell = disasmGrid[0, index];
+            string instruction = OpcodeToStr(opcodeFormat, gb.cpu.prevOpcode, prevPC, gb.cpu.mmu);
 
-            string instruction = disasmGrid.Rows[addressLineMap[prevPC]].Cells[0].Value.ToString();
-            AddHistory(instruction, gb.cpu.regs);
+            if (chkInteractive.Checked) {
+                // update UI
+                int index = addressLineMap[gb.cpu.regs.PC];
+                disasmGrid.Rows[index].Selected = true;
+                disasmGrid.CurrentCell = disasmGrid[0, index];
+                AddHistory(instruction, gb.cpu.regs);
+            }
+
+            Log(instruction);
 
             // backup 
             prevA = gb.cpu.regs.A;
@@ -169,65 +207,71 @@ namespace FrozenBoyDebugger {
             prevFlagC = gb.cpu.regs.FlagC;
             prevPC = gb.cpu.regs.PC;
             prevSP = gb.cpu.regs.SP;
-
-
         }
 
-
-        private void AddInstruction(string value) {
-            int rowId = disasmGrid.Rows.Add();
-            DataGridViewRow row = disasmGrid.Rows[rowId];
-            row.Cells["Instruction"].Value = value;
+        private void AddInstruction(List<DataGridViewRow> rows, string instruction) {
+            DataGridViewRow row = new DataGridViewRow();
+            row.CreateCells(disasmGrid);
+            row.Cells[0].Value = instruction;
+            rows.Add(row);
         }
 
         private void AddHistory(string instruction, Registers r) {
-            // history.AppendText(DumpState() + Environment.NewLine);
 
-            int rowId = historyGrid.Rows.Add();
-            DataGridViewRow row = historyGrid.Rows[rowId];
-            row.Cells["histInstruction"].Value = instruction;
+            if (chkInteractive.Checked) {
+                int rowId = historyGrid.Rows.Add();
+                DataGridViewRow row = historyGrid.Rows[rowId];
+                row.Cells["histInstruction"].Value = instruction;
 
-            row.Cells["histA"].Value = String.Format("{0:x2}", r.A);
-            StyleCell(r.A, prevA, row.Cells["histA"]);
+                row.Cells["histA"].Value = String.Format("{0:x2}", r.A);
+                StyleCell(r.A, prevA, row.Cells["histA"]);
 
-            row.Cells["histB"].Value = String.Format("{0:x2}", r.B);
-            StyleCell(r.B, prevB, row.Cells["histB"]);
+                row.Cells["histB"].Value = String.Format("{0:x2}", r.B);
+                StyleCell(r.B, prevB, row.Cells["histB"]);
 
-            row.Cells["histC"].Value = String.Format("{0:x2}", r.C);
-            StyleCell(r.C, prevC, row.Cells["histC"]);
+                row.Cells["histC"].Value = String.Format("{0:x2}", r.C);
+                StyleCell(r.C, prevC, row.Cells["histC"]);
 
-            row.Cells["histD"].Value = String.Format("{0:x2}", r.D);
-            StyleCell(r.D, prevD, row.Cells["histD"]);
+                row.Cells["histD"].Value = String.Format("{0:x2}", r.D);
+                StyleCell(r.D, prevD, row.Cells["histD"]);
 
-            row.Cells["histE"].Value = String.Format("{0:x2}", r.E);
-            StyleCell(r.E, prevE, row.Cells["histE"]);
+                row.Cells["histE"].Value = String.Format("{0:x2}", r.E);
+                StyleCell(r.E, prevE, row.Cells["histE"]);
 
-            row.Cells["histF"].Value = String.Format("{0:x2}", r.F);
-            StyleCell(r.F, prevF, row.Cells["histF"]);
+                row.Cells["histF"].Value = String.Format("{0:x2}", r.F);
+                StyleCell(r.F, prevF, row.Cells["histF"]);
 
-            row.Cells["histH"].Value = String.Format("{0:x2}", r.H);
-            StyleCell(r.H, prevH, row.Cells["histH"]);
+                row.Cells["histH"].Value = String.Format("{0:x2}", r.H);
+                StyleCell(r.H, prevH, row.Cells["histH"]);
 
-            row.Cells["histL"].Value = String.Format("{0:x2}", r.L);
-            StyleCell(r.L, prevL, row.Cells["histL"]);
+                row.Cells["histL"].Value = String.Format("{0:x2}", r.L);
+                StyleCell(r.L, prevL, row.Cells["histL"]);
 
-            row.Cells["histFlagZ"].Value = String.Format("{0}", Convert.ToInt32(r.FlagZ));
-            StyleCell(r.FlagZ, prevFlagZ, row.Cells["histFlagZ"]);
+                row.Cells["histFlagZ"].Value = String.Format("{0}", Convert.ToInt32(r.FlagZ));
+                StyleCell(r.FlagZ, prevFlagZ, row.Cells["histFlagZ"]);
 
-            row.Cells["histFlagN"].Value = String.Format("{0}", Convert.ToInt32(r.FlagN));
-            StyleCell(r.FlagN, prevFlagN, row.Cells["histFlagN"]);
+                row.Cells["histFlagN"].Value = String.Format("{0}", Convert.ToInt32(r.FlagN));
+                StyleCell(r.FlagN, prevFlagN, row.Cells["histFlagN"]);
 
-            row.Cells["histFlagH"].Value = String.Format("{0}", Convert.ToInt32(r.FlagH));
-            StyleCell(r.FlagH, prevFlagH, row.Cells["histFlagH"]);
+                row.Cells["histFlagH"].Value = String.Format("{0}", Convert.ToInt32(r.FlagH));
+                StyleCell(r.FlagH, prevFlagH, row.Cells["histFlagH"]);
 
-            row.Cells["histFlagC"].Value = String.Format("{0}", Convert.ToInt32(r.FlagC));
-            StyleCell(r.FlagC, prevFlagC, row.Cells["histFlagC"]);
+                row.Cells["histFlagC"].Value = String.Format("{0}", Convert.ToInt32(r.FlagC));
+                StyleCell(r.FlagC, prevFlagC, row.Cells["histFlagC"]);
 
-            row.Cells["histPC"].Value = String.Format("{0:x4}", r.PC);
-            StyleCell(r.PC, prevPC, row.Cells["histPC"]);
+                row.Cells["histPC"].Value = String.Format("{0:x4}", r.PC);
+                StyleCell(r.PC, prevPC, row.Cells["histPC"]);
 
-            row.Cells["histSP"].Value = String.Format("{0:x4}", r.SP);
-            StyleCell(r.SP, prevSP, row.Cells["histSP"]);
+                row.Cells["histSP"].Value = String.Format("{0:x4}", r.SP);
+                StyleCell(r.SP, prevSP, row.Cells["histSP"]);
+            }
+
+        }
+
+        private void Log(string instruction) {
+            // dumpFile.WriteLine(String.Format(stateFormat, instruction.Substring(16), gb.cpu.regs.ToString(), gb.cpu.mmu.Read16(gb.cpu.regs.SP)));
+            dumpFile.WriteLine(String.Format(stateFormat, instruction.Substring(16), gb.cpu.regs.ToString(), gb.cpu.mmu.Read8(0xFF44)));
+            dumpFile.Flush();
         }
 
 
@@ -285,16 +329,6 @@ namespace FrozenBoyDebugger {
             };
         }
 
-        private string DumpState() {
-            return String.Format(stateFormat, OpcodeToStr(opcodeFormat, gb.cpu.opcode, gb.cpu.regs.PC, gb.cpu.mmu), gb.cpu.regs.ToString());
-        }
-
-        //private void History_TextChanged(object sender, EventArgs e) {
-        //    // set the current caret position to the end
-        //    history.SelectionStart = history.Text.Length;
-        //    // scroll it automatically
-        //    history.ScrollToCaret();
-        //}
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData) {
             if (keyData == Keys.F10) {
@@ -308,6 +342,12 @@ namespace FrozenBoyDebugger {
 
         private void HistoryGrid_SelectionChanged(object sender, EventArgs e) {
             historyGrid.ClearSelection();
+        }
+
+        private void FrmDebugger_FormClosed(object sender, FormClosedEventArgs e) {
+            dumpFile.Flush();
+            dumpFile.Close();
+            dumpFile.Dispose();
         }
 
 

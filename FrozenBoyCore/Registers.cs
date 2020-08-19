@@ -7,7 +7,7 @@ using u16 = System.UInt16;
 namespace FrozenBoyCore {
 
     public class Registers {
-        private const string regFormat = @"a={0:x2} f={1:x2} b={2:x2} c={3:x2} d={4:x2} e={5:x2} h={6:x2} l={7:x2}    Z={8} N={9} H={10} C={11} PC={12} SP={12}";
+        private const string regFormat = @"a={0:x2} f={1:x2} b={2:x2} c={3:x2} d={4:x2} e={5:x2} h={6:x2} l={7:x2}   Z={8} N={9} H={10} C={11}   PC={12:x4} SP={13:x4}";
         private const int bitZeroPosition = 7;
         private const int bitSubtractPosition = 6;
         private const int bitHalfCarryPosition = 5;

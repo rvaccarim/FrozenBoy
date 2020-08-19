@@ -23,6 +23,20 @@
         /// the contents of this method with the code editor.
         /// </summary>
         private void InitializeComponent() {
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle11 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle12 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle13 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle14 = new System.Windows.Forms.DataGridViewCellStyle();
             this.btnNext = new System.Windows.Forms.Button();
             this.Instruction = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.disasmGrid = new System.Windows.Forms.DataGridView();
@@ -43,8 +57,10 @@
             this.histSP = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.historyGrid = new System.Windows.Forms.DataGridView();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.btnRun = new System.Windows.Forms.Button();
             this.txtRunTo = new System.Windows.Forms.TextBox();
             this.btnRunTo = new System.Windows.Forms.Button();
+            this.chkInteractive = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.disasmGrid)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.historyGrid)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -55,7 +71,7 @@
             // 
             // btnNext
             // 
-            this.btnNext.Location = new System.Drawing.Point(3, 3);
+            this.btnNext.Location = new System.Drawing.Point(323, 3);
             this.btnNext.Name = "btnNext";
             this.btnNext.Size = new System.Drawing.Size(94, 29);
             this.btnNext.TabIndex = 0;
@@ -65,14 +81,13 @@
             // 
             // Instruction
             // 
-            // this.Instruction.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
             this.Instruction.HeaderText = "Instruction";
-            this.Instruction.MinimumWidth = 6;
             this.Instruction.MinimumWidth = 320;
             this.Instruction.Name = "Instruction";
             this.Instruction.ReadOnly = true;
             this.Instruction.Resizable = System.Windows.Forms.DataGridViewTriState.True;
             this.Instruction.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.Instruction.Width = 320;
             // 
             // disasmGrid
             // 
@@ -94,7 +109,6 @@
             // 
             // histInstruction
             // 
-            // this.histInstruction.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
             this.histInstruction.HeaderText = "Instruction";
             this.histInstruction.MinimumWidth = 6;
             this.histInstruction.Name = "histInstruction";
@@ -103,164 +117,152 @@
             // 
             // histA
             // 
-            // this.histA.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.histA.DefaultCellStyle = dataGridViewCellStyle1;
             this.histA.HeaderText = "A";
             this.histA.MinimumWidth = 6;
             this.histA.Name = "histA";
             this.histA.ReadOnly = true;
             this.histA.Width = 47;
-            this.histA.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
             // 
             // histB
             // 
-            // this.histB.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.histB.DefaultCellStyle = dataGridViewCellStyle2;
             this.histB.HeaderText = "B";
             this.histB.MinimumWidth = 6;
             this.histB.Name = "histB";
             this.histB.ReadOnly = true;
             this.histB.Width = 47;
-            this.histB.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-
             // 
             // histC
             // 
-            // this.histC.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.histC.DefaultCellStyle = dataGridViewCellStyle3;
             this.histC.HeaderText = "C";
             this.histC.MinimumWidth = 6;
             this.histC.Name = "histC";
             this.histC.ReadOnly = true;
             this.histC.Width = 47;
-            this.histC.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-
             // 
             // histD
             // 
             this.histD.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.histD.DefaultCellStyle = dataGridViewCellStyle4;
             this.histD.HeaderText = "D";
             this.histD.MinimumWidth = 6;
             this.histD.Name = "histD";
             this.histD.ReadOnly = true;
-            this.histD.Width = 47;
-            this.histD.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-
+            this.histD.Width = 49;
             // 
             // histE
             // 
-            // this.histE.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.histE.DefaultCellStyle = dataGridViewCellStyle5;
             this.histE.HeaderText = "E";
             this.histE.MinimumWidth = 6;
             this.histE.Name = "histE";
             this.histE.ReadOnly = true;
             this.histE.Width = 47;
-            this.histE.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-
             // 
             // histF
             // 
-            // this.histF.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.histF.DefaultCellStyle = dataGridViewCellStyle6;
             this.histF.HeaderText = "F";
             this.histF.MinimumWidth = 6;
             this.histF.Name = "histF";
             this.histF.ReadOnly = true;
             this.histF.Width = 47;
-            this.histF.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-
             // 
             // histH
             // 
-            // this.histH.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.histH.DefaultCellStyle = dataGridViewCellStyle7;
             this.histH.HeaderText = "H";
             this.histH.MinimumWidth = 6;
             this.histH.Name = "histH";
             this.histH.ReadOnly = true;
             this.histH.Width = 47;
-            this.histH.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-
             // 
             // histL
             // 
-            // this.histL.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.histL.DefaultCellStyle = dataGridViewCellStyle8;
             this.histL.HeaderText = "L";
             this.histL.MinimumWidth = 6;
             this.histL.Name = "histL";
             this.histL.ReadOnly = true;
             this.histL.Width = 47;
-            this.histL.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-
             // 
             // histFlagZ
             // 
-            // this.histFlagZ.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.histFlagZ.DefaultCellStyle = dataGridViewCellStyle9;
             this.histFlagZ.HeaderText = "FZ";
             this.histFlagZ.MinimumWidth = 6;
             this.histFlagZ.Name = "histFlagZ";
             this.histFlagZ.ReadOnly = true;
             this.histFlagZ.Width = 47;
-            this.histFlagZ.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-
             // 
             // histFlagN
             // 
-            // this.histFlagN.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.histFlagN.DefaultCellStyle = dataGridViewCellStyle10;
             this.histFlagN.HeaderText = "FN";
             this.histFlagN.MinimumWidth = 6;
             this.histFlagN.Name = "histFlagN";
             this.histFlagN.ReadOnly = true;
             this.histFlagN.Width = 47;
-            this.histFlagN.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-
             // 
             // histFlagH
             // 
-            // this.histFlagH.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            dataGridViewCellStyle11.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.histFlagH.DefaultCellStyle = dataGridViewCellStyle11;
             this.histFlagH.HeaderText = "FH";
             this.histFlagH.MinimumWidth = 6;
             this.histFlagH.Name = "histFlagH";
             this.histFlagH.ReadOnly = true;
             this.histFlagH.Width = 47;
-            this.histFlagH.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-
             // 
             // histFlagC
             // 
-            // this.histFlagC.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            dataGridViewCellStyle12.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.histFlagC.DefaultCellStyle = dataGridViewCellStyle12;
             this.histFlagC.HeaderText = "FC";
             this.histFlagC.MinimumWidth = 6;
             this.histFlagC.Name = "histFlagC";
             this.histFlagC.ReadOnly = true;
             this.histFlagC.Width = 47;
-            this.histFlagC.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-
             // 
             // histPC
             // 
-            // this.histPC.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            dataGridViewCellStyle13.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.histPC.DefaultCellStyle = dataGridViewCellStyle13;
             this.histPC.HeaderText = "PC";
             this.histPC.MinimumWidth = 6;
             this.histPC.Name = "histPC";
             this.histPC.ReadOnly = true;
             this.histPC.Width = 47;
-            this.histPC.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-
             // 
             // histSP
             // 
-            // this.histSP.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
+            dataGridViewCellStyle14.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.histSP.DefaultCellStyle = dataGridViewCellStyle14;
             this.histSP.HeaderText = "SP";
             this.histSP.MinimumWidth = 6;
             this.histSP.Name = "histSP";
             this.histSP.ReadOnly = true;
             this.histSP.Width = 47;
-            this.histSP.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-
             // 
             // historyGrid
             // 
             this.historyGrid.AllowUserToAddRows = false;
             this.historyGrid.AllowUserToDeleteRows = false;
             this.historyGrid.AllowUserToResizeColumns = false;
-            this.historyGrid.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
+            this.historyGrid.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.historyGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.historyGrid.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
@@ -279,7 +281,6 @@
             this.histFlagC,
             this.histPC,
             this.histSP});
-            // 
             this.historyGrid.Location = new System.Drawing.Point(3, 38);
             this.historyGrid.MultiSelect = false;
             this.historyGrid.Name = "historyGrid";
@@ -303,6 +304,8 @@
             // 
             // splitContainer1.Panel2
             // 
+            this.splitContainer1.Panel2.Controls.Add(this.chkInteractive);
+            this.splitContainer1.Panel2.Controls.Add(this.btnRun);
             this.splitContainer1.Panel2.Controls.Add(this.txtRunTo);
             this.splitContainer1.Panel2.Controls.Add(this.btnRunTo);
             this.splitContainer1.Panel2.Controls.Add(this.btnNext);
@@ -312,22 +315,42 @@
             this.splitContainer1.TabIndex = 7;
             this.splitContainer1.Text = "splitContainer1";
             // 
+            // btnRun
+            // 
+            this.btnRun.Location = new System.Drawing.Point(3, 3);
+            this.btnRun.Name = "btnRun";
+            this.btnRun.Size = new System.Drawing.Size(94, 29);
+            this.btnRun.TabIndex = 8;
+            this.btnRun.Text = "Run";
+            this.btnRun.UseVisualStyleBackColor = true;
+            this.btnRun.Click += new System.EventHandler(this.BtnRun_Click);
+            // 
             // txtRunTo
             // 
-            this.txtRunTo.Location = new System.Drawing.Point(212, 3);
+            this.txtRunTo.Location = new System.Drawing.Point(213, 4);
             this.txtRunTo.Name = "txtRunTo";
             this.txtRunTo.Size = new System.Drawing.Size(89, 27);
             this.txtRunTo.TabIndex = 7;
             // 
             // btnRunTo
             // 
-            this.btnRunTo.Location = new System.Drawing.Point(112, 3);
+            this.btnRunTo.Location = new System.Drawing.Point(113, 3);
             this.btnRunTo.Name = "btnRunTo";
             this.btnRunTo.Size = new System.Drawing.Size(94, 29);
             this.btnRunTo.TabIndex = 0;
             this.btnRunTo.Text = "Run to";
             this.btnRunTo.UseVisualStyleBackColor = true;
             this.btnRunTo.Click += new System.EventHandler(this.BtnRunTo_Click);
+            // 
+            // chkInteractive
+            // 
+            this.chkInteractive.AutoSize = true;
+            this.chkInteractive.Location = new System.Drawing.Point(740, 7);
+            this.chkInteractive.Name = "chkInteractive";
+            this.chkInteractive.Size = new System.Drawing.Size(100, 24);
+            this.chkInteractive.TabIndex = 9;
+            this.chkInteractive.Text = "Interactive";
+            this.chkInteractive.UseVisualStyleBackColor = true;
             // 
             // FrmDebugger
             // 
@@ -341,6 +364,7 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Debugger";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.FrmDebugger_FormClosed);
             this.Load += new System.EventHandler(this.FrmDebugger_Load);
             ((System.ComponentModel.ISupportInitialize)(this.disasmGrid)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.historyGrid)).EndInit();
@@ -377,5 +401,7 @@
         private System.Windows.Forms.SplitContainer splitContainer1;
         private System.Windows.Forms.TextBox txtRunTo;
         private System.Windows.Forms.Button btnRunTo;
+        private System.Windows.Forms.Button btnRun;
+        private System.Windows.Forms.CheckBox chkInteractive;
     }
 }

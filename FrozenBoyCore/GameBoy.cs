@@ -5,23 +5,21 @@ using System.Text;
 
 namespace FrozenBoyCore {
     public class GameBoy {
-        private const string romPath = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\";
-
-        public MMU memory;
+        public MMU mmu;
         public CPU cpu;
 
-        public GameBoy() {
-            memory = new MMU();
-            byte[] romData = File.ReadAllBytes(romPath + @"boot\boot_rom.gb");
-            // byte[] romData = File.ReadAllBytes(romPath + @"blargg\cpu_instrs\individual\11-op a,(hl).gb");
+        public GameBoy(string romName) {
+            mmu = new MMU();
+
+            byte[] romData = File.ReadAllBytes(romName);
 
             int i = 0;
             foreach (byte b in romData) {
-                memory.data[i] = b;
+                mmu.data[i] = b;
                 i++;
             }
 
-            cpu = new CPU(memory);
+            cpu = new CPU(mmu);
         }
 
     }

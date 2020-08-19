@@ -16,14 +16,22 @@ namespace FrozenBoyCore {
 
         // Opcode related stuff
         public Opcode opcode;
+        public Opcode prevOpcode;
         public u16 opLocation;
 
         public bool halted;
 
         public CPU(MMU mmu) {
-            regs = new Registers();
             this.mmu = mmu;
-            regs.PC = 0;
+
+            regs = new Registers {
+                AF = 0x01B0,
+                BC = 0x0013,
+                DE = 0x00D8,
+                HL = 0x014d,
+                PC = 0x100,
+                SP = 0xFFFE
+            };
 
             opcodes = InitializeOpcodes();
             cbOpcodes = InitializeCB();
@@ -33,15 +41,16 @@ namespace FrozenBoyCore {
             opLocation = regs.PC;
             opcode = Disassemble();
 
-            // points to the next one even if we haven't executed it yet
-            regs.PC = (u16)(regs.PC + opcode.length);
-
             if (opcode != null) {
+                // points to the next one even if we haven't executed it yet
+                regs.PC = (u16)(regs.PC + opcode.length);
                 opcode.logic.Invoke();
             }
             else {
                 System.Environment.Exit(0);
             }
+
+            prevOpcode = opcode;
         }
 
 
@@ -690,10 +699,21 @@ namespace FrozenBoyCore {
             };
         }
 
+        private void PUSH(u16 value) {
+            regs.SP -= 2;
+            mmu.Write16(regs.SP, value);
+        }
+
+        private u16 POP() {
+            u16 value = mmu.Read16(regs.SP);
+            regs.SP += 2;
+            return value;
+        }
+
         private void CALL(bool flag, u16 address) {
             if (flag) {
-                // push address of next instruction, call opcode size = 2
-                PUSH((ushort)(regs.PC + 2));
+                // push address of next instruction
+                PUSH((ushort)(regs.PC));
                 regs.PC = address;
             }
         }
@@ -763,7 +783,7 @@ namespace FrozenBoyCore {
 
         private void ADD(u8 value) {
             int result = regs.A + value;
-            regs.FlagZ = (result == 0);
+            regs.FlagZ = (result & 0b_1111_1111) == 0;
             regs.FlagN = false;
             regs.FlagH = (regs.A & 0b_0000_1111) + (value & 0b_0000_1111) > 0b_0000_1111;
             regs.FlagC = HasCarry(result);
@@ -792,13 +812,23 @@ namespace FrozenBoyCore {
             return (u16)result;
         }
 
+        //        AddFunction("ADC", DataType.D8, DataType.D8, (flags, byte1, byte2) =>
+        //{
+        //            var carry = flags.IsC() ? 1 : 0;
+        //            flags.SetZ(((byte1 + byte2 + carry) & 0xff) == 0);
+        //            flags.SetN(false);
+        //            flags.SetH((byte1 & 0x0f) + (byte2 & 0x0f) + carry > 0x0f);
+        //            flags.SetC(byte1 + byte2 + carry > 0xff);
+        //            return (byte1 + byte2 + carry) & 0xff;
+        //        });
+
         private void ADC(u8 value) {
             var carry = regs.FlagC ? 1 : 0;
-            int result = regs.A + value + carry;
+            int result = (regs.A + value + carry) & 0b_1111_1111;
             regs.FlagZ = (result == 0);
             regs.FlagN = false;
             regs.FlagH = (regs.A & 0b_0000_1111) + (value & 0b_0000_1111) + carry > 0b_0000_1111;
-            regs.FlagC = HasCarry(result);
+            regs.FlagC = HasCarry(regs.A + value + carry);
             regs.A = (u8)result;
         }
 
@@ -815,7 +845,7 @@ namespace FrozenBoyCore {
         private void SBC(u8 value) {
             var carry = regs.FlagC ? 1 : 0;
             int result = regs.A - value - carry;
-            regs.FlagZ = (result == 0);
+            regs.FlagZ = (result & 0b_1111_1111) == 0;
             regs.FlagN = true;
             regs.FlagH = (((regs.A ^ value ^ (result & 0b_1111_1111)) & (1 << 4)) != 0);
             regs.FlagC = (result < 0);
@@ -834,7 +864,7 @@ namespace FrozenBoyCore {
             u8 result = (u8)(value + 1);
             regs.FlagZ = (result == 0);
             regs.FlagN = false;
-            regs.FlagH = (value == 0b_0000_1111);
+            regs.FlagH = (value & 0b_0000_1111) == 0b_0000_1111;
             // regs.FlagC -> unmodified
             return result;
         }
@@ -843,7 +873,7 @@ namespace FrozenBoyCore {
             u8 result = (u8)(value - 1);
             regs.FlagZ = (result == 0);
             regs.FlagN = true;
-            regs.FlagH = (value == 0b_0000_0000);
+            regs.FlagH = (value & 0b_0000_1111) == 0b_0000_0000;
             // r.FlagC -> unmodified
             return result;
         }
@@ -935,7 +965,7 @@ namespace FrozenBoyCore {
             regs.FlagZ = (result == 0);
             regs.FlagN = false;
             regs.FlagH = false;
-            regs.FlagC = (value & 0b_0001_0001) == 1;
+            regs.FlagC = (value & 0b_0000_0001) != 0;
             return result;
         }
 
@@ -977,17 +1007,6 @@ namespace FrozenBoyCore {
 
             regs.FlagZ = (result == 0);
             regs.A = result;
-        }
-
-        private void PUSH(u16 value) {
-            regs.SP -= 2;
-            mmu.Write16(regs.SP, value);
-        }
-
-        private u16 POP() {
-            u16 value = mmu.Read16(regs.SP);
-            regs.SP += 2;
-            return value;
         }
 
         public u8 Parm8() {
