@@ -48,7 +48,7 @@ namespace FrozenBoyDebugger {
         }
 
         private void FrmDebugger_Load(object sender, EventArgs e) {
-            string romName = @"09-op r,r.gb";
+            string romName = @"11-op a,(hl).gb";
 
             string romFilename = romPath + romName;
             string disasmFilename = debugPath + romName + ".disasm.txt";

@@ -812,16 +812,6 @@ namespace FrozenBoyCore {
             return (u16)result;
         }
 
-        //        AddFunction("ADC", DataType.D8, DataType.D8, (flags, byte1, byte2) =>
-        //{
-        //            var carry = flags.IsC() ? 1 : 0;
-        //            flags.SetZ(((byte1 + byte2 + carry) & 0xff) == 0);
-        //            flags.SetN(false);
-        //            flags.SetH((byte1 & 0x0f) + (byte2 & 0x0f) + carry > 0x0f);
-        //            flags.SetC(byte1 + byte2 + carry > 0xff);
-        //            return (byte1 + byte2 + carry) & 0xff;
-        //        });
-
         private void ADC(u8 value) {
             var carry = regs.FlagC ? 1 : 0;
             int result = (regs.A + value + carry) & 0b_1111_1111;
@@ -970,43 +960,26 @@ namespace FrozenBoyCore {
         }
 
         private void DAA() {
-            var result = regs.A;
-
             if (regs.FlagN) {
-                if (regs.FlagH) {
-                    // 0x6 = 0b_0000_0110
-                    result = (u8)((regs.A - 0b_0000_0110) & 0b_1111_1111);
-                }
-
                 if (regs.FlagC) {
-                    // 0x60 = 0b_01100_000
-                    result = (byte)((regs.A - 0b_01100_000) & 0b_1111_1111);
+                    regs.A -= 0x60;
+                }
+                if (regs.FlagH) {
+                    regs.A -= 0x6;
                 }
             }
             else {
-                // 0x9 = 0b_0000_1001
-                if (regs.FlagH || (result & 0b_0000_1111) > 0b_0000_1001) {
-                    // 0x6 =  0b_0000_0110
-                    result += 0b_0000_0110;
+                if (regs.FlagC || (regs.A > 0x99)) {
+                    regs.A += 0x60;
+                    regs.FlagC = true;
                 }
-
-                // 0x9f = 0b_1001_1111
-                if (regs.FlagC || result > 0b_1001_1111) {
-                    // 0x60 = 0b_01100_000
-                    result += 0b_01100_000;
+                if (regs.FlagH || (regs.A & 0xF) > 0x9) {
+                    regs.A += 0x6;
                 }
             }
-
+            regs.FlagZ = (regs.A == 0);
             regs.FlagH = false;
 
-            if (result > 0b_1111_1111) {
-                regs.FlagC = true;
-            }
-
-            result &= 0b_1111_1111;
-
-            regs.FlagZ = (result == 0);
-            regs.A = result;
         }
 
         public u8 Parm8() {
