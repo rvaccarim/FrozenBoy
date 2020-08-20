@@ -4,17 +4,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Xunit;
-using u8 = System.Byte;
-using u16 = System.UInt16;
 using System.Diagnostics;
 using Xunit.Abstractions;
+using u8 = System.Byte;
+using u16 = System.UInt16;
 
 namespace FrozenBoyTest {
     public class CPUTest {
         private ITestOutputHelper output;
-
-        private const string opcodeFormat = "{0,-15} ;${1,-6:x4} O=0x{2:x2}";
-        private const string stateFormat = "{0}   {1}";
 
         private const string romPath = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\blargg\cpu_instrs\individual\";
         private const string debugPath = @"D:\Users\frozen\Documents\99_temp\GB_Debug\";
@@ -90,60 +87,20 @@ namespace FrozenBoyTest {
         }
 
         public bool TestCPU_Blargg(string romName) {
-            bool passed;
-            string romFilename = romPath + romName;
-            string debugOutput = debugPath + romName + ".debug.frozenBoy.txt";
+            bool debugMode = true;
+            bool checkLinkPort = true;
 
-            using (StreamWriter outputFile = new StreamWriter(debugOutput)) {
-                GameBoy gb = new GameBoy(romFilename);
-                passed = RunROM(gb, outputFile);
-            }
+            string romFilename = romPath + romName;
+            string logOutput = debugPath + romName + ".log.frozenBoy.txt";
+
+            GameBoyParm gbParm = new GameBoyParm(debugMode, checkLinkPort, logOutput);
+            GameBoy gb = new GameBoy(romFilename, gbParm);
+
+            bool passed = gb.Run();
+            output.WriteLine(gb.cpu.mmu.linkPortOutput);
 
             return passed;
-        }
 
-        private bool RunROM(GameBoy gb, StreamWriter outputFile) {
-            int prevPC = gb.cpu.regs.PC;
-
-            while (true) {
-                gb.cpu.ExecuteNext();
-
-                string instruction = OpcodeToStr(gb, opcodeFormat, gb.cpu.prevOpcode, prevPC, gb.cpu.mmu);
-                outputFile.WriteLine(String.Format(stateFormat, instruction.Substring(16), gb.cpu.regs.ToString()));
-
-                prevPC = gb.cpu.regs.PC;
-
-                if (gb.mmu.linkPortText.Contains("Passed")) {
-                    return true;
-                }
-
-                if (gb.mmu.linkPortText.Contains("Failed")) {
-                    output.WriteLine(gb.mmu.linkPortText);
-                    return false;
-                }
-            }
-        }
-
-
-        private string OpcodeToStr(GameBoy gb, string format, Opcode o, int address, MMU m) {
-            return o.length switch
-            {
-                2 => String.Format(format,
-                                   String.Format(o.asmInstruction, m.Read8((u16)(address + 1))),
-                                   address,
-                                   o.value),
-
-                3 => String.Format(format,
-                                   String.Format(o.asmInstruction, m.Read16((u16)(address + 1))),
-                                   address,
-                                   o.value),
-
-                _ => String.Format(format,
-                                   String.Format(o.value != 0xCB ? o.asmInstruction
-                                                                 : gb.cpu.cbOpcodes[m.Read8((u16)(address + 1))].asmInstruction),
-                                   address,
-                                   o.value),
-            };
         }
     }
 }

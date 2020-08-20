@@ -23,7 +23,6 @@ namespace FrozenBoyCore {
         public bool IME_Scheduled = true;
         public bool halted = false;
 
-
         public CPU(MMU mmu) {
             this.mmu = mmu;
 
@@ -53,9 +52,6 @@ namespace FrozenBoyCore {
 
                 // execute opcode
                 opcode.logic.Invoke();
-
-                HandleInterrupts();
-
             }
             else {
                 System.Environment.Exit(0);
@@ -67,7 +63,7 @@ namespace FrozenBoyCore {
             return cycles;
         }
 
-        private void HandleInterrupts() {
+        public void HandleInterrupts() {
             // IE and IF are positions in memory
             // IE = granular interrupt enabler. When bits are set, the corresponding interrupt can be triggered
             // IF = When bits are set, an interrupt has happened
@@ -97,6 +93,10 @@ namespace FrozenBoyCore {
 
             IME |= IME_Scheduled;
             IME_Scheduled = false;
+        }
+
+        public void UpdateIME() {
+
         }
 
 

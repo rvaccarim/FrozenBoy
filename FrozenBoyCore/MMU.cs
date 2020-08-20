@@ -11,7 +11,7 @@ namespace FrozenBoyCore {
     public class MMU {
         // 0xFFFF = 65535
         public u8[] data = new u8[0xFFFF + 1];
-        public string linkPortText = "";
+        public string linkPortOutput = "";
 
         // FFFF - IE - Interrupt Enable
         // When bits are set, the corresponding interrupt can be triggered
@@ -70,13 +70,7 @@ namespace FrozenBoyCore {
         //    return memory;
         //}
 
-
-
         public u8 Read8(u16 address) {
-            //if (address == 0xFF44) {
-            //    Debug.WriteLine("Reading 0xFF44");
-            //}
-
             return data[address];
 
             //switch (address) {
@@ -130,24 +124,15 @@ namespace FrozenBoyCore {
         public void Write8(u16 address, u8 value) {
             data[address] = value;
 
-            //if (address == 0xFF44) {
-            //    Debug.WriteLine(String.Format("Written by opcode at {0:x4}, value {1:x2}", gb.cpu.opLocation, value));
-            //}
-
             if (address == 0xFF02 && value == 0x81) {
-                linkPortText += System.Convert.ToChar(data[0xFF01]);
-                Debug.Write(System.Convert.ToChar(data[0xFF01]));
+                linkPortOutput += System.Convert.ToChar(data[0xFF01]);
+                Debug.Write(linkPortOutput);
             }
         }
 
         public void Write16(u16 address, u16 value) {
             data[address + 1] = (u8)((value & 0b_11111111_00000000) >> 8);
             data[address] = (u8)(value & 0b_00000000_11111111);
-
-            //if (address == 0xFF44) {
-            //    Debug.WriteLine(String.Format("Written by opcode at {0:x4}, value {1:x4}", gb.cpu.opLocation, value));
-            //}
-
         }
 
     }
