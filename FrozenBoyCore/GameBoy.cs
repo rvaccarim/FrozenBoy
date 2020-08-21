@@ -14,6 +14,7 @@ namespace FrozenBoyCore {
         public const float MILLIS_PER_FRAME = 16.74f;
 
         public CPU cpu;
+        public PPU ppu;
         public MMU mmu;
         public Timer timer;
         public Logger logger;
@@ -21,7 +22,6 @@ namespace FrozenBoyCore {
 
         int totalCycles;
         int cycles;
-        int prevPC;
 
         // constructor
         public GameBoy(string romName, GameBoyParm gbParm) {
@@ -31,6 +31,7 @@ namespace FrozenBoyCore {
 
             timer = new Timer(mmu);
             cpu = new CPU(mmu);
+            ppu = new PPU(mmu);
 
             this.gbParm = gbParm;
             if (gbParm.debugMode) {
@@ -39,8 +40,6 @@ namespace FrozenBoyCore {
         }
 
         public bool Run() {
-            prevPC = cpu.regs.PC;
-
             totalCycles = 0;
 
             while (true) {
@@ -48,7 +47,7 @@ namespace FrozenBoyCore {
                 while (totalCycles < CYCLES_PER_UPDATE) {
                     cycles = cpu.ExecuteNext();
                     timer.Update(cycles);
-                    // UpdateGraphics(cycles);
+                    ppu.Update(cycles);
                     cpu.HandleInterrupts();
 
                     totalCycles += cycles;

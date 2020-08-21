@@ -44,7 +44,6 @@ namespace FrozenBoyCore {
                 { 0x0058 },    // SerialLink
                 { 0x0060 } };  // JoypadPress,
 
-
         //public u8[] boot;                     //     0 ->   255, 0x0000 -> 0x00FF, after boot it's used for Restart and Interrupt Vectors
         //public u8[] cartridge_header;         //   256 ->   335, 0x0100 -> 0x014F
         //public u8[] cartridge_bank0;          //   336 -> 16383, 0x0150 -> 0x3FFF 
