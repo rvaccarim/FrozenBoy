@@ -1,13 +1,15 @@
-﻿using System;
+﻿using FrozenBoyCore.Memory;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace FrozenBoyCore {
-    public class PPU {
+namespace FrozenBoyCore.Graphics {
+
+    public class GPU {
         private int scanlineCounter;
         private MMU mmu;
 
-        public PPU(MMU mmu) {
+        public GPU(MMU mmu) {
             this.mmu = mmu;
         }
 

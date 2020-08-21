@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Collections.Generic;
+using FrozenBoyCore.Memory;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 
-
-namespace FrozenBoyCore {
+namespace FrozenBoyCore.Processor {
 
     public class CPU {
         public Registers regs;
@@ -751,57 +751,10 @@ namespace FrozenBoyCore {
             };
         }
 
-        //private void HALT() {
-        //    if (!IME) {
-        //        if ((mmu.IE & mmu.IF & 0x1F) == 0) {
-        //            halted = true;
-        //            regs.PC--;
-        //        }
-        //        else {
-        //            halted = true;
-        //        }
-        //    }
-        //}
-
-        //public void UpdateIME() {
-        //    IME |= IMEEnabler;
-        //    IMEEnabler = false;
-        //}
-
         private void PUSH(u16 value) {
             regs.SP -= 2;
             mmu.Write16(regs.SP, value);
         }
-
-        //private void handleInterrupts() {
-        //    u8 IE = mmu.IE;
-        //    u8 IF = mmu.IF;
-
-        //    for (int i = 0; i < 5; i++) {
-        //        if ((((IE & IF) >> i) & 0x1) == 1) {
-        //            ExecuteInterrupt(i);
-        //        }
-        //    }
-
-        //    UpdateIME();
-        //}
-
-        //public void ExecuteInterrupt(int b) {
-        //    if (halted) {
-        //        regs.PC++;
-        //        halted = false;
-        //    }
-        //    if (IME) {
-        //        PUSH(regs.PC);
-        //        regs.PC = (ushort)(0x40 + (8 * b));
-        //        IME = false;
-        //        mmu.IF = bitClear(b, mmu.IF);
-        //    }
-        //}
-
-        //public static byte bitClear(int n, byte v) {
-        //    return v &= (byte)~(1 << n);
-        //}
 
         private u16 POP() {
             u16 value = mmu.Read16(regs.SP);

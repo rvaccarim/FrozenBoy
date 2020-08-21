@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
+using FrozenBoyCore.Memory;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 
-namespace FrozenBoyCore {
+
+namespace FrozenBoyCore.Processor {
 
     public class Timer {
         public Dictionary<int, int> TIMA_Freq = new Dictionary<int, int> {

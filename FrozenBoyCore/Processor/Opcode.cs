@@ -7,7 +7,7 @@ using u16 = System.UInt16;
 
 public delegate void Logic();
 
-namespace FrozenBoyCore {
+namespace FrozenBoyCore.Processor {
     public class Opcode {
         public u8 value;
         public string asmInstruction;

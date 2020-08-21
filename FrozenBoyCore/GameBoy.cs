@@ -4,6 +4,10 @@ using System.IO;
 using System.Text;
 using u8 = System.Byte;
 using u16 = System.UInt16;
+using FrozenBoyCore.Processor;
+using FrozenBoyCore.Graphics;
+using FrozenBoyCore.Util;
+using FrozenBoyCore.Memory;
 
 namespace FrozenBoyCore {
 
@@ -14,7 +18,7 @@ namespace FrozenBoyCore {
         public const float MILLIS_PER_FRAME = 16.74f;
 
         public CPU cpu;
-        public PPU ppu;
+        public GPU ppu;
         public MMU mmu;
         public Timer timer;
         public Logger logger;
@@ -31,7 +35,7 @@ namespace FrozenBoyCore {
 
             timer = new Timer(mmu);
             cpu = new CPU(mmu);
-            ppu = new PPU(mmu);
+            ppu = new GPU(mmu);
 
             this.gbParm = gbParm;
             if (gbParm.debugMode) {
