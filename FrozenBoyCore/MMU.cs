@@ -1,26 +1,41 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using u8 = System.Byte;
 using u16 = System.UInt16;
-using System.Diagnostics;
 
 namespace FrozenBoyCore {
 
     // MMU = Memory Management Unit
     public class MMU {
-        // 0xFFFF = 65535
-        public u8[] data = new u8[0xFFFF + 1];
         public string linkPortOutput = "";
 
-        // FFFF - IE - Interrupt Enable
-        // When bits are set, the corresponding interrupt can be triggered
+        // 0xFFFF = 65535
+        public u8[] data = new u8[0xFFFF + 1];
+
+        // TIMERS
+        // https://gbdev.gg8.se/wiki/articles/Timer_and_Divider_Registers
+        // https://thomas.spurden.name/gameboy/#divider-and-timer-registers
+        // The divider register increments at a fixed frequency (1 per 256 clock cycles)
+        public u8 DIV { get { return data[0xFF04]; } set { data[0xFF04] = value; } }
+        //  The timer register increments at a configurable frequency and can provide an interrupt when it overflows.
+        public u8 TIMA { get { return data[0xFF05]; } set { data[0xFF05] = value; } }
+        // When the TIMA overflows, this data will be loaded.
+        public u8 TMA { get { return data[0xFF06]; } set { data[0xFF06] = value; } }
+        // Bit  2   - Timer Enable
+        // Bits 1-0 - Input Clock Select
+        //     00: CPU Clock / 1024 (DMG, CGB:   4096 Hz, SGB:   ~4194 Hz)
+        //     01: CPU Clock / 16   (DMG, CGB: 262144 Hz, SGB: ~268400 Hz)
+        //     10: CPU Clock / 64   (DMG, CGB:  65536 Hz, SGB:  ~67110 Hz)
+        //     11: CPU Clock / 256  (DMG, CGB:  16384 Hz, SGB:  ~16780 Hz)
+        //Note: The "Timer Enable" bit only affects the timer, the divider is ALWAYS counting.
+        public u8 TAC { get { return data[0xFF07]; } set { data[0xFF07] = value; } }   // Timer Control 
+
+
+        // INTERRUPTION STUFF
+        // FFFF - IE - Interrupt Enable, when bits are set, the corresponding interrupt can be triggered
         public u8 IE { get { return data[0xFFFF]; } set { data[0xFFFF] = value; } }
-
-        // When bits are set, an interrupt has happened
-        // FF0F - IF - Interrupt Flag (R/W)
+        // FF0F - IF - Interrupt Flag (R/W), when bits are set, an interrupt has happened
         public u8 IF { get { return data[0xFF0F]; } set { data[0xFF0F] = value; } }
-
         // ISR addresses
         public List<u16> ISR_Address = new List<u16> {
                 { 0x0040 },    // Vblank
@@ -28,6 +43,7 @@ namespace FrozenBoyCore {
                 { 0x0050 },    // TimerOverflow
                 { 0x0058 },    // SerialLink
                 { 0x0060 } };  // JoypadPress,
+
 
         //public u8[] boot;                     //     0 ->   255, 0x0000 -> 0x00FF, after boot it's used for Restart and Interrupt Vectors
         //public u8[] cartridge_header;         //   256 ->   335, 0x0100 -> 0x014F
@@ -133,6 +149,10 @@ namespace FrozenBoyCore {
         public void Write16(u16 address, u16 value) {
             data[address + 1] = (u8)((value & 0b_11111111_00000000) >> 8);
             data[address] = (u8)(value & 0b_00000000_11111111);
+        }
+
+        public void RequestInterrupt(int bitPosition) {
+            IF |= (byte)(1 << bitPosition);
         }
 
     }

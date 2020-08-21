@@ -20,8 +20,10 @@ namespace FrozenBoyCore {
         public u16 opLocation;
 
         public bool IME;  // Interrupt Master Enable Register, it's a master switch for all interruptions
-        public bool IME_Scheduled = true;
+        public bool IME_Scheduled = false;
         public bool halted = false;
+
+        public int cycles;
 
         public CPU(MMU mmu) {
             this.mmu = mmu;
@@ -41,7 +43,7 @@ namespace FrozenBoyCore {
         }
 
         public int ExecuteNext() {
-            int cycles = 0;
+            cycles = 0;
 
             opLocation = regs.PC;
             opcode = Disassemble();
@@ -94,11 +96,6 @@ namespace FrozenBoyCore {
             IME |= IME_Scheduled;
             IME_Scheduled = false;
         }
-
-        public void UpdateIME() {
-
-        }
-
 
         public Opcode Disassemble() {
             u8 opcodeValue = mmu.Read8(regs.PC);
@@ -229,13 +226,14 @@ namespace FrozenBoyCore {
                 { 0xD4, new Opcode(0xD4, "CALL NC, ${0:x4}",     3, 24, () => { CALL(!regs.FlagC, Parm16()); })},
                 { 0xDC, new Opcode(0xDC, "CALL C, ${0:x4}",      3, 24, () => { CALL( regs.FlagC, Parm16()); })},
                 // Return - Pop two bytes from stack & jump to that address.
-                { 0xC0, new Opcode(0xC0, "RET NZ",               1, 20, () => { RET(!regs.FlagZ); })},
-                { 0xC8, new Opcode(0xC8, "RET Z",                1, 20, () => { RET( regs.FlagZ); })},
-                { 0xD0, new Opcode(0xD0, "RET NC",               1, 20, () => { RET(!regs.FlagC); })},
-                { 0xD8, new Opcode(0xD8, "RET C",                1, 20, () => { RET( regs.FlagC); })},
-                { 0xC9, new Opcode(0xC9, "RET",                  1, 16, () => { RET(true); })},
+                { 0xC0, new Opcode(0xC0, "RET NZ",               1, 20, () => { RET_CONDITIONAL(!regs.FlagZ); })},
+                { 0xC8, new Opcode(0xC8, "RET Z",                1, 20, () => { RET_CONDITIONAL( regs.FlagZ); })},
+                { 0xD0, new Opcode(0xD0, "RET NC",               1, 20, () => { RET_CONDITIONAL(!regs.FlagC); })},
+                { 0xD8, new Opcode(0xD8, "RET C",                1, 20, () => { RET_CONDITIONAL( regs.FlagC); })},
+                // Different function because RET has different timing information
+                { 0xC9, new Opcode(0xC9, "RET",                  1, 16, () => { RET(); })},
                 // Pop two bytes from stack & jump to that address then enable interrupts
-                { 0xD9, new Opcode(0xD9, "RETI",                 1, 16, () => { RET(true); IME = true; })},
+                { 0xD9, new Opcode(0xD9, "RETI",                 1, 16, () => { RET(); IME = true; })},
 
                 // ==================================================================================================================
                 // COMPARE
@@ -263,18 +261,18 @@ namespace FrozenBoyCore {
                 // JUMP FAMILY
                 // ==================================================================================================================
                 // JP - Jump to location
-                { 0xC3, new Opcode(0xC3, "JP ${0:x4}",           3, 16, () => { JP(true, Parm16()); })},
-                { 0xE9, new Opcode(0xE9, "JP (HL)",              1,  4, () => { JP(true, regs.HL); })},
-                { 0xC2, new Opcode(0xC2, "JP NZ, ${0:x4}",       3, 16, () => { JP(!regs.FlagZ, Parm16()); })},
-                { 0xCA, new Opcode(0xCA, "JP Z, ${0:x4}",        3, 16, () => { JP( regs.FlagZ, Parm16()); })},
-                { 0xD2, new Opcode(0xD2, "JP NC, ${0:x4}",       3, 16, () => { JP(!regs.FlagC, Parm16()); })},
-                { 0xDA, new Opcode(0xDA, "JP C, ${0:x4}",        3, 16, () => { JP( regs.FlagC, Parm16()); })},
+                { 0xC3, new Opcode(0xC3, "JP ${0:x4}",           3, 16, () => { JP(Parm16()); })},
+                { 0xE9, new Opcode(0xE9, "JP (HL)",              1,  4, () => { JP(regs.HL); })},
+                { 0xC2, new Opcode(0xC2, "JP NZ, ${0:x4}",       3, 16, () => { JP_CONDITIONAL(!regs.FlagZ, Parm16()); })},
+                { 0xCA, new Opcode(0xCA, "JP Z, ${0:x4}",        3, 16, () => { JP_CONDITIONAL( regs.FlagZ, Parm16()); })},
+                { 0xD2, new Opcode(0xD2, "JP NC, ${0:x4}",       3, 16, () => { JP_CONDITIONAL(!regs.FlagC, Parm16()); })},
+                { 0xDA, new Opcode(0xDA, "JP C, ${0:x4}",        3, 16, () => { JP_CONDITIONAL( regs.FlagC, Parm16()); })},
                 // Jump to location relative to the current location
-                { 0x18, new Opcode(0x18, "JR ${0:x2}",           2, 12, () => { JR(true, Parm8()); })},
-                { 0x20, new Opcode(0x20, "JR NZ, ${0:x2}",       2, 12, () => { JR(!regs.FlagZ, Parm8()); })},
-                { 0x28, new Opcode(0x28, "JR Z, ${0:x2}",        2, 12, () => { JR( regs.FlagZ, Parm8()); })},
-                { 0x30, new Opcode(0x30, "JR NC, ${0:x2}",       2, 12, () => { JR(!regs.FlagC, Parm8()); })},
-                { 0x38, new Opcode(0x38, "JR C, ${0:x2}",        2, 12, () => { JR( regs.FlagC, Parm8()); })},
+                { 0x18, new Opcode(0x18, "JR ${0:x2}",           2, 12, () => { JR(Parm8()); })},
+                { 0x20, new Opcode(0x20, "JR NZ, ${0:x2}",       2, 12, () => { JR_CONDITIONAL(!regs.FlagZ, Parm8()); })},
+                { 0x28, new Opcode(0x28, "JR Z, ${0:x2}",        2, 12, () => { JR_CONDITIONAL( regs.FlagZ, Parm8()); })},
+                { 0x30, new Opcode(0x30, "JR NC, ${0:x2}",       2, 12, () => { JR_CONDITIONAL(!regs.FlagC, Parm8()); })},
+                { 0x38, new Opcode(0x38, "JR C, ${0:x2}",        2, 12, () => { JR_CONDITIONAL( regs.FlagC, Parm8()); })},
 
                 // ==================================================================================================================
                 // LOAD FANILY
@@ -812,30 +810,60 @@ namespace FrozenBoyCore {
         }
 
         private void CALL(bool flag, u16 address) {
+            // without branch (12t)	with branch (24t)
             if (flag) {
                 // push address of next instruction
                 PUSH((ushort)(regs.PC));
                 regs.PC = address;
             }
+            else {
+                cycles -= 12;
+            }
         }
 
-        private void RET(bool flag) {
+        private void RET_CONDITIONAL(bool flag) {
+            // without branch (8t) with branch (20t)
             if (flag) {
                 // Pop two bytes from stack & jump to that address.
                 regs.PC = POP();
             }
-        }
-
-        private void JP(bool flag, u16 address) {
-            if (flag) {
-                regs.PC = address;
+            else {
+                cycles -= 12;
             }
         }
 
-        private void JR(bool flag, u8 offset) {
+        private void RET() {
+            // RET AND RET_CONDITIONAL have different timings
+            // Pop two bytes from stack & jump to that address.
+            regs.PC = POP();
+        }
+
+        private void JP(u16 address) {
+            regs.PC = address;
+        }
+
+        private void JP_CONDITIONAL(bool flag, u16 address) {
+            // without branch (12t)	with branch (16t)
+            if (flag) {
+                regs.PC = address;
+            }
+            else {
+                cycles -= 4;
+            }
+        }
+
+        private void JR(u8 offset) {
+            regs.PC = (u16)(opLocation + 2 + ToSigned(offset));
+        }
+
+        private void JR_CONDITIONAL(bool flag, u8 offset) {
+            // Timing without branch(8t) with branch(12t)
             if (flag) {
                 // +2 because it's the size of opcode
                 regs.PC = (u16)(opLocation + 2 + ToSigned(offset));
+            }
+            else {
+                cycles -= 4;
             }
         }
 

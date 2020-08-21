@@ -8,13 +8,19 @@ using u16 = System.UInt16;
 namespace FrozenBoyCore {
 
     public class GameBoy {
-        private const int MAXCYCLES = 69905;
+        public const int DMG_4Mhz = 4194304;
+        public const float REFRESH_RATE = 59.7275f;
+        public const int CYCLES_PER_UPDATE = (int)(DMG_4Mhz / REFRESH_RATE);
+        public const float MILLIS_PER_FRAME = 16.74f;
 
         public CPU cpu;
         public MMU mmu;
-        public Disassembler disassembler;
+        public Timer timer;
         public Logger logger;
         private readonly GameBoyParm gbParm;
+
+        int totalCycles;
+        int cycles;
         int prevPC;
 
         // constructor
@@ -23,8 +29,8 @@ namespace FrozenBoyCore {
             byte[] romData = File.ReadAllBytes(romName);
             Buffer.BlockCopy(romData, 0, mmu.data, 0, romData.Length);
 
+            timer = new Timer(mmu);
             cpu = new CPU(mmu);
-            disassembler = new Disassembler();
 
             this.gbParm = gbParm;
             if (gbParm.debugMode) {
@@ -35,15 +41,17 @@ namespace FrozenBoyCore {
         public bool Run() {
             prevPC = cpu.regs.PC;
 
+            totalCycles = 0;
+
             while (true) {
-                int cpuCycles = 0;
 
-                while (cpuCycles < MAXCYCLES) {
-                    // perform next instruction
-                    cpuCycles += cpu.ExecuteNext();
-
-                    // handle interruptions
+                while (totalCycles < CYCLES_PER_UPDATE) {
+                    cycles = cpu.ExecuteNext();
+                    timer.Update(cycles);
+                    // UpdateGraphics(cycles);
                     cpu.HandleInterrupts();
+
+                    totalCycles += cycles;
 
                     // Debug stuff
                     if (gbParm.debugMode) {
@@ -52,23 +60,23 @@ namespace FrozenBoyCore {
                         if (gbParm.checkLinkPort) {
                             // This is for Blargg testing, the ROMS write to the link port I/O
                             if (mmu.linkPortOutput.Contains("Passed")) {
+                                logger.Close();
                                 return true;
                             }
                             if (mmu.linkPortOutput.Contains("Failed")) {
+                                logger.Close();
                                 return false;
                             }
                         }
                     }
                 }
 
-                // Render frame
+                totalCycles -= CYCLES_PER_UPDATE;
             }
         }
 
         private void Log() {
-            string instruction = disassembler.OpcodeToStr(cpu, cpu.prevOpcode, prevPC);
-            logger.LogState(instruction, cpu.regs.ToString());
-            prevPC = cpu.regs.PC;
+            logger.LogState(cpu, mmu, totalCycles);
         }
 
     }

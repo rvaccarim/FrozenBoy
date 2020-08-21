@@ -8,7 +8,7 @@ namespace FrozenBoyCore {
 
         private const string opcodeFormat = "{0,-15} ;${1,-6:x4} O=0x{2:x2}";
 
-        public string OpcodeToStr(CPU cpu, Opcode o, int address) {
+        public static string OpcodeToStr(CPU cpu, Opcode o, int address) {
             return o.length switch
             {
                 2 => String.Format(opcodeFormat,
