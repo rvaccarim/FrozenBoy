@@ -32,7 +32,7 @@ namespace FrozenBoyCore.Processor {
         public void Update(int cycles) {
             // The divider register increments at a fixed frequency (1 per 256 clock cycles). From 0 to 255.
             divCycles += cycles;
-            if (divCycles >= DivCycleFreq) {
+            while (divCycles >= DivCycleFreq) {
                 // divcycles = 0 is incorrect, because we might have exceeded DivCycleFreq
                 divCycles -= DivCycleFreq;
                 mmu.DIV++;
@@ -42,7 +42,7 @@ namespace FrozenBoyCore.Processor {
                 timaCycles += cycles;
                 int timaFreq = TIMA_ClockCycles[mmu.TAC & 0b_0000_0011];
 
-                if (timaCycles >= timaFreq) {
+                while (timaCycles >= timaFreq) {
                     // timaCycles = 0 is incorrect, because we might have exceeded timaFreq
                     timaCycles -= timaFreq;
                     mmu.TIMA++;

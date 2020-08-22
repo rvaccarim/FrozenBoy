@@ -39,7 +39,7 @@ namespace FrozenBoyCore {
 
             this.gbParm = gbParm;
             if (gbParm.logExecution) {
-                logger = new Logger(gbParm.logFilename);
+                logger = new Logger(gbParm.logFilename, gbParm.logMode);
             }
         }
 
