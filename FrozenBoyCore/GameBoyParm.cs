@@ -4,13 +4,13 @@ using System.Text;
 
 namespace FrozenBoyCore {
     public class GameBoyParm {
-        public bool debugMode;
-        public bool checkLinkPort;
+        public bool logExecution;
+        public bool testingMode;
         public string logFilename;
 
-        public GameBoyParm(bool debugMode, bool checkLinkPort, string logFilename) {
-            this.debugMode = debugMode;
-            this.checkLinkPort = checkLinkPort;
+        public GameBoyParm(bool testingMode, bool logExecution, string logFilename) {
+            this.testingMode = testingMode;
+            this.logExecution = logExecution;
             this.logFilename = logFilename;
         }
     }

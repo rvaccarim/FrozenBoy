@@ -38,7 +38,7 @@ namespace FrozenBoyCore {
             gpu = new GPU(mmu);
 
             this.gbParm = gbParm;
-            if (gbParm.debugMode) {
+            if (gbParm.logExecution) {
                 logger = new Logger(gbParm.logFilename);
             }
         }
@@ -57,19 +57,23 @@ namespace FrozenBoyCore {
                     totalCycles += cycles;
 
                     // Debug stuff
-                    if (gbParm.debugMode) {
+                    if (gbParm.logExecution) {
                         Log();
+                    }
 
-                        if (gbParm.checkLinkPort) {
-                            // This is for Blargg testing, the ROMS write to the link port I/O
-                            if (mmu.linkPortOutput.Contains("Passed")) {
+                    if (gbParm.testingMode) {
+                        // This is for Blargg testing, the ROMS write to the link port I/O
+                        if (mmu.linkPortOutput.Contains("Passed")) {
+                            if (logger != null) {
                                 logger.Close();
-                                return true;
                             }
-                            if (mmu.linkPortOutput.Contains("Failed")) {
+                            return true;
+                        }
+                        if (mmu.linkPortOutput.Contains("Failed")) {
+                            if (logger != null) {
                                 logger.Close();
-                                return false;
                             }
+                            return false;
                         }
                     }
                 }

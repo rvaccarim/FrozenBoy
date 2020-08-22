@@ -24,9 +24,11 @@ namespace FrozenBoyCore.Util {
             logFile.Dispose();
         }
 
-        //~Logger() {
-        //    Close();
-        //}
+        ~Logger() {
+            if (logFile != null) {
+                Close();
+            }
+        }
 
         public void LogState(CPU cpu, MMU mmu, int totalCycles) {
             // tring instruction = Disassembler.OpcodeToStr(cpu, cpu.opcode, cpu.opLocation);

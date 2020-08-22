@@ -87,13 +87,13 @@ namespace FrozenBoyTest {
         }
 
         public bool TestCPU_Blargg(string romName) {
-            bool debugMode = true;
+            bool debugMode = false;
             bool checkLinkPort = true;
 
             string romFilename = romPath + romName;
             string logOutput = debugPath + romName + ".log.frozenBoy.txt";
 
-            GameBoyParm gbParm = new GameBoyParm(debugMode, checkLinkPort, logOutput);
+            GameBoyParm gbParm = new GameBoyParm(checkLinkPort, debugMode, logOutput);
             GameBoy gb = new GameBoy(romFilename, gbParm);
 
             bool passed = gb.Run();
