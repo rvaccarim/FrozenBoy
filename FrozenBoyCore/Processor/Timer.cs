@@ -7,14 +7,17 @@ using u16 = System.UInt16;
 namespace FrozenBoyCore.Processor {
 
     public class Timer {
-        public Dictionary<int, int> TIMA_Freq = new Dictionary<int, int> {
-                { 0x00, 4096 },
-                { 0x01, 262144 },
-                { 0x10, 65536 },
-                { 0x11, 16384 } };
+        public const double ClockFrequency = 4194304;
+        public const int DivFrequency = 16384;
+
+        public Dictionary<int, int> TIMA_ClockCycles = new Dictionary<int, int> {
+                { 0b00, (int) ClockFrequency / 4096 },
+                { 0b01, (int) ClockFrequency / 262144 },
+                { 0b10, (int) ClockFrequency / 65536},
+                { 0b11, (int) ClockFrequency / 16384 } };
 
         // TODO
-        public const int DivCycleFreq = 256;
+        public const int DivCycleFreq = (int)(ClockFrequency / DivFrequency);
         private const int TimerEnabledBitPosition = 2;
         private const int TimerInterruptBitPosition = 2;
 
@@ -29,7 +32,7 @@ namespace FrozenBoyCore.Processor {
         public void Update(int cycles) {
             // The divider register increments at a fixed frequency (1 per 256 clock cycles). From 0 to 255.
             divCycles += cycles;
-            while (divCycles >= DivCycleFreq) {
+            if (divCycles >= DivCycleFreq) {
                 // divcycles = 0 is incorrect, because we might have exceeded DivCycleFreq
                 divCycles -= DivCycleFreq;
                 mmu.DIV++;
@@ -37,9 +40,9 @@ namespace FrozenBoyCore.Processor {
 
             if (IsClockEnabled()) {
                 timaCycles += cycles;
-                int timaFreq = TIMA_Freq[mmu.TAC & 0b_0000_0011];
+                int timaFreq = TIMA_ClockCycles[mmu.TAC & 0b_0000_0011];
 
-                while (timaCycles >= timaFreq) {
+                if (timaCycles >= timaFreq) {
                     // timaCycles = 0 is incorrect, because we might have exceeded timaFreq
                     timaCycles -= timaFreq;
                     mmu.TIMA++;

@@ -18,7 +18,7 @@ namespace FrozenBoyCore {
         public const float MILLIS_PER_FRAME = 16.74f;
 
         public CPU cpu;
-        public GPU ppu;
+        public GPU gpu;
         public MMU mmu;
         public Timer timer;
         public Logger logger;
@@ -35,7 +35,7 @@ namespace FrozenBoyCore {
 
             timer = new Timer(mmu);
             cpu = new CPU(mmu);
-            ppu = new GPU(mmu);
+            gpu = new GPU(mmu);
 
             this.gbParm = gbParm;
             if (gbParm.debugMode) {
@@ -51,7 +51,7 @@ namespace FrozenBoyCore {
                 while (totalCycles < CYCLES_PER_UPDATE) {
                     cycles = cpu.ExecuteNext();
                     timer.Update(cycles);
-                    ppu.Update(cycles);
+                    gpu.Update(cycles);
                     cpu.HandleInterrupts();
 
                     totalCycles += cycles;

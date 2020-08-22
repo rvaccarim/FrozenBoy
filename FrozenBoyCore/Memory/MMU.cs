@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 
@@ -13,9 +14,17 @@ namespace FrozenBoyCore.Memory {
         public u8[] data = new u8[0xFFFF + 1];
 
         // INTERRUPTION REGISTERS
-        // FFFF - IE - Interrupt Enable, when bits are set, the corresponding interrupt can be triggered
+        // IE = granular interrupt enabler. When bits are set, the corresponding interrupt can be triggered
+        // IF = When bits are set, an interrupt has happened
+        // They use the same bit positions
+        // 
+        // Bit 
+        // 0   Vblank 
+        // 1   LCD
+        // 2   Timer 
+        // 3   Serial Link 
+        // 4   Joypad 
         public u8 IE { get { return data[0xFFFF]; } set { data[0xFFFF] = value; } }
-        // FF0F - IF - Interrupt Flag (R/W), when bits are set, an interrupt has happened
         public u8 IF { get { return data[0xFF0F]; } set { data[0xFF0F] = value; } }
         // ISR addresses
         public List<u16> ISR_Address = new List<u16> {
@@ -24,6 +33,7 @@ namespace FrozenBoyCore.Memory {
                 { 0x0050 },    // TimerOverflow
                 { 0x0058 },    // SerialLink
                 { 0x0060 } };  // JoypadPress,
+
 
         // TIMER REGISTERS
         // https://gbdev.gg8.se/wiki/articles/Timer_and_Divider_Registers
@@ -35,16 +45,46 @@ namespace FrozenBoyCore.Memory {
         // When the TIMA overflows, this data will be loaded.
         public u8 TMA { get { return data[0xFF06]; } set { data[0xFF06] = value; } }
         // Timer Control 
-        // Bit  2   - Timer Enable
         // Bits 1-0 - Input Clock Select
-        //     00: 4096   Hz 
-        //     01: 262144 Hz
-        //     10: 65536  Hz
-        //     11: 16384  Hz
+        //            00: 4096   Hz 
+        //            01: 262144 Hz
+        //            10: 65536  Hz
+        //            11: 16384  Hz
+        // Bit  2   - Timer Enable
         //Note: The "Timer Enable" bit only affects the timer, the divider is ALWAYS counting.
         public u8 TAC { get { return data[0xFF07]; } set { data[0xFF07] = value; } }
 
 
+        // GPU Registers
+        // LCD and GPU Control
+        // Bit Function                 When 0   When 1
+        // 0	Background: on/off           
+        // 1	Sprites: on/off             
+        // 2	Sprites: size(pixels)   8x8   	8x16
+        // 3	Background: tile map	 #0	      #1
+        // 4	Background: tile set	 #0	      #1
+        // 5	Window: on/off                             A "window" layer which can appear above the background
+        // 6	Window: tile map	     #0	      #1
+        // 7	Display: on/off        
+        public u8 LCDC { get { return data[0xFF40]; } set { data[0xFF40] = value; } }
+
+        // Bits
+        // 0-1
+        //         00: H-Blank
+        //         01: V-Blank
+        //         10: Searching Sprites Atts
+        //         11: Transfering Data to LCD Driver
+        // 2       Set to 1 if register (0xFF44) is the same value as (0xFF45) 
+        // 3, 4, 5 are interrupt enabled flags (similar to how the IE Register works), when the mode changes the
+        //         corresponding bit 3,4,5 is set
+        public u8 Status { get { return data[0xFF41]; } set { data[0xFF41] = value; } }
+        public u8 ScrollY { get { return data[0xFF42]; } set { data[0xFF42] = value; } }
+        public u8 ScrollX { get { return data[0xFF43]; } set { data[0xFF43] = value; } }
+        // This is Y coordinate of the current scan line
+        public u8 LY { get { return data[0xFF44]; } set { data[0xFF44] = value; } }
+        // LYC - Scanline compare register
+        public u8 LYC { get { return data[0xFF45]; } set { data[0xFF45] = value; } }
+        public u8 BGPalette { get { return data[0xFF47]; } set { data[0xFF47] = value; } }
 
 
         //public u8[] boot;                     //     0 ->   255, 0x0000 -> 0x00FF, after boot it's used for Restart and Interrupt Vectors
@@ -65,6 +105,28 @@ namespace FrozenBoyCore.Memory {
         //public u8[] IE;                       // 65535 -> 65535, 0xFFFF -> 0xFFFF (1 byte) Interrupt Enable Flag
 
         public MMU() {
+            data[0xFF10] = 0x80;
+            data[0xFF11] = 0xBF;
+            data[0xFF12] = 0xF3;
+            data[0xFF14] = 0xBF;
+            data[0xFF16] = 0x3F;
+            data[0xFF19] = 0xBF;
+            data[0xFF1A] = 0x7F;
+            data[0xFF1B] = 0xFF;
+            data[0xFF1C] = 0x9F;
+            data[0xFF1E] = 0xBF;
+            data[0xFF20] = 0xFF;
+            data[0xFF23] = 0xBF;
+            data[0xFF24] = 0x77;
+            data[0xFF25] = 0xF3;
+            data[0xFF26] = 0xF1;
+
+            // graph related
+            LCDC = 0x91;
+            BGPalette = 0xFC;
+            data[0xFF48] = 0xFF;
+            data[0xFF49] = 0xFF;
+
             //boot = InitMemory(0x0000, 0x00FF);
             //cartridge_header = InitMemory(0x0100, 0x014F);
             //cartridge_bank0 = InitMemory(0x0150, 0x3FFF);
@@ -133,12 +195,14 @@ namespace FrozenBoyCore.Memory {
             //}
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public u16 Read16(u16 address) {
             u8 a = data[address];
             u8 b = data[address + 1];
             return (u16)(b << 8 | a);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Write8(u16 address, u8 value) {
             data[address] = value;
 
@@ -148,11 +212,13 @@ namespace FrozenBoyCore.Memory {
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Write16(u16 address, u16 value) {
             data[address + 1] = (u8)((value & 0b_11111111_00000000) >> 8);
             data[address] = (u8)(value & 0b_00000000_11111111);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RequestInterrupt(int bitPosition) {
             IF |= (byte)(1 << bitPosition);
         }

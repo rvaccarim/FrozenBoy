@@ -71,9 +71,9 @@ namespace FrozenBoyCore.Processor {
             // IF = When bits are set, an interrupt has happened
             // They use the same bit positions
             // 
-            // Bit When 0  When 1
+            // Bit
             // 0   Vblank 
-            // 1   LCD stat
+            // 1   LCD 
             // 2   Timer 
             // 3   Serial Link 
             // 4   Joypad 
