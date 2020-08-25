@@ -10,7 +10,7 @@ using u8 = System.Byte;
 using u16 = System.UInt16;
 
 namespace FrozenBoyTest {
-    public class BlarggTest {
+    public class BlarggTestX {
         private ITestOutputHelper output;
 
         private const string CPU_Path = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\blargg\cpu_instrs\individual\";
@@ -23,7 +23,7 @@ namespace FrozenBoyTest {
 
         private const string debugPath = @"D:\Users\frozen\Documents\99_temp\GB_Debug\";
 
-        public BlarggTest(ITestOutputHelper output) {
+        public BlarggTestX(ITestOutputHelper output) {
             this.output = output;
         }
 
@@ -137,7 +137,7 @@ namespace FrozenBoyTest {
             LogMode logMode = LogMode.Full;
 
             GameBoyOptions gbParm = new GameBoyOptions(testingMode, logExecution, logFilename, logMode);
-            GameBoy gb = new GameBoy(romFilename, gbParm);
+            GameBoyX gb = new GameBoyX(romFilename, gbParm);
 
             bool passed = gb.Run();
             output.WriteLine(gb.cpu.mmu.linkPortOutput);

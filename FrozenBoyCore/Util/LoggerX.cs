@@ -1,13 +1,13 @@
-﻿using System;
-using System.IO;
-using FrozenBoyCore.Processor;
+﻿using FrozenBoyCore.Graphics;
 using FrozenBoyCore.Memory;
-using u8 = System.Byte;
-using u16 = System.UInt16;
-using FrozenBoyCore.Graphics;
+using FrozenBoyCore.Processor;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
 
 namespace FrozenBoyCore.Util {
-    public class Logger {
+    public class LoggerX {
         //private const string stateFormatFull =
         //    "{0}   cycles:{1,6}  AF={2:x4} BC={3:x4} DE={4:x4} HL={5:x4}   Z={6} N={7} H={8} C={9}   PC={10:x4} SP={11:x4}   IME={12} IE={13:x4} IF={14:x4} IME_Scheduled={15} halted={16}   DIV={17:x4} TIMA={18:x4} TMA={19:x4} TAC={20:x4}   LCDC={21:x2} STAT={22} LY={23:x2} LYC={24:x2}";
         private const string stateFormatFull =
@@ -26,7 +26,7 @@ namespace FrozenBoyCore.Util {
         private readonly string logFilename;
         private readonly LogMode logMode;
 
-        public Logger(string logFilename, LogMode logMode) {
+        public LoggerX(string logFilename, LogMode logMode) {
             this.logFilename = logFilename;
             this.logMode = logMode;
 
@@ -39,15 +39,15 @@ namespace FrozenBoyCore.Util {
             logFile.Dispose();
         }
 
-        ~Logger() {
+        ~LoggerX() {
             if (logFile != null) {
                 Close();
             }
         }
 
-        public void LogState(CPU cpu, GPU gpu, Timer timer, MMU mmu, int cycles) {
+        public void LogState(CPUX cpu, GPU gpu, Timer timer, MMU mmu, int cycles) {
             // string instruction = Disassembler.OpcodeToStr(cpu, cpu.opcode, cpu.opLocation);
-            string instruction = Disassembler.OpcodeToStr(cpu, cpu.opcode, cpu.opLocation).Substring(25);
+            string instruction = DisassemblerX.OpcodeToStr(cpu, cpu.opcode, cpu.opLocation).Substring(25);
 
             //logFile.WriteLine(
             //String.Format(stateFormatFull,

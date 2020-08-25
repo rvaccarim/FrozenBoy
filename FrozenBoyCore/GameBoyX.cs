@@ -12,17 +12,17 @@ using System.Diagnostics;
 
 namespace FrozenBoyCore {
 
-    public class GameBoy {
+    public class GameBoyX {
         public const int DMG_4Mhz = 4194304;
         public const float REFRESH_RATE = 59.7275f;
         public const int CYCLES_PER_UPDATE = (int)(DMG_4Mhz / REFRESH_RATE);
 
-        public CPU cpu;
+        public CPUX cpu;
         public GPU gpu;
         public MMU mmu;
         public InterruptManager intManager;
         public Timer timer;
-        public Logger logger;
+        public LoggerX logger;
         private readonly GameBoyOptions gbParm;
 
         int totalCycles;
@@ -30,18 +30,18 @@ namespace FrozenBoyCore {
         int cycles;
 
         // constructor
-        public GameBoy(string romName, GameBoyOptions gbParm) {
+        public GameBoyX(string romName, GameBoyOptions gbParm) {
             intManager = new InterruptManager();
             timer = new Timer(intManager);
             gpu = new GPU(intManager);
             mmu = new MMU(timer, intManager, gpu);
-            cpu = new CPU(mmu, timer, intManager);
+            cpu = new CPUX(mmu, timer, intManager);
 
             mmu.LoadData(romName);
 
             this.gbParm = gbParm;
             if (gbParm.logExecution) {
-                logger = new Logger(gbParm.logFilename, gbParm.logMode);
+                logger = new LoggerX(gbParm.logFilename, gbParm.logMode);
             }
         }
 
@@ -49,16 +49,16 @@ namespace FrozenBoyCore {
             totalCycles = 0;
             coreBoyCycles = 0;
 
+
             while (true) {
 
                 while (totalCycles < CYCLES_PER_UPDATE) {
-                    cycles = cpu.ExecuteNext();
-                    // timer.Update(cycles);
-                    gpu.Update(cycles);
-                    // cpu.HandleInterrupts();
+                    timer.Tick();
+                    cpu.ExecuteNext();
+                    gpu.Update(1);
 
-                    totalCycles += cycles;
-                    coreBoyCycles += cycles;
+                    totalCycles++;
+                    coreBoyCycles++;
 
                     if (coreBoyCycles >= 65536) {
                         coreBoyCycles -= 65536;
@@ -66,7 +66,9 @@ namespace FrozenBoyCore {
 
                     // Debug stuff
                     if (gbParm.logExecution) {
-                        Log();
+                        if (cpu.shouldLog) {
+                            Log();
+                        }
                     }
 
                     if (gbParm.testingMode) {
@@ -88,6 +90,8 @@ namespace FrozenBoyCore {
                             return false;
                         }
                     }
+
+
                 }
 
                 totalCycles -= CYCLES_PER_UPDATE;
@@ -100,3 +104,4 @@ namespace FrozenBoyCore {
 
     }
 }
+

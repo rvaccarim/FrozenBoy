@@ -1,64 +1,109 @@
-﻿using System.Collections.Generic;
-using FrozenBoyCore.Memory;
+﻿using FrozenBoyCore.Memory;
+using System;
+using System.Collections.Generic;
+using System.Text;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 
 
 namespace FrozenBoyCore.Processor {
-
     public class Timer {
-        public const double ClockFrequency = 4194304;
-        public const int DivFrequency = 16384;
 
-        public Dictionary<int, int> TIMA_ClockCycles = new Dictionary<int, int> {
-                { 0b00, (int) ClockFrequency / 4096 },
-                { 0b01, (int) ClockFrequency / 262144 },
-                { 0b10, (int) ClockFrequency / 65536},
-                { 0b11, (int) ClockFrequency / 16384 } };
+        private InterruptManager interruptManager;
+        private static readonly int[] FreqToBit = { 9, 3, 5, 7 };
 
-        // TODO
-        public const int DivCycleFreq = (int)(ClockFrequency / DivFrequency);
-        private const int TimerEnabledBitPosition = 2;
-        private const int TimerInterruptBitPosition = 2;
+        // TODO: revoke public
+        public int timerCounter = 0;
+        private u8 tima;
+        public u8 tac;
+        public bool overflow;
+        public int ticksSinceOverflow;
+        public bool previousBit;
 
-        private readonly MMU mmu;
-        public int timaCycles;
-        public int divCycles;
-
-        public Timer(MMU mmu) {
-            this.mmu = mmu;
+        public Timer(InterruptManager interruptManager) {
+            this.interruptManager = interruptManager;
         }
 
-        public void Update(int cycles) {
-            // The divider register increments at a fixed frequency (1 per 256 clock cycles). From 0 to 255.
-            divCycles += cycles;
-            while (divCycles >= DivCycleFreq) {
-                // divcycles = 0 is incorrect, because we might have exceeded DivCycleFreq
-                divCycles -= DivCycleFreq;
-                mmu.DIV++;
-            }
+        // The divider register increments at a fixed frequency
+        // For some reason it's inside a 16 bit value (the 8 most significant bytes)
+        public u8 DIV {
+            get => (u8)(timerCounter >> 8);
+            set => UpdateDiv(0);
+        }
 
-            if (IsClockEnabled()) {
-                timaCycles += cycles;
-                int timaFreq = TIMA_ClockCycles[mmu.TAC & 0b_0000_0011];
-
-                while (timaCycles >= timaFreq) {
-                    // timaCycles = 0 is incorrect, because we might have exceeded timaFreq
-                    timaCycles -= timaFreq;
-                    mmu.TIMA++;
-                }
-
-                if (mmu.TIMA == 255) {
-                    mmu.TIMA = mmu.TMA;
-                    mmu.RequestInterrupt(TimerInterruptBitPosition);
-                }
+        //  The timer register increments at a configurable frequency and can provide an interrupt when it overflows.
+        public u8 TIMA {
+            get => tima;
+            set {
+                if (ticksSinceOverflow < 5) {
+                    tima = value;
+                    overflow = false;
+                    ticksSinceOverflow = 0;
+                };
             }
         }
 
-        public bool IsClockEnabled() {
-            // check if bit 2 is 1
-            return ((mmu.TAC >> TimerEnabledBitPosition) & 0b_0000_0001) == 1;
+        // When the TIMA overflows, after some cycles this data will be loaded.
+        public byte TMA { get; set; }
+
+        // Timer Control 
+        // Bits 1-0 - Input Clock Select
+        //            00: 4096   Hz 
+        //            01: 262144 Hz
+        //            10: 65536  Hz
+        //            11: 16384  Hz
+        // Bit  2   - Timer Enable
+        //Note: The "Timer Enable" bit only affects the timer, the divider is ALWAYS counting.
+        public u8 TAC { get => (u8)(tac | 0b11111000); set => tac = value; }
+
+        public void Tick() {
+            // 1111_1111_1111_1111 = 65535
+            UpdateDiv((timerCounter + 1) & 65535);
+            if (!overflow) {
+                return;
+            }
+
+            ticksSinceOverflow++;
+            if (ticksSinceOverflow == 4) {
+                interruptManager.RequestTimer();
+            }
+
+            if (ticksSinceOverflow == 5) {
+                tima = TMA;
+            }
+
+            if (ticksSinceOverflow == 6) {
+                tima = TMA;
+                overflow = false;
+                ticksSinceOverflow = 0;
+            }
         }
 
+        private void UpdateDiv(int newTimerCounter) {
+            timerCounter = newTimerCounter;
+
+            int bitPos = FreqToBit[TAC & 0b11];
+            //bitPos <<= _speedMode.GetSpeedMode() - 1;       
+            bitPos <<= 0;
+
+            bool bit = (timerCounter & (1 << bitPos)) != 0;
+            bit &= (TAC & (1 << 2)) != 0;
+            if (!bit && previousBit) {
+                UpdateTima();
+            }
+
+            previousBit = bit;
+        }
+
+        private void UpdateTima() {
+            tima++;
+            int timaMod = tima % 256;
+
+            if (timaMod == 0) {
+                tima = 0;
+                overflow = true;
+                ticksSinceOverflow = 0;
+            }
+        }
     }
 }

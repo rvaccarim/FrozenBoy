@@ -4,12 +4,15 @@ using System.Collections.Generic;
 using FrozenBoyCore.Memory;
 using u8 = System.Byte;
 using u16 = System.UInt16;
+using System.Text;
 
 namespace FrozenBoyCore.Processor {
 
     public class CPU {
         public Registers regs;
         public MMU mmu;
+        public Timer timer;
+        public InterruptManager intManager;
 
         public Dictionary<u8, Opcode> opcodes;
         public Dictionary<u8, Opcode> cbOpcodes;
@@ -18,15 +21,18 @@ namespace FrozenBoyCore.Processor {
         public Opcode opcode;
         public Opcode prevOpcode;
         public u16 opLocation;
+        public bool cbPrefix;
 
-        public bool IME;  // Interrupt Master Enable Register, it's a master switch for all interruptions
-        public bool IME_Scheduled = false;
         public bool halted = false;
+        public bool halt_bug = false;
 
         public int cycles;
+        public int delta;
 
-        public CPU(MMU mmu) {
+        public CPU(MMU mmu, Timer timer, InterruptManager intManager) {
             this.mmu = mmu;
+            this.timer = timer;
+            this.intManager = intManager;
 
             regs = new Registers {
                 AF = 0x01B0,
@@ -36,21 +42,52 @@ namespace FrozenBoyCore.Processor {
                 PC = 0x100,
                 SP = 0xFFFE
             };
-            IME = false;
+            this.intManager.IME = false;
 
             opcodes = InitializeOpcodes();
             cbOpcodes = InitializeCB();
         }
 
-        public int ExecuteNext() {
-            cycles = 0;
+        private void AdvanceClock(int ticks, bool interrupts) {
+            for (int t = 0; t < ticks; t++) {
+                timer.Tick();
+            }
 
+            if (interrupts)
+                HandleInterrupts();
+        }
+
+        public int ExecuteNext() {
+            delta = 0;
+            cycles = 0;
+            int ticks = 0;
+
+            AdvanceClock(4, true);
+            ticks += 4;
+
+            cbPrefix = false;
             opLocation = regs.PC;
             opcode = Disassemble();
+
+            if (halt_bug) {
+                regs.PC--;
+                halt_bug = false;
+            }
 
             if (opcode != null) {
                 // points to the next one even if we haven't executed it yet
                 regs.PC = (u16)(regs.PC + opcode.length);
+
+                if (opcode.length > 1) {
+                    if (!cbPrefix && (opcode.value == 0xEA || opcode.value == 0xFA)) {
+                        AdvanceClock(8, true);
+                        ticks += 8;
+                    }
+                    else {
+                        AdvanceClock(4, true);
+                        ticks += 4;
+                    }
+                }
 
                 // execute opcode
                 opcode.logic.Invoke();
@@ -59,42 +96,41 @@ namespace FrozenBoyCore.Processor {
                 System.Environment.Exit(0);
             }
 
-            cycles += opcode.mcycles;
+            cycles += opcode.mcycles + delta;
             prevOpcode = opcode;
+
+            if (cbPrefix && opcode.value == 0xFE) {
+                AdvanceClock(4, true);
+                AdvanceClock(4, true);
+            }
+            else {
+                if (cycles - ticks > 0) {
+                    AdvanceClock(cycles - ticks, true);
+                }
+            }
 
             return cycles;
         }
 
         public void HandleInterrupts() {
-            // IE and IF are positions in memory
-            // IE = granular interrupt enabler. When bits are set, the corresponding interrupt can be triggered
-            // IF = When bits are set, an interrupt has happened
-            // They use the same bit positions
-            // 
-            // Bit
-            // 0   Vblank 
-            // 1   LCD 
-            // 2   Timer 
-            // 3   Serial Link 
-            // 4   Joypad 
 
             for (int bitPos = 0; bitPos < 5; bitPos++) {
-                if ((((mmu.IE & mmu.IF) >> bitPos) & 0x1) == 1) {
+                if ((((intManager.IE & intManager.IF) >> bitPos) & 0x1) == 1) {
                     if (halted) {
                         regs.PC++;
                         halted = false;
                     }
-                    if (IME) {
+                    if (intManager.IME) {
                         PUSH(regs.PC);
-                        regs.PC = mmu.ISR_Address[bitPos];
-                        IME = false;
-                        mmu.IF = RES(mmu.IF, bitPos);
+                        regs.PC = intManager.ISR_Address[bitPos];
+                        intManager.IME = false;
+                        intManager.IF = RES(intManager.IF, bitPos);
                     }
                 }
             }
 
-            IME |= IME_Scheduled;
-            IME_Scheduled = false;
+            intManager.IME |= intManager.IME_Scheduled;
+            intManager.IME_Scheduled = false;
         }
 
         public Opcode Disassemble() {
@@ -110,6 +146,7 @@ namespace FrozenBoyCore.Processor {
                     u8 cbOpcodeValue = Parm8();
 
                     if (cbOpcodes.ContainsKey(cbOpcodeValue)) {
+                        cbPrefix = true;
                         return cbOpcodes[cbOpcodeValue];
                     }
                     else {
@@ -129,10 +166,13 @@ namespace FrozenBoyCore.Processor {
         }
 
         private void HALT() {
-            if (!IME) {
-                if ((mmu.IE & mmu.IF & 0x1F) == 0) {
+            if (!intManager.IME) {
+                if ((intManager.IE & intManager.IF & 0x1F) == 0) {
                     halted = true;
                     regs.PC--;
+                }
+                else {
+                    halt_bug = true;
                 }
             }
         }
@@ -233,7 +273,7 @@ namespace FrozenBoyCore.Processor {
                 // Different function because RET has different timing information
                 { 0xC9, new Opcode(0xC9, "RET",                  1, 16, () => { RET(); })},
                 // Pop two bytes from stack & jump to that address then enable interrupts
-                { 0xD9, new Opcode(0xD9, "RETI",                 1, 16, () => { RET(); IME = true; })},
+                { 0xD9, new Opcode(0xD9, "RETI",                 1, 16, () => { RET(); intManager.IME = true; })},
 
                 // ==================================================================================================================
                 // COMPARE
@@ -253,9 +293,9 @@ namespace FrozenBoyCore.Processor {
                 // INTERRUPTS
                 // ==================================================================================================================
                 // Disables interrupt handling by setting IME=0 
-                { 0xF3, new Opcode(0xF3, "DI",                   1,  4, () => { IME = false; })},
+                { 0xF3, new Opcode(0xF3, "DI",                   1,  4, () => { intManager.IME = false; })},
                 // Schedules interrupt handling to be enabled
-                { 0xFB, new Opcode(0xFB, "EI",                   1,  4, () => { IME_Scheduled = true; })},
+                { 0xFB, new Opcode(0xFB, "EI",                   1,  4, () => { intManager.IME_Scheduled = true; })},
                                         
                 // ==================================================================================================================
                 // JUMP FAMILY
@@ -770,7 +810,7 @@ namespace FrozenBoyCore.Processor {
                 regs.PC = address;
             }
             else {
-                cycles -= 12;
+                delta = -12;
             }
         }
 
@@ -781,7 +821,7 @@ namespace FrozenBoyCore.Processor {
                 regs.PC = POP();
             }
             else {
-                cycles -= 12;
+                delta = -12;
             }
         }
 
@@ -801,7 +841,7 @@ namespace FrozenBoyCore.Processor {
                 regs.PC = address;
             }
             else {
-                cycles -= 4;
+                delta = -4;
             }
         }
 
@@ -816,7 +856,7 @@ namespace FrozenBoyCore.Processor {
                 regs.PC = (u16)(opLocation + 2 + ToSigned(offset));
             }
             else {
-                cycles -= 4;
+                delta = -4;
             }
         }
 
