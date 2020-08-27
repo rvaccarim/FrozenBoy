@@ -49,16 +49,23 @@ namespace FrozenBoyCore {
             totalCycles = 0;
             coreBoyCycles = 0;
 
+
             while (true) {
 
                 while (totalCycles < CYCLES_PER_UPDATE) {
-                    cycles = cpu.ExecuteNext();
-                    // timer.Update(cycles);
-                    gpu.Update(cycles);
-                    // cpu.HandleInterrupts();
 
-                    totalCycles += cycles;
-                    coreBoyCycles += cycles;
+                    if (totalCycles >= 8270) {
+                        if (cpu.state == InstructionState.WorkPending) {
+                            int x = 0;
+                        }
+                    }
+
+                    timer.Tick();
+                    cpu.ExecuteNext();
+                    gpu.Update(1);
+
+                    totalCycles++;
+                    coreBoyCycles++;
 
                     if (coreBoyCycles >= 65536) {
                         coreBoyCycles -= 65536;
@@ -66,15 +73,13 @@ namespace FrozenBoyCore {
 
                     // Debug stuff
                     if (gbParm.logExecution) {
-                        Log();
+                        if (cpu.shouldLog) {
+                            logger.LogState(cpu, gpu, timer, mmu, coreBoyCycles);
+                        }
                     }
 
                     if (gbParm.testingMode) {
                         // This is for Blargg testing, the ROMS write to the link port I/O
-                        if (mmu.linkPortOutput.Length != 0) {
-                            Console.WriteLine(mmu.linkPortOutput);
-                        }
-
                         if (mmu.linkPortOutput.Contains("Passed")) {
                             if (logger != null) {
                                 logger.Close();
@@ -88,15 +93,14 @@ namespace FrozenBoyCore {
                             return false;
                         }
                     }
+
+
                 }
 
                 totalCycles -= CYCLES_PER_UPDATE;
             }
         }
 
-        private void Log() {
-            logger.LogState(cpu, gpu, timer, mmu, coreBoyCycles);
-        }
-
     }
 }
+

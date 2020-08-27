@@ -5,22 +5,24 @@ using System.Text;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 
-public delegate void Logic();
+public delegate void Step();
 
 namespace FrozenBoyCore.Processor {
     public class Opcode {
         public u8 value;
-        public string asmInstruction;
+        public string label;
         public int length;
+        public int tcycles;
         public int mcycles;
-        public Logic logic;
+        public Step[] steps;
 
-        public Opcode(u8 value, string asmInstruction, int length, int mcycles, Logic logic) {
+        public Opcode(u8 value, string label, int length, int tcycles, Step[] steps) {
             this.value = value;
-            this.asmInstruction = asmInstruction;
+            this.label = label;
             this.length = length;
-            this.mcycles = mcycles;
-            this.logic = logic;
+            this.tcycles = tcycles;
+            this.mcycles = tcycles / 4;
+            this.steps = steps;
         }
 
     }

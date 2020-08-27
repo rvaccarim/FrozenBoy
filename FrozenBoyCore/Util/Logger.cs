@@ -1,10 +1,10 @@
-﻿using System;
-using System.IO;
-using FrozenBoyCore.Processor;
+﻿using FrozenBoyCore.Graphics;
 using FrozenBoyCore.Memory;
-using u8 = System.Byte;
-using u16 = System.UInt16;
-using FrozenBoyCore.Graphics;
+using FrozenBoyCore.Processor;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
 
 namespace FrozenBoyCore.Util {
     public class Logger {
@@ -16,8 +16,7 @@ namespace FrozenBoyCore.Util {
         //private const string stateFormatFull2 =
         //    "{0}   cycles:{1,6}  AF={2:x4} BC={3:x4} DE={4:x4} HL={5:x4}   Z={6} N={7} H={8} C={9}   PC={10:x4} SP={11:x4}   DIV={12:x4} TIMA={13:x4} TMA={14:x4} TAC={15:x4}   LCDC={16:x2} STAT={17} LY={18,3} LYC={19,3} gpuClock={20} delay={21}";
         private const string stateFormatCoreBoy =
-            "{0}   cycles:{1,6}  AF={2:x4} BC={3:x4} DE={4:x4} HL={5:x4}   Z={6} N={7} H={8} C={9}   PC={10:x4} SP={11:x4}   DIV={12:x4} TIMA={13:x4} TMA={14:x4} TAC={15:x4}";
-
+            "{0}   cycles:{1,6}  AF={2:x4} BC={3:x4} DE={4:x4} HL={5:x4}   Z={6} N={7} H={8} C={9}   PC={10:x4} SP={11:x4}-->{12:x4}   DIV={13:x4} TIMA={14:x4} TMA={15:x4} TAC={16:x4}";
         private const string stateFormatGbNet =
         "{0}   cycles:{1,6}  AF={2:x4} BC={3:x4} DE={4:x4} HL={5:x4}   F={6}   PC={7:x4} SP={8:x4}   DIV={9:x4} TIMA={10:x4} TMA={11:x4} TAC={12:x4}";
 
@@ -45,9 +44,9 @@ namespace FrozenBoyCore.Util {
             }
         }
 
-        public void LogState(CPU cpu, GPU gpu, Timer timer, MMU mmu, int cycles) {
-            // string instruction = Disassembler.OpcodeToStr(cpu, cpu.opcode, cpu.opLocation);
-            string instruction = Disassembler.OpcodeToStr(cpu, cpu.opcode, cpu.opLocation).Substring(25);
+        public void LogState(CPU cpu, GPU gpu, Timer timer, MMU mmu, int cycle) {
+            string instruction = Disassembler.OpcodeToStr(cpu, cpu.opcode, cpu.regs.OpcodePC);
+            // string instruction = DisassemblerX.OpcodeToStr(cpu, cpu.opcode, cpu.regs.OpcodePC).Substring(25);
 
             //logFile.WriteLine(
             //String.Format(stateFormatFull,
@@ -64,16 +63,18 @@ namespace FrozenBoyCore.Util {
 
             logFile.WriteLine(
             String.Format(stateFormatCoreBoy,
-                                instruction, cycles,
+                                instruction, cycle,
                                 cpu.regs.AF, cpu.regs.BC, cpu.regs.DE, cpu.regs.HL,
                                 Convert.ToInt32(cpu.regs.FlagZ), Convert.ToInt32(cpu.regs.FlagN),
                                 Convert.ToInt32(cpu.regs.FlagH), Convert.ToInt32(cpu.regs.FlagC),
-                                cpu.regs.PC, cpu.regs.SP,
+                                cpu.regs.PC, cpu.regs.SP, mmu.data[cpu.regs.SP],
                                 //Convert.ToInt32(cpu.IME), mmu.IE, Convert.ToString(mmu.IF, 2).PadLeft(8, '0').Substring(3),
                                 //Convert.ToInt32(cpu.IME_Scheduled), Convert.ToInt32(cpu.halted),
                                 timer.DIV, timer.TIMA, timer.TMA, timer.tac,
                                 Convert.ToString(gpu.LCDC, 2).PadLeft(8, '0'), Convert.ToString(gpu.STAT, 2).PadLeft(8, '0'),
                                 gpu.LY, gpu.LYC, gpu.cumModeClock, gpu.turnOnDelay == 244 ? -1 : gpu.turnOnDelay));
+
+            logFile.Flush();
 
             //logFile.WriteLine(
             //String.Format(stateFormatGbNet,

@@ -77,7 +77,6 @@ namespace FrozenBoyCore.Memory {
             // output to serial port
             if (address == 0xFF02 && value == 0x81) {
                 linkPortOutput += System.Convert.ToChar(data[0xFF01]);
-                Debug.WriteLine(linkPortOutput);
             }
 
             switch (address) {

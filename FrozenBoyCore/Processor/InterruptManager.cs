@@ -5,6 +5,9 @@ using u16 = System.UInt16;
 
 namespace FrozenBoyCore.Processor {
     public class InterruptManager {
+        public bool halted = false;
+        public bool halt_bug = false;
+
         // Interrupt Master Enable Register, it's a master switch for all interruptions
         public bool IME;
         public bool IME_Scheduled = false;

@@ -11,7 +11,7 @@ using u16 = System.UInt16;
 
 namespace FrozenBoyTest {
     public class BlarggTest {
-        private ITestOutputHelper output;
+        // private ITestOutputHelper output;
 
         private const string CPU_Path = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\blargg\cpu_instrs\individual\";
         private const string InstTimingPath = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\blargg\instr_timing\";
@@ -23,8 +23,12 @@ namespace FrozenBoyTest {
 
         private const string debugPath = @"D:\Users\frozen\Documents\99_temp\GB_Debug\";
 
-        public BlarggTest(ITestOutputHelper output) {
-            this.output = output;
+        //public BlarggTestX(ITestOutputHelper output) {
+        //    this.output = output;
+        //}        
+
+        public BlarggTest() {
+            // this.output = output;
         }
 
         [Fact]
@@ -140,7 +144,7 @@ namespace FrozenBoyTest {
             GameBoy gb = new GameBoy(romFilename, gbParm);
 
             bool passed = gb.Run();
-            output.WriteLine(gb.cpu.mmu.linkPortOutput);
+            // output.WriteLine(gb.cpu.mmu.linkPortOutput);
 
             return passed;
 
