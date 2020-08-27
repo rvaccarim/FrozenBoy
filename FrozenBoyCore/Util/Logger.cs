@@ -13,10 +13,11 @@ namespace FrozenBoyCore.Util {
         private const string stateFormatFull =
             "{0}   cycles:{1,6}  AF={2:x4} BC={3:x4} DE={4:x4} HL={5:x4}   Z={6} N={7} H={8} C={9}   PC={10:x4} SP={11:x4}   DIV={12:x4} TIMA={13:x4} TMA={14:x4} TAC={15:x4}   LCDC={16:x2} STAT={17} LY={18,3} LYC={19,3}";
 
-        //private const string stateFormatFull2 =
-        //    "{0}   cycles:{1,6}  AF={2:x4} BC={3:x4} DE={4:x4} HL={5:x4}   Z={6} N={7} H={8} C={9}   PC={10:x4} SP={11:x4}   DIV={12:x4} TIMA={13:x4} TMA={14:x4} TAC={15:x4}   LCDC={16:x2} STAT={17} LY={18,3} LYC={19,3} gpuClock={20} delay={21}";
-        private const string stateFormatCoreBoy =
-            "{0}   cycles:{1,6}  AF={2:x4} BC={3:x4} DE={4:x4} HL={5:x4}   Z={6} N={7} H={8} C={9}   PC={10:x4} SP={11:x4}-->{12:x4}   DIV={13:x4} TIMA={14:x4} TMA={15:x4} TAC={16:x4}";
+        //private const string stateFormatCoreBoy =
+        //    "{0}   cycles:{1,6}  AF={2:x4} BC={3:x4} DE={4:x4} HL={5:x4}   Z={6} N={7} H={8} C={9}   PC={10:x4} SP={11:x4}   DIV={12:x4} TIMA={13:x4} TMA={14:x4} TAC={15:x4}";
+        private const string stateFormatCoreBoy2 =
+            "{0}   cycles:{1,6}  AF={2:x4} BC={3:x4} DE={4:x4} HL={5:x4}   Z={6} N={7} H={8} C={9}   PC={10:x4} SP={11:x4}   DIV={12:x4} TIMA={13:x4} TMA={14:x4} TAC={15:x4}   LCDC={16:x2} STAT={17} LY={18,3} LYC={19,3} gpuClock={20} delay={21}";
+
         private const string stateFormatGbNet =
         "{0}   cycles:{1,6}  AF={2:x4} BC={3:x4} DE={4:x4} HL={5:x4}   F={6}   PC={7:x4} SP={8:x4}   DIV={9:x4} TIMA={10:x4} TMA={11:x4} TAC={12:x4}";
 
@@ -45,8 +46,8 @@ namespace FrozenBoyCore.Util {
         }
 
         public void LogState(CPU cpu, GPU gpu, Timer timer, MMU mmu, int cycle) {
-            string instruction = Disassembler.OpcodeToStr(cpu, cpu.opcode, cpu.regs.OpcodePC);
-            // string instruction = DisassemblerX.OpcodeToStr(cpu, cpu.opcode, cpu.regs.OpcodePC).Substring(25);
+            // string instruction = Disassembler.OpcodeToStr(cpu, cpu.opcode, cpu.regs.OpcodePC);
+            string instruction = Disassembler.OpcodeToStr(cpu, cpu.opcode, cpu.regs.OpcodePC).Substring(25);
 
             //logFile.WriteLine(
             //String.Format(stateFormatFull,
@@ -62,12 +63,12 @@ namespace FrozenBoyCore.Util {
             //                    mmu.LY, mmu.LYC));
 
             logFile.WriteLine(
-            String.Format(stateFormatCoreBoy,
+            String.Format(stateFormatCoreBoy2,
                                 instruction, cycle,
                                 cpu.regs.AF, cpu.regs.BC, cpu.regs.DE, cpu.regs.HL,
                                 Convert.ToInt32(cpu.regs.FlagZ), Convert.ToInt32(cpu.regs.FlagN),
                                 Convert.ToInt32(cpu.regs.FlagH), Convert.ToInt32(cpu.regs.FlagC),
-                                cpu.regs.PC, cpu.regs.SP, mmu.data[cpu.regs.SP],
+                                cpu.regs.PC, cpu.regs.SP,
                                 //Convert.ToInt32(cpu.IME), mmu.IE, Convert.ToString(mmu.IF, 2).PadLeft(8, '0').Substring(3),
                                 //Convert.ToInt32(cpu.IME_Scheduled), Convert.ToInt32(cpu.halted),
                                 timer.DIV, timer.TIMA, timer.TMA, timer.tac,

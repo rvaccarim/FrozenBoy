@@ -11,7 +11,7 @@ namespace FrozenBoyConsole {
     class Program {
         static void Main(string[] args) {
             BlarggTest b = new BlarggTest();
-            b.TestCPU_03();
+            b.TestHaltBug();
             Console.ReadLine();
         }
     }

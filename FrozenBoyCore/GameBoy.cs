@@ -9,6 +9,8 @@ using FrozenBoyCore.Graphics;
 using FrozenBoyCore.Util;
 using FrozenBoyCore.Memory;
 using System.Diagnostics;
+using System.Runtime.Serialization;
+using System.Reflection.Metadata.Ecma335;
 
 namespace FrozenBoyCore {
 
@@ -23,11 +25,10 @@ namespace FrozenBoyCore {
         public InterruptManager intManager;
         public Timer timer;
         public Logger logger;
-        private readonly GameBoyOptions gbParm;
+        private readonly GameBoyOptions gbOptions;
 
         int totalCycles;
         int coreBoyCycles;
-        int cycles;
 
         // constructor
         public GameBoy(string romName, GameBoyOptions gbParm) {
@@ -39,19 +40,18 @@ namespace FrozenBoyCore {
 
             mmu.LoadData(romName);
 
-            this.gbParm = gbParm;
+            this.gbOptions = gbParm;
             if (gbParm.logExecution) {
                 logger = new Logger(gbParm.logFilename, gbParm.logMode);
             }
         }
 
+
         public bool Run() {
             totalCycles = 0;
             coreBoyCycles = 0;
 
-
             while (true) {
-
                 while (totalCycles < CYCLES_PER_UPDATE) {
 
                     if (totalCycles >= 8270) {
@@ -72,33 +72,66 @@ namespace FrozenBoyCore {
                     }
 
                     // Debug stuff
-                    if (gbParm.logExecution) {
+                    if (gbOptions.logExecution) {
                         if (cpu.shouldLog) {
                             logger.LogState(cpu, gpu, timer, mmu, coreBoyCycles);
                         }
                     }
 
-                    if (gbParm.testingMode) {
-                        // This is for Blargg testing, the ROMS write to the link port I/O
-                        if (mmu.linkPortOutput.Contains("Passed")) {
+                    // Testing
+                    if (gbOptions.testingMode) {
+                        int status = TestCompleted();
+                        if (status != -1) {
                             if (logger != null) {
                                 logger.Close();
                             }
-                            return true;
-                        }
-                        if (mmu.linkPortOutput.Contains("Failed")) {
-                            if (logger != null) {
-                                logger.Close();
-                            }
-                            return false;
+                            return status == 1;
                         }
                     }
-
-
                 }
 
                 totalCycles -= CYCLES_PER_UPDATE;
             }
+        }
+
+
+        private int TestCompleted() {
+            if (gbOptions.testOutput == TestOutput.LinkPort) {
+                // This is for Blargg testing, the ROMS write to the link port I/O
+                if (mmu.linkPortOutput.Contains("Passed")) {
+                    return 1;
+                }
+                if (mmu.linkPortOutput.Contains("Failed")) {
+                    return 0;
+                }
+
+                if (mmu.linkPortOutput.Length != 0) {
+                    Console.WriteLine(mmu.linkPortOutput);
+                    Debug.WriteLine(mmu.linkPortOutput);
+                }
+            }
+            else {
+                // while the test is running $A000 holds $80
+                u16 address = 0xA000;
+                string outputText = "";
+
+                if (mmu.data[0xA000] != 0x80) {
+                    address++;
+                    while (mmu.data[address] != 0x0) {
+                        outputText += Convert.ToChar(mmu.data[address]);
+                        address++;
+                    }
+
+                    if (outputText.Contains("Passed")) {
+                        return 1;
+                    }
+                    if (outputText.Contains("Failed")) {
+                        return 0;
+                    }
+                }
+            }
+
+            return -1;
         }
 
     }
