@@ -145,11 +145,11 @@ namespace FrozenBoyTest {
             Assert.True(passed);
         }
 
-        [Fact]
-        public void TestHaltBug() {
-            bool passed = Test(HaltPath, @"halt_bug.gb", logExecution: true, TestOutput.LinkPort);
-            Assert.True(passed);
-        }
+        //[Fact]
+        //public void TestHaltBug() {
+        //    bool passed = Test(HaltPath, @"halt_bug.gb", logExecution: false, TestOutput.LinkPort);
+        //    Assert.True(passed);
+        //}
 
         public bool Test(string path, string romName, bool logExecution, TestOutput testOutput) {
             bool testingMode = true;

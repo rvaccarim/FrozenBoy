@@ -6,37 +6,25 @@ using FrozenBoyCore.Processor;
 
 namespace FrozenBoyCore.Graphics {
     // http://imrannazar.com/GameBoy-Emulation-in-JavaScript:-GPU-Timings
+    // https://gbdev.gg8.se/wiki/articles/Video_Display#FF40_-_LCDC_-_LCD_Control_.28R.2FW.29
 
     public class GPU {
-        private const int SCREEN_WIDTH = 160;
-        private const int SCREEN_HEIGHT = 144;
-        private const int SCREEN_VBLANK_HEIGHT = 153;
-
         private const int MODE_HBLANK = 0b00;
         private const int MODE_VBLANK = 0b01;
         private const int MODE_SCANLINE_OAM = 0b10;
         private const int MODE_SCANLINE_VRAM = 0b11;
 
-        private const int CYCLES_SCANLINE_OAM = 80;
-        private const int CYCLES_SCANLINE_VRAM = 172;
-        private const int CYCLES_HBLANK = 204;
-        private const int CYCLES_ONE_LINE = CYCLES_SCANLINE_OAM + CYCLES_SCANLINE_VRAM + CYCLES_HBLANK; // 456
-        private const int CYCLES_VBLANK = CYCLES_ONE_LINE * 10;
-
         // for the STATUS register
         private const int STATUS_COINCIDENCE_BITPOS = 2;
-        private const int STATUS_HBLANK_BITPOS = 3;
         private const int STATUS_VBLANK_BITPOS = 4;
         private const int STATUS_SCANLINE_OAM_BITPOS = 5;
 
-        public int modeClock;
-        public int cumModeClock;
-        public bool lcdEnabled = true;
-        public bool prevLcdEnabled = true;
-        public int turnOnDelay = 0;
-        public bool first = true;
+        public int modeTicks;
+        public int lineTicks;
+        public int enableDelay = 0;
+        public bool wasDisabled = false;
 
-        private readonly InterruptManager iManager;
+        private readonly InterruptManager intManager;
 
         private readonly byte modeMask = 0b_0000_0011;
 
@@ -48,6 +36,7 @@ namespace FrozenBoyCore.Graphics {
         // One line(scan and blank)                               456
         // Full frame(scans and vblank)                         70224
         public int mode;
+        private byte _ldcd;
 
         // GPU Registers
         // LCD and GPU Control
@@ -60,7 +49,19 @@ namespace FrozenBoyCore.Graphics {
         // 5	Window: on/off                             A "window" layer which can appear above the background
         // 6	Window: tile map	     #0	      #1
         // 7	Display: on/off        
-        public u8 LCDC { get; set; }
+        public u8 LCDC {
+            get => _ldcd;
+            set {
+                _ldcd = value;
+
+                if (IsLcdEnabled()) {
+                    EnableLCD();
+                }
+                else {
+                    DisableLCD();
+                }
+            }
+        }
 
         // Bits
         // 0-1
@@ -71,6 +72,7 @@ namespace FrozenBoyCore.Graphics {
         // 2       Set to 1 if register (0xFF44) is the same value as (0xFF45) 
         // 3, 4, 5 are interrupt enabled flags (similar to how the IE Register works), when the mode changes the
         //         corresponding bit 3,4,5 is set
+        // 6       LYC=LY Coincidence Interrupt (1=Enable) (Read/Write)
         public u8 STAT { get; set; }
         public u8 ScrollY { get; set; }
         public u8 ScrollX { get; set; }
@@ -82,137 +84,115 @@ namespace FrozenBoyCore.Graphics {
 
 
         public GPU(InterruptManager iManager) {
-            this.iManager = iManager;
-
+            this.intManager = iManager;
             mode = 0;
-            LCDC = 0x91;
+            _ldcd = 0x91;
             STAT = 0b1000_0110;
-            LYC = 0xFC;
+            LYC = 0x0;
         }
 
-        public void SetCoincidenceFlag() {
-            if (LY == LYC) {
-                STAT = (u8)(STAT | (1 << STATUS_COINCIDENCE_BITPOS));
-            }
-            else {
-                STAT = (u8)(STAT & ~(1 << STATUS_COINCIDENCE_BITPOS));
-            }
+        public void EnableLCD() {
+            enableDelay = 244;
         }
 
-        public bool IsLcdEnabled() {
-            return IsBitSet(LCDC, 7);
+        public void DisableLCD() {
+            modeTicks = -2;
+            lineTicks = 0;
+            wasDisabled = true;
+            enableDelay = 244;
+
+            LY = 0;
+            STAT = (byte)(STAT & ~0x3);
+            SetCoincidenceFlag();
         }
 
-        public void Update(int cycles) {
-            lcdEnabled = IsLcdEnabled();
+        public void Tick() {
 
-            if (!lcdEnabled) {
-                modeClock = 0;
-                cumModeClock = 0;
+            if (IsLcdEnabled()) {
+                if (wasDisabled) {
+                    enableDelay--;
 
-                LY = 0;
-                STAT = (byte)(STAT & ~0x3);
-                SetCoincidenceFlag();
-
-                turnOnDelay = 244;
-                prevLcdEnabled = lcdEnabled;
-                return;
-            }
-            else {
-                if (!prevLcdEnabled) {
-                    int prevDelay = turnOnDelay;
-
-                    // it was turned off and now it's turned on
-                    if (first) {
-                        turnOnDelay--;
-                        first = false;
-                    }
-                    else {
-                        turnOnDelay -= cycles;
-                    }
-
-                    if (turnOnDelay <= 0) {
-                        modeClock = -prevDelay + 1;
-                        cumModeClock = modeClock;
-
-                        turnOnDelay = 0;
-                        first = true;
-                        prevLcdEnabled = lcdEnabled;
+                    if (enableDelay == 0) {
+                        wasDisabled = false;
                     }
                     else {
                         return;
                     }
                 }
             }
+            else {
+                return;
+            }
 
             u8 status = STAT;
             var mode = STAT & modeMask;
-            modeClock += cycles;
-            cumModeClock += cycles;
 
-            // The GB simulates a cathodic-ray tube display, see horizontal and vertical blank
-            switch (mode) {
-                // Scanline(accessing OAM) -> Object Attribute Memory       
-                case MODE_SCANLINE_OAM:
-                    if (modeClock >= CYCLES_SCANLINE_OAM) {
-                        modeClock -= CYCLES_SCANLINE_OAM;
+            modeTicks++;
+            lineTicks++;
 
-                        mode = MODE_SCANLINE_VRAM;
-                    }
-                    break;
-                // Scanline(accessing VRAM) -> Video Ram
-                case MODE_SCANLINE_VRAM:
-                    if (modeClock >= CYCLES_SCANLINE_VRAM) {
-                        modeClock -= CYCLES_SCANLINE_VRAM;
-
-                        mode = MODE_HBLANK;
-                        if (IsBitSet(status, STATUS_HBLANK_BITPOS)) {
-                            iManager.RequestLCD();
+            // The VBlank interrupt triggers as soon as VBlank starts
+            if (modeTicks == 4 && mode == MODE_VBLANK && LY == 153) {
+                LY = 0;
+                if (IsBitSet(status, STATUS_SCANLINE_OAM_BITPOS)) {
+                    intManager.RequestLCD();
+                }
+            }
+            else {
+                switch (mode) {
+                    case MODE_SCANLINE_OAM:
+                        // it takes 80 Ticks for this step to be completed
+                        if (modeTicks == 80) {
+                            modeTicks = 0;
+                            mode = MODE_SCANLINE_VRAM;
                         }
+                        break;
 
-                        // drawScanLine(mmu);
-                    }
-                    break;
-                // Horizontal blank
-                case MODE_HBLANK:
-                    if (modeClock >= CYCLES_HBLANK) {
-                        modeClock -= CYCLES_HBLANK;
+                    case MODE_SCANLINE_VRAM:
+                        if (modeTicks == 172) {
+                            modeTicks = 0;
+                            mode = MODE_HBLANK;
+                            // RenderScan();
+                        }
+                        break;
+                    case MODE_HBLANK:
+                        if (modeTicks == 204) {
+                            modeTicks = 0;
+                            lineTicks = 0;
+                            LY++;
 
-                        LY++;
-                        cumModeClock = modeClock;
+                            if (LY == 144) {
+                                mode = MODE_VBLANK;
+                                // _canvas.putImageData(GPU._scrn, 0, 0);
 
-                        if (LY == SCREEN_HEIGHT) {
-                            // it's the last line, we need to trigger a VBLANK interrupt to
-                            // return to the first one
-                            mode = MODE_VBLANK;
-                            iManager.RequestVBlank();
-                            if (IsBitSet(status, STATUS_VBLANK_BITPOS)) {
-                                iManager.RequestLCD();
+                                intManager.RequestVBlank();
+                                if (IsBitSet(status, STATUS_VBLANK_BITPOS)) {
+                                    intManager.RequestLCD();
+                                }
+                            }
+                            else {
+                                mode = MODE_SCANLINE_OAM;
                             }
                         }
-                        else {
-                            mode = MODE_SCANLINE_OAM;
-                        }
-                    }
-                    break;
-                // Vertical blank
-                case MODE_VBLANK:
-                    if (modeClock >= CYCLES_ONE_LINE) {
-                        modeClock -= CYCLES_ONE_LINE;
-                        cumModeClock = modeClock;
+                        break;
+                    case MODE_VBLANK:
+                        // 456 is a full line
+                        if (modeTicks == 456) {
+                            modeTicks = 0;
+                            lineTicks = 0;
+                            LY++;
 
-                        // SCREEN_VBLANK_HEIGHT is largen than SCREEN_HEIGHT
-                        LY++;
-                        if (LY > SCREEN_VBLANK_HEIGHT) {
-                            mode = MODE_SCANLINE_OAM;
-                            LY = 0;
+                            if (LY == 1) {
+                                // Restart scanning modes
+                                mode = MODE_SCANLINE_OAM;
+                                LY = 0;
 
-                            if (IsBitSet(status, STATUS_SCANLINE_OAM_BITPOS)) {
-                                iManager.RequestLCD();
+                                if (IsBitSet(status, STATUS_SCANLINE_OAM_BITPOS)) {
+                                    intManager.RequestLCD();
+                                }
                             }
                         }
-                    }
-                    break;
+                        break;
+                }
             }
 
             status = (u8)(STAT & ~0x3);
@@ -229,22 +209,21 @@ namespace FrozenBoyCore.Graphics {
 
         }
 
-        public int TicksUntilChange() {
-            var mode = STAT & modeMask;
-
-            return mode switch
-            {
-                MODE_SCANLINE_OAM => CYCLES_SCANLINE_OAM - modeClock,
-                MODE_SCANLINE_VRAM => CYCLES_SCANLINE_VRAM - modeClock,
-                MODE_HBLANK => CYCLES_HBLANK - modeClock,
-                MODE_VBLANK => CYCLES_ONE_LINE - modeClock,
-                _ => 0,
-            };
-        }
-
         private bool IsBitSet(u8 value, int bitPosition) {
             return ((value >> bitPosition) & 0b_0000_0001) == 1;
         }
 
+        public void SetCoincidenceFlag() {
+            if (LY == LYC) {
+                STAT = (u8)(STAT | (1 << STATUS_COINCIDENCE_BITPOS));
+            }
+            else {
+                STAT = (u8)(STAT & ~(1 << STATUS_COINCIDENCE_BITPOS));
+            }
+        }
+
+        public bool IsLcdEnabled() {
+            return IsBitSet(_ldcd, 7);
+        }
     }
 }

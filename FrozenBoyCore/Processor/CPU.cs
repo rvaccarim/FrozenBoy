@@ -63,11 +63,11 @@ namespace FrozenBoyCore.Processor {
                 ticksNext = 0;
             }
 
-            HandleInterrupts();
-
             cbPrefix = false;
 
             if (state == InstructionState.Fetch) {
+                HandleInterrupts();
+
                 currM = 0;
                 opHandler.stop = false;
                 shouldLog = false;
@@ -149,6 +149,7 @@ namespace FrozenBoyCore.Processor {
         public void HandleInterrupts() {
             for (int bitPos = 0; bitPos < 5; bitPos++) {
                 if ((((intManager.IE & intManager.IF) >> bitPos) & 0x1) == 1) {
+
                     if (intManager.halted) {
                         regs.PC++;
                         intManager.halted = false;

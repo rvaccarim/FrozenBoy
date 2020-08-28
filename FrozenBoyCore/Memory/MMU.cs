@@ -23,6 +23,8 @@ namespace FrozenBoyCore.Memory {
             this.intManager = intManager;
             this.gpu = gpu;
 
+            intManager.IF = 0b_0000_0001;
+
             data[0xFF10] = 0x80;
             data[0xFF11] = 0xBF;
             data[0xFF12] = 0xF3;

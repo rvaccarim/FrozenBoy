@@ -62,7 +62,7 @@ namespace FrozenBoyCore {
 
                     timer.Tick();
                     cpu.ExecuteNext();
-                    gpu.Update(1);
+                    gpu.Tick();
 
                     totalCycles++;
                     coreBoyCycles++;
@@ -74,7 +74,7 @@ namespace FrozenBoyCore {
                     // Debug stuff
                     if (gbOptions.logExecution) {
                         if (cpu.shouldLog) {
-                            logger.LogState(cpu, gpu, timer, mmu, coreBoyCycles);
+                            logger.LogState(cpu, gpu, timer, mmu, intManager, coreBoyCycles);
                         }
                     }
 
@@ -105,10 +105,10 @@ namespace FrozenBoyCore {
                     return 0;
                 }
 
-                if (mmu.linkPortOutput.Length != 0) {
-                    Console.WriteLine(mmu.linkPortOutput);
-                    Debug.WriteLine(mmu.linkPortOutput);
-                }
+                //if (mmu.linkPortOutput.Length != 0) {
+                //    Console.WriteLine(mmu.linkPortOutput);
+                //    Debug.WriteLine(mmu.linkPortOutput);
+                //}
             }
             else {
                 // while the test is running $A000 holds $80
