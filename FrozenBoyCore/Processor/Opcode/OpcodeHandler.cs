@@ -209,10 +209,10 @@ namespace FrozenBoyCore.Processor {
                 // ==================================================================================================================
                 // INTERRUPTS
                 // ==================================================================================================================
-                // Disables interrupt handling by setting IME=0 
-                { 0xF3, new Opcode(0xF3, "DI",                   1,  4, new Step[] { () => { intManager.IME = false; } })},
-                // Schedules interrupt handling to be enabled
-                { 0xFB, new Opcode(0xFB, "EI",                   1,  4, new Step[] { () => { intManager.IME_Scheduled = true; } })},
+                // Disables interrupt handling by setting IME=0 and cancelling any scheduled effects of the EI instruction if any
+                { 0xF3, new Opcode(0xF3, "DI",                   1,  4, new Step[] { () => { intManager.DisableInterrupts(); } })},
+                // Schedules interrupt handling to be enabled after the next machine cycle
+                { 0xFB, new Opcode(0xFB, "EI",                   1,  4, new Step[] { () => { intManager.EnableInterrupts(true); } })},
                                         
                 // ==================================================================================================================
                 // JUMP FAMILY
@@ -502,7 +502,7 @@ namespace FrozenBoyCore.Processor {
                 // Complement carry flag
                 { 0x3F, new Opcode(0x3F, "CCF",                  1,  4, new Step[] { () => { regs.FlagC = !regs.FlagC; regs.FlagN = false; regs.FlagH = false; } })},
                 // Halt CPU & LCD display until button pressed.
-                { 0x76, new Opcode(0x76, "HALT",                 1,  4, new Step[] { () => { HALT(); } })},
+                { 0x76, new Opcode(0x76, "HALT",                 1,  4, new Step[] { () => { } })},
 
             };
         }
@@ -510,59 +510,6 @@ namespace FrozenBoyCore.Processor {
         private void STOP() {
             throw new NotImplementedException();
         }
-
-        private void HALT() {
-            if (!intManager.IME) {
-                if ((intManager.IE & intManager.IF & 0x1F) == 0) {
-                    intManager.halted = true;
-                    regs.PC--;
-                }
-                else {
-                    intManager.halt_bug = true;
-                }
-            }
-        }
-
-        //private Step[] CALL_StepsX() {
-        //    // 24t if true, 12t if false 
-        //    // Fetch = 4t
-        //    return new Step[] {
-        //               () => { lsb = OpcodeParm1(); }, //  8t
-        //               () => { msb = OpcodeParm2(); if (!condition) { stop = true; } }, // 12t
-        //               () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.PC)); }, // 16t
-        //               () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.PC)); }, // 20t                        
-        //               () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); }, // 24t
-        //           };
-        //}
-
-        //private void CALL(bool flag, u16 address) {
-        //    // without branch (12t)	with branch (24t)
-        //    if (flag) {
-        //        // push address of next instruction
-        //        PUSH((u16)(regs.PC));
-        //        regs.PC = address;
-        //    }
-        //    else {
-        //        deltaCycles = -12;
-        //    }
-        //}
-
-        //private Step[] CALL_Steps(bool condition) {
-        //    // 24t if true, 12t if false 
-        //    // Fetch = 4t
-        //    return new Step[] {
-        //               //  8t
-        //               () => { lsb = OpcodeParm1(); },    
-        //               // 12t
-        //               () => { msb = OpcodeParm2(); if (!condition) { stop = true; }  },
-        //               // 16t
-        //               () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.PC)); }, 
-        //               // 20t
-        //               () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.PC)); },                          
-        //               // 24t
-        //               () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); },
-        //           };
-        //}
 
         private Step[] RST_Steps(u16 address) {
             // the two first steps are equivalent to a PUSH, but done step by step
@@ -572,103 +519,6 @@ namespace FrozenBoyCore.Processor {
                 () => { regs.PC = address; },
             };
         }
-
-        //private void PUSH(u16 value) {
-        //    regs.SP -= 2;
-        //    mmu.Write16(regs.SP, value);
-        //}
-
-        //public void PUSH_U8(u8 value) {
-        //    regs.SP--;
-        //    mmu.Write8(regs.SP, value);
-        //}
-
-        //private u16 POP() {
-        //    u16 value = mmu.Read16(regs.SP);
-        //    regs.SP += 2;
-        //    return value;
-        //}
-
-        //private Step[] RET_CONDITIONAL_Steps(bool condition) {
-        //    // 20t if true, 8t if false 
-        //    return new Step[] {
-        //        () => { if (!condition) {stop = true; } },
-        //        () => { lsb = mmu.Read8(regs.SP); regs.SP++; },
-        //        () => { msb = mmu.Read8(regs.SP); regs.SP++; },
-        //        () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); },
-        //    };
-        //}
-
-        //private void RET_CONDITIONAL(bool flag) {
-        //    // 20t if true, 8t if false 
-        //    // without branch (8t) with branch (20t)
-        //    if (flag) {
-        //        // Pop two bytes from stack & jump to that address.
-        //        regs.PC = POP();
-        //    }
-        //    else {
-        //        deltaCycles = -12;
-        //    }
-        //}
-
-        //private void RET() {
-        //    // RET AND RET_CONDITIONAL have different timings
-        //    // Pop two bytes from stack & jump to that address.
-        //    regs.PC = POP();
-        //}
-
-        //private void JP(u16 address) {
-        //    regs.PC = address;
-        //}
-
-        //private Step[] JP_Steps(bool condition) {
-        //    // 16t if true, 12 if false 
-        //    return new Step[] {
-        //        () => { lsb = OpcodeParm1(); },
-        //        () => { msb = OpcodeParm2(); if (!condition) { stop=true; }  },
-        //        () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); },
-        //    };
-        //}
-
-        //private void JP_CONDITIONAL(bool flag, u16 address) {
-        //    // without branch (12t)	with branch (16t)
-        //    if (flag) {
-        //        regs.PC = address;
-        //    }
-        //    else {
-        //        deltaCycles = -4;
-        //    }
-        //}
-
-        //private Step[] JR_Steps(bool flag) {
-        //    // 12t if true, 8 if false 
-        //    return new Step[] {
-        //        () => { operand8 = OpcodeParm1(); if (!flag) { stop=true; }  },
-        //        () => { // +2 because it's the size of opcode
-        //                regs.PC = (u16)(regs.OpcodePC + 2 + ToSigned(operand8));
-        //              },
-        //    };
-        //}
-
-        //private void JR(u8 offset) {
-        //    regs.PC = (u16)(regs.OpcodePC + 2 + ToSigned(offset));
-        //}
-
-        //private void JR_CONDITIONAL(bool flag, u8 offset) {
-        //    // Timing without branch(8t) with branch(12t)
-        //    if (flag) {
-        //        // +2 because it's the size of opcode
-        //        regs.PC = (u16)(regs.OpcodePC + 2 + ToSigned(offset));
-        //    }
-        //    else {
-        //        deltaCycles = -4;
-        //    }
-        //}
-
-        //private void RST(u8 b) {
-        //    PUSH(regs.PC);
-        //    regs.PC = b;
-        //}
 
         public static int ToSigned(u8 rawValue) {
             // If a positive value, return it
@@ -854,18 +704,16 @@ namespace FrozenBoyCore.Processor {
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public u8 OpcodeParm1() {
+            regs.PC++;
             return (u8)mmu.Read8((u16)(regs.OpcodePC + 1));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public u8 OpcodeParm2() {
+            regs.PC++;
             return (u8)mmu.Read8((u16)(regs.OpcodePC + 2));
         }
 
-        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //public u16 ReadParm16() {
-        //    return (u16)mmu.Read16((u16)(regs.OpcodePC + 1));
-        //}
 
     }
 }

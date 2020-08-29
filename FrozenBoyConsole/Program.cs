@@ -10,9 +10,9 @@ using Xunit.Abstractions;
 namespace FrozenBoyConsole {
     class Program {
         static void Main(string[] args) {
-            BlarggTest b = new BlarggTest();
-            b.TestHaltBug();
-            Console.ReadLine();
+            //BlarggTest b = new BlarggTest();
+            //b.TestHaltBug();
+            //Console.ReadLine();
         }
     }
 }

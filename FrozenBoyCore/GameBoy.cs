@@ -26,6 +26,7 @@ namespace FrozenBoyCore {
         public Timer timer;
         public Logger logger;
         private readonly GameBoyOptions gbOptions;
+        public string MemoryOutput = "";
 
         int totalCycles;
         int coreBoyCycles;
@@ -42,7 +43,7 @@ namespace FrozenBoyCore {
 
             this.gbOptions = gbParm;
             if (gbParm.logExecution) {
-                logger = new Logger(gbParm.logFilename, gbParm.logMode);
+                logger = new Logger(gbParm.logFilename);
             }
         }
 
@@ -105,27 +106,23 @@ namespace FrozenBoyCore {
                     return 0;
                 }
 
-                //if (mmu.linkPortOutput.Length != 0) {
-                //    Console.WriteLine(mmu.linkPortOutput);
-                //    Debug.WriteLine(mmu.linkPortOutput);
-                //}
             }
             else {
                 // while the test is running $A000 holds $80
                 u16 address = 0xA000;
-                string outputText = "";
+                MemoryOutput = "";
 
                 if (mmu.data[0xA000] != 0x80) {
                     address++;
                     while (mmu.data[address] != 0x0) {
-                        outputText += Convert.ToChar(mmu.data[address]);
+                        MemoryOutput += Convert.ToChar(mmu.data[address]);
                         address++;
                     }
 
-                    if (outputText.Contains("Passed")) {
+                    if (MemoryOutput.Contains("Passed")) {
                         return 1;
                     }
-                    if (outputText.Contains("Failed")) {
+                    if (MemoryOutput.Contains("Failed")) {
                         return 0;
                     }
                 }

@@ -23,13 +23,13 @@ namespace FrozenBoyTest {
 
         private const string debugPath = @"D:\Users\frozen\Documents\99_temp\GB_Debug\";
 
-        //public BlarggTest(ITestOutputHelper output) {
-        //    this.output = output;
-        //}
-
-        public BlarggTest() {
-
+        public BlarggTest(ITestOutputHelper output) {
+            this.output = output;
         }
+
+        //public BlarggTest() {
+
+        //}
 
         [Fact]
         public void TestCPU_01() {
@@ -145,25 +145,29 @@ namespace FrozenBoyTest {
             Assert.True(passed);
         }
 
-        //[Fact]
-        //public void TestHaltBug() {
-        //    bool passed = Test(HaltPath, @"halt_bug.gb", logExecution: false, TestOutput.LinkPort);
-        //    Assert.True(passed);
-        //}
+        [Fact]
+        public void TestHaltBug() {
+            bool passed = Test(HaltPath, @"halt_bug.gb", logExecution: false, TestOutput.Memory);
+            Assert.True(passed);
+        }
 
         public bool Test(string path, string romName, bool logExecution, TestOutput testOutput) {
             bool testingMode = true;
 
             string romFilename = path + romName;
             string logFilename = debugPath + romName + ".log.frozenBoy.txt";
-            LogMode logMode = LogMode.Full;
 
-            GameBoyOptions gbParm = new GameBoyOptions(testingMode, testOutput, logExecution, logFilename, logMode);
+            GameBoyOptions gbParm = new GameBoyOptions(testingMode, testOutput, logExecution, logFilename);
             GameBoy gb = new GameBoy(romFilename, gbParm);
 
             bool passed = gb.Run();
-            // output.WriteLine(gb.cpu.mmu.linkPortOutput);
 
+            if (testOutput == TestOutput.LinkPort) {
+                output.WriteLine(gb.cpu.mmu.linkPortOutput);
+            }
+            else {
+                output.WriteLine(gb.MemoryOutput);
+            }
             return passed;
 
         }
