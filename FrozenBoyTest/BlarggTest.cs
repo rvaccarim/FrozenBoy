@@ -11,15 +11,13 @@ using u16 = System.UInt16;
 
 namespace FrozenBoyTest {
     public class BlarggTest {
-        private ITestOutputHelper output;
+        private readonly ITestOutputHelper output;
 
         private const string CPU_Path = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\blargg\cpu_instrs\individual\";
         private const string InstTimingPath = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\blargg\instr_timing\";
         private const string MemTimingPath1 = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\blargg\mem_timing\individual\";
         private const string MemTimingPath2 = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\blargg\mem_timing-2\rom_singles\";
-        private const string InterruptTimePath = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\blargg\interrupt_time\";
         private const string HaltPath = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\blargg\halt_bug\";
-
 
         private const string debugPath = @"D:\Users\frozen\Documents\99_temp\GB_Debug\";
 
@@ -103,12 +101,6 @@ namespace FrozenBoyTest {
             Assert.True(passed);
         }
 
-        //[Fact]
-        //public void TestInterruptTime() {
-        //    bool passed = Test(InterruptTimePath, @"interrupt_time.gb", logExecution: false, TestOutput.LinkPort);
-        //    Assert.True(passed);
-        //}
-
         [Fact]
         public void TestMemory1_ReadTiming() {
             bool passed = Test(MemTimingPath1, @"01-read_timing.gb", logExecution: false, TestOutput.LinkPort);
@@ -152,15 +144,13 @@ namespace FrozenBoyTest {
         }
 
         public bool Test(string path, string romName, bool logExecution, TestOutput testOutput) {
-            bool testingMode = true;
-
             string romFilename = path + romName;
             string logFilename = debugPath + romName + ".log.frozenBoy.txt";
 
-            GameBoyOptions gbParm = new GameBoyOptions(testingMode, testOutput, logExecution, logFilename);
-            GameBoy gb = new GameBoy(romFilename, gbParm);
+            TestOptions options = new TestOptions(testOutput, logExecution, logFilename);
+            GameBoy gb = new GameBoy(romFilename);
 
-            bool passed = gb.Run();
+            bool passed = gb.RunTest(options);
 
             if (testOutput == TestOutput.LinkPort) {
                 output.WriteLine(gb.cpu.mmu.linkPortOutput);
