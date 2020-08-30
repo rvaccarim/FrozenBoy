@@ -29,7 +29,8 @@ namespace FrozenBoyUI {
         }
 
         protected override void Initialize() {
-            string romFilename = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\games\drMario.gb";
+            // string romFilename = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\games\alleyway.gb";
+            string romFilename = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\games\drmario.gb";
             gameboy = new GameBoy(romFilename);
 
             base.Initialize();

@@ -70,6 +70,8 @@ namespace FrozenBoyCore.Memory {
                 0xFF44 => gpu.LY,
                 0xFF45 => gpu.LYC,
                 0xFF47 => gpu.BGPalette,
+                0xFF4A => gpu.WindowY,
+                0xFF4B => gpu.WindowX,
                 _ => data[address],
             };
         }
@@ -97,6 +99,9 @@ namespace FrozenBoyCore.Memory {
                 case 0xFF44: gpu.LY = 0; break;        // LY = 0 if someone writes to it
                 case 0xFF45: gpu.LYC = value; break;
                 case 0xFF47: gpu.BGPalette = value; break;
+                case 0xFF4A: gpu.WindowY = value; break;
+                case 0xFF4B: gpu.WindowX = value; break;
+                case 0xFF46: DMATransfer(value); break;
                 default: data[address] = value; break;
             }
         }
@@ -112,6 +117,13 @@ namespace FrozenBoyCore.Memory {
         public void Write16(u16 address, u16 value) {
             data[address + 1] = (u8)((value & 0b_11111111_00000000) >> 8);
             data[address] = (u8)(value & 0b_00000000_11111111);
+        }
+
+        public void DMATransfer(u8 data) {
+            u16 address = (u16)(data << 8); // source address is data * 100
+            for (int i = 0; i < 0xA0; i++) {
+                Write8((u16)(0xFE00 + i), Read8((u16)(address + i)));
+            }
         }
 
     }
