@@ -219,11 +219,16 @@ namespace FrozenBoyCore.Graphics {
                 }
             }
 
-            status = (u8)(STAT & ~0x3);
+            // Set STAT flags according to the new mode
+            status = (u8)(STAT & ~0b_0000_0011);
             status = (u8)(status | mode);
 
             if (LY == LYC) {
                 status = (u8)(status | (1 << STATUS_COINCIDENCE_BITPOS));
+
+                if (mode == MODE_HBLANK || mode == MODE_VBLANK) {
+                    intManager.Request_LY_Equals_LYC();
+                }
             }
             else {
                 status = (u8)(status & ~(1 << STATUS_COINCIDENCE_BITPOS));

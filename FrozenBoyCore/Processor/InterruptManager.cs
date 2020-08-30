@@ -18,6 +18,7 @@ namespace FrozenBoyCore.Processor {
         private const int VBLANK_BITPOS = 0;
         private const int LCD_BITPOS = 1;
         private const int TIMER_BITPOS = 2;
+        private const int LY_EQUALS_LYC_BITPOS = 6;
 
         private u8 _IF;
 
@@ -53,6 +54,10 @@ namespace FrozenBoyCore.Processor {
 
         public void RequestLCD() {
             _IF |= (byte)(1 << LCD_BITPOS);
+        }
+
+        public void Request_LY_Equals_LYC() {
+            _IF |= (byte)(1 << LY_EQUALS_LYC_BITPOS);
         }
 
         public bool IsInterruptRequested() {

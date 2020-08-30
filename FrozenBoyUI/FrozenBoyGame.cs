@@ -16,7 +16,6 @@ namespace FrozenBoyUI {
         private Texture2D gameboyBuffer;
         private bool cancelled = false;
 
-
         public FrozenBoyGame() {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
@@ -30,7 +29,8 @@ namespace FrozenBoyUI {
 
         protected override void Initialize() {
             // string romFilename = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\games\alleyway.gb";
-            string romFilename = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\games\drmario.gb";
+            // string romFilename = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\games\drmario.gb";
+            string romFilename = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\games\bubbleGhost.gb";
             gameboy = new GameBoy(romFilename);
 
             base.Initialize();
