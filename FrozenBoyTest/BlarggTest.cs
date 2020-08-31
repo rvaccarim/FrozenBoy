@@ -147,17 +147,12 @@ namespace FrozenBoyTest {
             string romFilename = path + romName;
             string logFilename = debugPath + romName + ".log.frozenBoy.txt";
 
-            TestOptions options = new TestOptions(testOutput, logExecution, logFilename);
+            TestOptions options = new TestOptions(testOutput, "", logExecution, logFilename);
             GameBoy gb = new GameBoy(romFilename);
 
             bool passed = gb.RunTest(options);
+            output.WriteLine(gb.testResult);
 
-            if (testOutput == TestOutput.LinkPort) {
-                output.WriteLine(gb.cpu.mmu.linkPortOutput);
-            }
-            else {
-                output.WriteLine(gb.MemoryOutput);
-            }
             return passed;
 
         }

@@ -6,6 +6,8 @@ using FrozenBoyCore.Memory;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using FrozenBoyCore.Controls;
+using System.Text;
+using System.ComponentModel.Design;
 
 namespace FrozenBoyCore {
 
@@ -19,7 +21,9 @@ namespace FrozenBoyCore {
         public Timer timer;
         public Joypad joypad;
         public Logger logger;
-        public string MemoryOutput = "";
+
+        public string testResult = "";
+
         public int totalCycles;
 
         // constructor
@@ -43,12 +47,18 @@ namespace FrozenBoyCore {
             return 1;
         }
 
+        private int MD5_Cycles = 69905;
+        private int md5_cycles;
+
         public bool RunTest(TestOptions options) {
             totalCycles = 0;
 
             if (options.logExecution) {
                 logger = new Logger(options.logFilename);
             }
+
+            int MD5_attemtps = 0;
+            int MD5_max_attempts = 20;
 
             while (true) {
                 Step();
@@ -64,12 +74,33 @@ namespace FrozenBoyCore {
                     }
                 }
 
-                int status = TestCompleted(options);
-                if (status != -1) {
-                    if (logger != null) {
-                        logger.Close();
+                if (options.testOutput == TestOutput.LinkPort || options.testOutput == TestOutput.Memory) {
+                    int status = TestCompleted(options);
+                    if (status != -1) {
+                        if (logger != null) {
+                            logger.Close();
+                        }
+                        return (status == 1);
                     }
-                    return status == 1;
+                }
+                else {
+                    // 60 FPS
+                    md5_cycles++;
+                    if (md5_cycles == MD5_Cycles) {
+                        string md5 = MD5(gpu.GetScreenBuffer());
+                        if (options.expectedMD5 == md5) {
+                            testResult = md5;
+                            return true;
+                        }
+
+                        md5_cycles = 0;
+                        MD5_attemtps++;
+                    }
+
+                    if (MD5_attemtps == MD5_max_attempts) {
+                        testResult = "MD5s didn't match, timeout reached";
+                        return false;
+                    }
                 }
             }
         }
@@ -78,34 +109,50 @@ namespace FrozenBoyCore {
             if (options.testOutput == TestOutput.LinkPort) {
                 // This is for Blargg testing, the ROMS write to the link port I/O
                 if (mmu.linkPortOutput.Contains("Passed")) {
+                    testResult = mmu.linkPortOutput;
                     return 1;
                 }
                 if (mmu.linkPortOutput.Contains("Failed")) {
+                    testResult = mmu.linkPortOutput;
                     return 0;
                 }
             }
             else {
                 // while the test is running $A000 holds $80
                 u16 address = 0xA000;
-                MemoryOutput = "";
+                testResult = "";
 
                 if (mmu.data[0xA000] != 0x80) {
                     address++;
                     while (mmu.data[address] != 0x0) {
-                        MemoryOutput += Convert.ToChar(mmu.data[address]);
+                        testResult += Convert.ToChar(mmu.data[address]);
                         address++;
                     }
 
-                    if (MemoryOutput.Contains("Passed")) {
+                    if (testResult.Contains("Passed")) {
                         return 1;
                     }
-                    if (MemoryOutput.Contains("Failed")) {
+                    if (testResult.Contains("Failed")) {
                         return 0;
                     }
                 }
             }
 
             return -1;
+        }
+
+        private string MD5(byte[] backbuffer) {
+            byte[] hash;
+            using var md5 = System.Security.Cryptography.MD5.Create();
+            md5.TransformFinalBlock(backbuffer, 0, backbuffer.Length);
+            hash = md5.Hash;
+
+            StringBuilder result = new StringBuilder(hash.Length * 2);
+
+            for (int i = 0; i < hash.Length; i++)
+                result.Append(hash[i].ToString("X2"));
+
+            return result.ToString();
         }
 
     }

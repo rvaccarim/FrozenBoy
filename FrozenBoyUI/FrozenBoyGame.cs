@@ -3,6 +3,8 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Threading;
 using FrozenBoyCore;
+using System.IO;
+using System.Text;
 
 namespace FrozenBoyUI {
 
@@ -11,6 +13,9 @@ namespace FrozenBoyUI {
         private SpriteBatch spriteBatch;
         private GameBoy gameboy;
         private Texture2D gameboyBuffer;
+        private bool scheduledScreenshot;
+        private byte[] backbuffer;
+        private string romFilename;
 
         // the amount of clock cycles the gameboy can exectue every second is 4194304
         // 4194304 / 60
@@ -29,10 +34,19 @@ namespace FrozenBoyUI {
         }
 
         protected override void Initialize() {
-            // string romFilename = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\games\alleyway.gb";
-            string romFilename = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\games\drmario.gb";
-            // string romFilename = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\games\bubbleGhost.gb";
-            gameboy = new GameBoy(romFilename);
+            // loading a rom and starting emulation
+            System.Windows.Forms.OpenFileDialog ofd = new System.Windows.Forms.OpenFileDialog {
+                DefaultExt = ".gb",
+                Filter = "ROM files (.gb)|*.gb",
+                Multiselect = false
+            };
+
+            System.Windows.Forms.DialogResult result = ofd.ShowDialog();
+            if (result == System.Windows.Forms.DialogResult.OK) {
+                romFilename = Path.GetFileName(ofd.FileName);
+                gameboy = new GameBoy(ofd.FileName);
+
+            }
 
             base.Initialize();
         }
@@ -41,7 +55,6 @@ namespace FrozenBoyUI {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
             gameboyBuffer = new Texture2D(GraphicsDevice, 160, 144);
-
         }
 
         protected override void UnloadContent() {
@@ -62,7 +75,17 @@ namespace FrozenBoyUI {
             gameboy.joypad.JoypadKeys[7] = keyboardState.IsKeyDown(Keys.Enter);
 
             // upload backbuffer to texture
-            byte[] backbuffer = gameboy.gpu.GetScreenBuffer();
+            backbuffer = gameboy.gpu.GetScreenBuffer();
+
+            if (keyboardState.IsKeyDown(Keys.F10)) {
+                scheduledScreenshot = true;
+            }
+
+            if (scheduledScreenshot) {
+                TakeScreenshot();
+                scheduledScreenshot = false;
+            }
+
             if (backbuffer != null)
                 gameboyBuffer.SetData<byte>(backbuffer);
 
@@ -107,6 +130,21 @@ namespace FrozenBoyUI {
             while (cyclesThisUpdate < CYCLES_FOR_60FPS) {
                 cyclesThisUpdate += gameboy.Step();
             }
+
+        }
+
+        private void TakeScreenshot() {
+            byte[] hash;
+            using var md5 = System.Security.Cryptography.MD5.Create();
+            md5.TransformFinalBlock(backbuffer, 0, backbuffer.Length);
+            hash = md5.Hash;
+
+            StringBuilder result = new StringBuilder(hash.Length * 2);
+
+            for (int i = 0; i < hash.Length; i++)
+                result.Append(hash[i].ToString("X2"));
+
+            File.WriteAllText(@"D:\Users\frozen\Documents\99_temp\GB_Debug\" + romFilename + ".hash.txt", result.ToString());
 
         }
     }
