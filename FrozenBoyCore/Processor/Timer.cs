@@ -65,7 +65,7 @@ namespace FrozenBoyCore.Processor {
 
             ticksSinceOverflow++;
             if (ticksSinceOverflow == 4) {
-                interruptManager.RequestTimer();
+                interruptManager.RequestInterruption(InterruptionType.Timer);
             }
 
             if (ticksSinceOverflow == 5) {

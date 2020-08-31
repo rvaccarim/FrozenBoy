@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.IO;
 using System.Diagnostics;
 using FrozenBoyCore.Graphics;
+using FrozenBoyCore.Controls;
 
 namespace FrozenBoyCore.Memory {
 
@@ -17,11 +18,13 @@ namespace FrozenBoyCore.Memory {
         private Timer timer;
         private InterruptManager intManager;
         private GPU gpu;
+        private Joypad joypad;
 
-        public MMU(Timer timer, InterruptManager intManager, GPU gpu) {
+        public MMU(Timer timer, InterruptManager intManager, GPU gpu, Joypad joypad) {
             this.timer = timer;
             this.intManager = intManager;
             this.gpu = gpu;
+            this.joypad = joypad;
 
             intManager.IF = 0b_0000_0001;
 
@@ -72,6 +75,8 @@ namespace FrozenBoyCore.Memory {
                 0xFF47 => gpu.BGPalette,
                 0xFF4A => gpu.WindowY,
                 0xFF4B => gpu.WindowX,
+                // joypad
+                0xFF00 => joypad.JOYP,
                 _ => data[address],
             };
         }
@@ -102,6 +107,8 @@ namespace FrozenBoyCore.Memory {
                 case 0xFF4A: gpu.WindowY = value; break;
                 case 0xFF4B: gpu.WindowX = value; break;
                 case 0xFF46: DMATransfer(value); break;
+                // joypad
+                case 0xFF00: joypad.JOYP = value; break;
                 default: data[address] = value; break;
             }
         }

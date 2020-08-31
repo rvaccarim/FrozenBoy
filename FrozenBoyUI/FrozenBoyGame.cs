@@ -2,9 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Threading;
-using System.IO;
 using FrozenBoyCore;
-using System.Windows.Forms;
 
 namespace FrozenBoyUI {
 
@@ -29,8 +27,8 @@ namespace FrozenBoyUI {
 
         protected override void Initialize() {
             // string romFilename = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\games\alleyway.gb";
-            // string romFilename = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\games\drmario.gb";
-            string romFilename = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\games\bubbleGhost.gb";
+            string romFilename = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\games\drmario.gb";
+            // string romFilename = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\games\bubbleGhost.gb";
             gameboy = new GameBoy(romFilename);
 
             base.Initialize();
@@ -72,17 +70,17 @@ namespace FrozenBoyUI {
         }
 
         protected override void Update(GameTime gameTime) {
-            // KeyboardState gamePadState = Keyboard.GetState();
+            KeyboardState keyboardState = Keyboard.GetState();
 
             // inputs
-            //emulator.JoypadState[0] = (gamePadState.IsKeyDown(Keys.Right));
-            //emulator.JoypadState[1] = (gamePadState.IsKeyDown(Keys.Left));
-            //emulator.JoypadState[2] = (gamePadState.IsKeyDown(Keys.Up));
-            //emulator.JoypadState[3] = (gamePadState.IsKeyDown(Keys.Down));
-            //emulator.JoypadState[4] = (gamePadState.IsKeyDown(Keys.Z));
-            //emulator.JoypadState[5] = (gamePadState.IsKeyDown(Keys.X));
-            //emulator.JoypadState[6] = (gamePadState.IsKeyDown(Keys.Back));
-            //emulator.JoypadState[7] = (gamePadState.IsKeyDown(Keys.Enter));
+            gameboy.joypad.JoypadKeys[0] = keyboardState.IsKeyDown(Keys.Right);
+            gameboy.joypad.JoypadKeys[1] = keyboardState.IsKeyDown(Keys.Left);
+            gameboy.joypad.JoypadKeys[2] = keyboardState.IsKeyDown(Keys.Up);
+            gameboy.joypad.JoypadKeys[3] = keyboardState.IsKeyDown(Keys.Down);
+            gameboy.joypad.JoypadKeys[4] = keyboardState.IsKeyDown(Keys.Z);
+            gameboy.joypad.JoypadKeys[5] = keyboardState.IsKeyDown(Keys.X);
+            gameboy.joypad.JoypadKeys[6] = keyboardState.IsKeyDown(Keys.Space);
+            gameboy.joypad.JoypadKeys[7] = keyboardState.IsKeyDown(Keys.Enter);
 
             // upload backbuffer to texture
             byte[] backbuffer = gameboy.gpu.GetScreenBuffer();

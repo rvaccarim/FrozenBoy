@@ -202,7 +202,7 @@ namespace FrozenBoyCore.Processor {
                     else {
                         state = InstructionState.Interrupt_Push1;
                         // clear flags
-                        intManager.IF = RES(intManager.IF, interruptBit);
+                        intManager.IF = BitUtils.BitReset(intManager.IF, interruptBit);
                         intManager.DisableInterrupts();
                     }
                     break;
@@ -226,28 +226,6 @@ namespace FrozenBoyCore.Processor {
             }
 
         }
-
-
-        //public void HandleInterruptsOld() {
-        //    for (int bitPos = 0; bitPos < 5; bitPos++) {
-        //        if ((((intManager.IE & intManager.IF) >> bitPos) & 0x1) == 1) {
-
-        //            if (intManager.halted) {
-        //                regs.PC++;
-        //                intManager.halted = false;
-        //            }
-        //            if (intManager.IME) {
-        //                PUSH(regs.PC);
-        //                regs.PC = intManager.ISR_Address[bitPos];
-        //                intManager.IME = false;
-        //                intManager.IF = RES(intManager.IF, bitPos);
-        //            }
-        //        }
-        //    }
-
-        //    intManager.IME |= intManager.IME_EnableScheduled;
-        //    intManager.IME_EnableScheduled = false;
-        //}
 
         // TODO: Move to Disassembler class
         public Opcode Disassemble() {
@@ -276,11 +254,6 @@ namespace FrozenBoyCore.Processor {
             }
 
             return null;
-        }
-
-        // Reset bit in value
-        private byte RES(u8 value, int bitPosition) {
-            return (byte)(value & ~(0b_0000_0001 << bitPosition));
         }
 
         public u8 ReadParm8() {

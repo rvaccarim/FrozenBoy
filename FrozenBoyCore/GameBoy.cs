@@ -5,6 +5,7 @@ using FrozenBoyCore.Util;
 using FrozenBoyCore.Memory;
 using u8 = System.Byte;
 using u16 = System.UInt16;
+using FrozenBoyCore.Controls;
 
 namespace FrozenBoyCore {
 
@@ -16,6 +17,7 @@ namespace FrozenBoyCore {
         public MMU mmu;
         public InterruptManager intManager;
         public Timer timer;
+        public Joypad joypad;
         public Logger logger;
         public string MemoryOutput = "";
         public int totalCycles;
@@ -25,7 +27,8 @@ namespace FrozenBoyCore {
             intManager = new InterruptManager();
             timer = new Timer(intManager);
             gpu = new GPU(intManager);
-            mmu = new MMU(timer, intManager, gpu);
+            joypad = new Joypad(intManager);
+            mmu = new MMU(timer, intManager, gpu, joypad);
             cpu = new CPU(mmu, timer, intManager);
 
             gpu.SetMMU(mmu);

@@ -1,12 +1,13 @@
 ﻿using FrozenBoyCore.Memory;
 using System.Runtime.ExceptionServices;
 using FrozenBoyCore.Processor;
+using System.Runtime.CompilerServices;
+using System;
 using u8 = System.Byte;
 using s8 = System.SByte;
 using u16 = System.UInt16;
 using s16 = System.Int16;
-using System.Runtime.CompilerServices;
-using System;
+using FrozenBoyCore.Util;
 
 namespace FrozenBoyCore.Graphics {
 
@@ -20,6 +21,7 @@ namespace FrozenBoyCore.Graphics {
         private const int STATUS_COINCIDENCE_BITPOS = 2;
         private const int STATUS_VBLANK_BITPOS = 4;
         private const int STATUS_SCANLINE_OAM_BITPOS = 5;
+        private const int STATUS_LC_EQUALS_LYC = 6;
 
         public int modeTicks;
         public int lineTicks;
@@ -157,8 +159,8 @@ namespace FrozenBoyCore.Graphics {
             // The VBlank interrupt triggers as soon as VBlank starts
             if (modeTicks == 4 && mode == MODE_VBLANK && LY == 153) {
                 LY = 0;
-                if (IsBitSet(status, STATUS_SCANLINE_OAM_BITPOS)) {
-                    intManager.RequestLCD();
+                if (BitUtils.IsBitSet(status, STATUS_SCANLINE_OAM_BITPOS)) {
+                    intManager.RequestInterruption(InterruptionType.LCD);
                 }
             }
             else {
@@ -188,9 +190,9 @@ namespace FrozenBoyCore.Graphics {
                                 mode = MODE_VBLANK;
                                 // _canvas.putImageData(GPU._scrn, 0, 0);
 
-                                intManager.RequestVBlank();
-                                if (IsBitSet(status, STATUS_VBLANK_BITPOS)) {
-                                    intManager.RequestLCD();
+                                intManager.RequestInterruption(InterruptionType.VBlank);
+                                if (BitUtils.IsBitSet(status, STATUS_VBLANK_BITPOS)) {
+                                    intManager.RequestInterruption(InterruptionType.LCD);
                                 }
                             }
                             else {
@@ -210,8 +212,8 @@ namespace FrozenBoyCore.Graphics {
                                 mode = MODE_SCANLINE_OAM;
                                 LY = 0;
 
-                                if (IsBitSet(status, STATUS_SCANLINE_OAM_BITPOS)) {
-                                    intManager.RequestLCD();
+                                if (BitUtils.IsBitSet(status, STATUS_SCANLINE_OAM_BITPOS)) {
+                                    intManager.RequestInterruption(InterruptionType.LCD);
                                 }
                             }
                         }
@@ -227,7 +229,9 @@ namespace FrozenBoyCore.Graphics {
                 status = (u8)(status | (1 << STATUS_COINCIDENCE_BITPOS));
 
                 if (mode == MODE_HBLANK || mode == MODE_VBLANK) {
-                    intManager.Request_LY_Equals_LYC();
+                    if (BitUtils.IsBitSet(status, STATUS_LC_EQUALS_LYC)) {
+                        intManager.RequestInterruption(InterruptionType.LCD);
+                    }
                 }
             }
             else {
@@ -239,13 +243,13 @@ namespace FrozenBoyCore.Graphics {
         }
 
         private void RenderLine(int line) {
-            bool WindowTileMapSelect = IsBitSet(lcd_control, 6);
-            bool WindowEnabled = IsBitSet(lcd_control, 5);
-            bool TileDataSelect = IsBitSet(lcd_control, 4);
-            bool BgTileMapSelect = IsBitSet(lcd_control, 3);
+            bool WindowTileMapSelect = BitUtils.IsBitSet(lcd_control, 6);
+            bool WindowEnabled = BitUtils.IsBitSet(lcd_control, 5);
+            bool TileDataSelect = BitUtils.IsBitSet(lcd_control, 4);
+            bool BgTileMapSelect = BitUtils.IsBitSet(lcd_control, 3);
             int SpriteSize = lcd_control & 0x04; // 0 = 8x8 else 8x16
-            bool SpriteEnabled = IsBitSet(lcd_control, 1);
-            bool BgEnabled = IsBitSet(lcd_control, 0);
+            bool SpriteEnabled = BitUtils.IsBitSet(lcd_control, 1);
+            bool BgEnabled = BitUtils.IsBitSet(lcd_control, 0);
 
             u8[] BgPalette = GetPalette(0xFF47);
             u8[] Obj0Palette = GetPalette(0xFF48);
@@ -582,11 +586,6 @@ namespace FrozenBoyCore.Graphics {
             frameBuffer[(x + y * 160) * 4 + 3] = ColorData[3];
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsBitSet(u8 value, int bitPosition) {
-            return ((value >> bitPosition) & 0b_0000_0001) == 1;
-        }
-
         public void SetCoincidenceFlag() {
             if (LY == LYC) {
                 STAT = (u8)(STAT | (1 << STATUS_COINCIDENCE_BITPOS));
@@ -597,7 +596,7 @@ namespace FrozenBoyCore.Graphics {
         }
 
         public bool IsLcdEnabled() {
-            return IsBitSet(lcd_control, 7);
+            return BitUtils.IsBitSet(lcd_control, 7);
         }
 
         public byte[] GetScreenBuffer() {

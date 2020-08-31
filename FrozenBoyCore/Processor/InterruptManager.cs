@@ -2,9 +2,21 @@
 using System.Collections.Generic;
 using u8 = System.Byte;
 using u16 = System.UInt16;
+using System;
 
 namespace FrozenBoyCore.Processor {
+
+    // for the IF register
+    public enum InterruptionType : int {
+        VBlank = 0,
+        LCD = 1,
+        Timer = 2,
+        SerialLink = 3,
+        Joypad = 4
+    };
+
     public class InterruptManager {
+
         // Interrupt Master Enable Register, it's a master switch for all interruptions
         public bool IME;
         public bool IME_EnableScheduled = false;
@@ -12,15 +24,6 @@ namespace FrozenBoyCore.Processor {
 
         public int pendingEnable = -1;
         public int pendingDisable = -1;
-
-
-        // for the IF register
-        private const int VBLANK_BITPOS = 0;
-        private const int LCD_BITPOS = 1;
-        private const int TIMER_BITPOS = 2;
-        private const int LY_EQUALS_LYC_BITPOS = 6;
-
-        private u8 _IF;
 
         // INTERRUPTION REGISTERS
         // IE = granular interrupt enabler. When bits are set, the corresponding interrupt can be triggered
@@ -33,7 +36,11 @@ namespace FrozenBoyCore.Processor {
         // 2   Timer 
         // 3   Serial Link 
         // 4   Joypad 
+
+        // 0xFFFF               
         public u8 IE { get; set; }
+        // 0xFF0F
+        private u8 _IF;
         public u8 IF { get => _IF; set => _IF = value |= 0xE0; }
 
         // ISR addresses
@@ -44,24 +51,12 @@ namespace FrozenBoyCore.Processor {
                 { 0x0058 },    // SerialLink
                 { 0x0060 } };  // JoypadPress,
 
-        public void RequestTimer() {
-            _IF |= (byte)(1 << TIMER_BITPOS);
-        }
-
-        public void RequestVBlank() {
-            _IF |= (byte)(1 << VBLANK_BITPOS);
-        }
-
-        public void RequestLCD() {
-            _IF |= (byte)(1 << LCD_BITPOS);
-        }
-
-        public void Request_LY_Equals_LYC() {
-            _IF |= (byte)(1 << LY_EQUALS_LYC_BITPOS);
-        }
-
         public bool IsInterruptRequested() {
             return (IE & IF) != 0;
+        }
+
+        public void RequestInterruption(InterruptionType interruption) {
+            _IF |= (u8)(1 << (int)interruption);
         }
 
         public bool IsHaltBug() => (IE & IF & 0x1f) != 0 && !IME;
@@ -77,7 +72,6 @@ namespace FrozenBoyCore.Processor {
             }
             return interruptBit;
         }
-
 
         public void EnableInterrupts() {
             IME = true;

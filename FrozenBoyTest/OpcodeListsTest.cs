@@ -6,6 +6,7 @@ using u8 = System.Byte;
 using u16 = System.UInt16;
 using System;
 using Xunit.Abstractions;
+using FrozenBoyCore.Controls;
 
 namespace FrozenBoyTest {
     public class OpcodeListsTest {
@@ -20,7 +21,8 @@ namespace FrozenBoyTest {
             InterruptManager intManager = new InterruptManager();
             Timer timer = new Timer(intManager);
             GPU gpu = new GPU(intManager);
-            MMU mmu = new MMU(timer, intManager, gpu);
+            Joypad joypad = new Joypad(intManager);
+            MMU mmu = new MMU(timer, intManager, gpu, joypad);
             CPU cpu = new CPU(mmu, timer, intManager);
 
             string msg;
@@ -54,7 +56,8 @@ namespace FrozenBoyTest {
             InterruptManager intManager = new InterruptManager();
             Timer timer = new Timer(intManager);
             GPU gpu = new GPU(intManager);
-            MMU mmu = new MMU(timer, intManager, gpu);
+            Joypad joypad = new Joypad(intManager);
+            MMU mmu = new MMU(timer, intManager, gpu, joypad);
             CPU cpu = new CPU(mmu, timer, intManager);
 
             string msg;
