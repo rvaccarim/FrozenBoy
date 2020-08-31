@@ -10,9 +10,11 @@ namespace FrozenBoyUI {
         private GraphicsDeviceManager graphics;
         private SpriteBatch spriteBatch;
         private GameBoy gameboy;
-        private Thread gameboyThread;
         private Texture2D gameboyBuffer;
-        private bool cancelled = false;
+
+        // the amount of clock cycles the gameboy can exectue every second is 4194304
+        // 4194304 / 60
+        private const int CYCLES_FOR_60FPS = 69905;
 
         public FrozenBoyGame() {
             graphics = new GraphicsDeviceManager(this);
@@ -23,6 +25,7 @@ namespace FrozenBoyUI {
             graphics.ApplyChanges();
 
             Window.AllowUserResizing = true;
+
         }
 
         protected override void Initialize() {
@@ -37,36 +40,12 @@ namespace FrozenBoyUI {
         protected override void LoadContent() {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
-
             gameboyBuffer = new Texture2D(GraphicsDevice, 160, 144);
 
-            //// loading a rom and starting emulation
-            //System.Windows.Forms.OpenFileDialog ofd = new System.Windows.Forms.OpenFileDialog {
-            //    DefaultExt = ".gb",
-            //    Filter = "ROM files (.gb)|*.gb",
-            //    Multiselect = false
-            //};
-
-            //System.Windows.Forms.DialogResult result = ofd.ShowDialog();
-            //if (result == System.Windows.Forms.DialogResult.OK) {
-            //    string filename = ofd.FileName;
-
-            //using (FileStream fs = new FileStream(filename, FileMode.Open)) {
-            //    using BinaryReader br = new BinaryReader(fs);
-            //    byte[] rom = new byte[fs.Length];
-            //    for (int i = 0; i < fs.Length; i++)
-            //        rom[i] = br.ReadByte();
-            //    emulator.Load(rom);
-            //}
-
-            gameboyThread = new Thread(GameBoyWork);
-            gameboyThread.Start();
-            // }
         }
 
         protected override void UnloadContent() {
-            if (gameboyThread != null && gameboyThread.IsAlive)
-                cancelled = true;
+
         }
 
         protected override void Update(GameTime gameTime) {
@@ -112,39 +91,23 @@ namespace FrozenBoyUI {
 
             // draw backbuffer
             spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+
+            // Draw is called called 60 times per second
+            UpdateWorld();
+
             spriteBatch.Draw(gameboyBuffer, bounds, Color.White);
             spriteBatch.End();
 
             base.Draw(gameTime);
         }
 
-        private void GameBoyWork() {
-            double cpuSecondsElapsed = 0.0f;
+        private void UpdateWorld() {
+            int cyclesThisUpdate = 0;
 
-            MicroStopwatch s = new MicroStopwatch();
-            s.Start();
-
-            while (!cancelled) {
-                uint cycles = (uint)gameboy.Step();
-
-                // timer handling
-                // note: there's nothing quite reliable / precise enough in cross-platform .Net
-                // so this is quite hack-ish / dirty
-                cpuSecondsElapsed += cycles / GameBoy.ClockSpeed;
-
-                double realSecondsElapsed = s.ElapsedMicroseconds * 1_000_000;
-
-                if (realSecondsElapsed - cpuSecondsElapsed > 0.0) // dirty wait
-                {
-                    realSecondsElapsed = s.ElapsedMicroseconds * 1_000_000;
-                }
-
-                if (s.ElapsedMicroseconds > 1_000_000) // dirty restart every seconds to not loose too many precision
-                {
-                    s.Restart();
-                    cpuSecondsElapsed -= 1.0;
-                }
+            while (cyclesThisUpdate < CYCLES_FOR_60FPS) {
+                cyclesThisUpdate += gameboy.Step();
             }
+
         }
     }
 }
