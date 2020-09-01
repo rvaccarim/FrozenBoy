@@ -44,7 +44,10 @@ namespace FrozenBoyUI {
             System.Windows.Forms.DialogResult result = ofd.ShowDialog();
             if (result == System.Windows.Forms.DialogResult.OK) {
                 romFilename = Path.GetFileName(ofd.FileName);
+
                 gameboy = new GameBoy(ofd.FileName);
+
+                base.Window.Title = "FrozeBoy - " + romFilename;
 
             }
 

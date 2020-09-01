@@ -19,12 +19,14 @@ namespace FrozenBoyCore.Memory {
         private InterruptManager intManager;
         private GPU gpu;
         private Joypad joypad;
+        private Dma dma;
 
-        public MMU(Timer timer, InterruptManager intManager, GPU gpu, Joypad joypad) {
+        public MMU(Timer timer, InterruptManager intManager, GPU gpu, Joypad joypad, Dma dma) {
             this.timer = timer;
             this.intManager = intManager;
             this.gpu = gpu;
             this.joypad = joypad;
+            this.dma = dma;
 
             intManager.IF = 0b_0000_0001;
 
@@ -72,6 +74,7 @@ namespace FrozenBoyCore.Memory {
                 0xFF43 => gpu.ScrollX,
                 0xFF44 => gpu.LY,
                 0xFF45 => gpu.LYC,
+                0xFF46 => dma.DMA_Register,
                 0xFF47 => gpu.BGPalette,
                 0xFF4A => gpu.WindowY,
                 0xFF4B => gpu.WindowX,
@@ -103,10 +106,10 @@ namespace FrozenBoyCore.Memory {
                 case 0xFF43: gpu.ScrollX = value; break;
                 case 0xFF44: gpu.LY = 0; break;        // LY = 0 if someone writes to it
                 case 0xFF45: gpu.LYC = value; break;
+                case 0xFF46: dma.DMA_Register = value; break;
                 case 0xFF47: gpu.BGPalette = value; break;
                 case 0xFF4A: gpu.WindowY = value; break;
                 case 0xFF4B: gpu.WindowX = value; break;
-                case 0xFF46: DMATransfer(value); break;
                 // joypad
                 case 0xFF00: joypad.JOYP = value; break;
                 default: data[address] = value; break;
@@ -126,12 +129,12 @@ namespace FrozenBoyCore.Memory {
             data[address] = (u8)(value & 0b_00000000_11111111);
         }
 
-        public void DMATransfer(u8 data) {
-            u16 address = (u16)(data << 8); // source address is data * 100
-            for (int i = 0; i < 0xA0; i++) {
-                Write8((u16)(0xFE00 + i), Read8((u16)(address + i)));
-            }
-        }
+        //public void DMATransfer(u8 data) {
+        //    u16 address = (u16)(data << 8); // source address is data * 100
+        //    for (int i = 0; i < 0xA0; i++) {
+        //        Write8((u16)(0xFE00 + i), Read8((u16)(address + i)));
+        //    }
+        //}
 
     }
 }

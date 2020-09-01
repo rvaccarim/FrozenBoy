@@ -84,6 +84,7 @@ namespace FrozenBoyCore.Controls {
                 }
 
                 _JOYP = (u8)(newState | (prevState & 0b_1111_0000));
+
             }
         }
     }

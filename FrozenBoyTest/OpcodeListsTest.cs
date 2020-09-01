@@ -22,7 +22,8 @@ namespace FrozenBoyTest {
             Timer timer = new Timer(intManager);
             GPU gpu = new GPU(intManager);
             Joypad joypad = new Joypad(intManager);
-            MMU mmu = new MMU(timer, intManager, gpu, joypad);
+            Dma dma = new Dma();
+            MMU mmu = new MMU(timer, intManager, gpu, joypad, dma);
             CPU cpu = new CPU(mmu, timer, intManager);
 
             string msg;
@@ -57,7 +58,8 @@ namespace FrozenBoyTest {
             Timer timer = new Timer(intManager);
             GPU gpu = new GPU(intManager);
             Joypad joypad = new Joypad(intManager);
-            MMU mmu = new MMU(timer, intManager, gpu, joypad);
+            Dma dma = new Dma();
+            MMU mmu = new MMU(timer, intManager, gpu, joypad, dma);
             CPU cpu = new CPU(mmu, timer, intManager);
 
             string msg;

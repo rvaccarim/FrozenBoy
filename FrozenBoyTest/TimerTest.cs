@@ -5,6 +5,7 @@ using u8 = System.Byte;
 using u16 = System.UInt16;
 using FrozenBoyCore.Graphics;
 using FrozenBoyCore.Controls;
+using FrozenBoyCore;
 
 namespace FrozenBoyTest {
     public class TimerTest {
@@ -13,9 +14,6 @@ namespace FrozenBoyTest {
         public void TestDivIncrease() {
             InterruptManager intManager = new InterruptManager();
             Timer timer = new Timer(intManager);
-            GPU gpu = new GPU(intManager);
-            Joypad joypad = new Joypad(intManager);
-            MMU mmu = new MMU(timer, intManager, gpu, joypad);
 
             for (int i = 0; i < 255; i++) {
                 timer.Tick();
@@ -31,9 +29,6 @@ namespace FrozenBoyTest {
         public void TestClockDisabled() {
             InterruptManager intManager = new InterruptManager();
             Timer timer = new Timer(intManager);
-            GPU gpu = new GPU(intManager);
-            Joypad joypad = new Joypad(intManager);
-            MMU mmu = new MMU(timer, intManager, gpu, joypad);
 
             for (int i = 0; i < 2056; i++) {
                 timer.Tick();
@@ -56,9 +51,6 @@ namespace FrozenBoyTest {
         public void TestTimaOverflow() {
             InterruptManager intManager = new InterruptManager();
             Timer timer = new Timer(intManager);
-            GPU gpu = new GPU(intManager);
-            Joypad joypad = new Joypad(intManager);
-            MMU mmu = new MMU(timer, intManager, gpu, joypad);
 
             timer.TAC = 0b_0000_00101;  // frequency = 16
 
@@ -84,13 +76,9 @@ namespace FrozenBoyTest {
 
         }
 
-
         private int AddTima(u8 TAC) {
             InterruptManager intManager = new InterruptManager();
             Timer timer = new Timer(intManager);
-            GPU gpu = new GPU(intManager);
-            Joypad joypad = new Joypad(intManager);
-            MMU mmu = new MMU(timer, intManager, gpu, joypad);
 
             timer.TAC = TAC;
 

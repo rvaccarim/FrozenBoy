@@ -20,21 +20,39 @@ namespace FrozenBoyTest {
         }
 
         [Fact]
-        public void Test_Mem_OAM() {
+        public void Test_mem_oam() {
             bool passed = Test(@"acceptance\bits\", "mem_oam.gb", false);
             Assert.True(passed);
         }
 
         [Fact]
-        public void Test_Reg_f() {
+        public void Test_reg_f() {
             bool passed = Test(@"acceptance\bits\", "reg_f.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_daa() {
+            bool passed = Test(@"acceptance\instr\", "daa.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_pop_timing() {
+            bool passed = Test(@"acceptance\", "pop_timing.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_push_timing() {
+            bool passed = Test(@"acceptance\", "push_timing.gb", false);
             Assert.True(passed);
         }
 
         private bool Test(string extraPath, string romName, bool logExecution) {
             string romFilename = mooneyePath + extraPath + romName;
             string logFilename = debugPath + romName + ".log.frozenBoy.txt";
-            string expectedMD5 = File.ReadAllText(hashesPath + romName + ".hash.txt");
+            string expectedMD5 = File.ReadAllText(hashesPath + extraPath + romName + ".hash.txt");
 
             TestOptions options = new TestOptions(TestOutput.MD5, expectedMD5, logExecution, logFilename);
             GameBoy gb = new GameBoy(romFilename);

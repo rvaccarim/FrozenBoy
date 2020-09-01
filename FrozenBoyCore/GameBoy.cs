@@ -17,6 +17,7 @@ namespace FrozenBoyCore {
         public CPU cpu;
         public GPU gpu;
         public MMU mmu;
+        public Dma dma;
         public InterruptManager intManager;
         public Timer timer;
         public Joypad joypad;
@@ -32,10 +33,12 @@ namespace FrozenBoyCore {
             timer = new Timer(intManager);
             gpu = new GPU(intManager);
             joypad = new Joypad(intManager);
-            mmu = new MMU(timer, intManager, gpu, joypad);
+            dma = new Dma();
+            mmu = new MMU(timer, intManager, gpu, joypad, dma);
             cpu = new CPU(mmu, timer, intManager);
 
             gpu.SetMMU(mmu);
+            dma.SetMMU(mmu);
 
             mmu.LoadData(romName);
         }
@@ -43,6 +46,7 @@ namespace FrozenBoyCore {
         public int Step() {
             timer.Tick();
             cpu.ExecuteNext();
+            dma.Tick();
             gpu.Tick();
             return 1;
         }
@@ -58,9 +62,14 @@ namespace FrozenBoyCore {
             }
 
             int MD5_attemtps = 0;
-            int MD5_max_attempts = 20;
+            int MD5_max_attempts = 500;
 
             while (true) {
+
+                if (totalCycles == 4855 && cpu.opcode.value == 0xe0) {
+                    int z = 0;
+                }
+
                 Step();
 
                 totalCycles++;
@@ -69,9 +78,9 @@ namespace FrozenBoyCore {
                 }
 
                 if (options.logExecution) {
-                    if (cpu.shouldLog) {
-                        logger.LogState(cpu, gpu, timer, mmu, intManager, totalCycles);
-                    }
+                    // if (cpu.shouldLog) {
+                    logger.LogState(cpu, gpu, timer, mmu, intManager, totalCycles);
+                    // }
                 }
 
                 if (options.testOutput == TestOutput.LinkPort || options.testOutput == TestOutput.Memory) {
