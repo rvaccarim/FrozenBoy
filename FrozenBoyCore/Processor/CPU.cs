@@ -111,7 +111,7 @@ namespace FrozenBoyCore.Processor {
                     else {
                         // points to the next one even if we haven't executed it yet
                         // regs.PC = (u16)(regs.PC + opcode.length);
-                        regs.OpcodePC = regs.PC;
+                        // regs.OpcodePC = regs.PC;
                         regs.PC++;
                     }
 
@@ -256,9 +256,9 @@ namespace FrozenBoyCore.Processor {
             return null;
         }
 
-        public u8 ReadParm8() {
-            return (u8)mmu.Read8((u16)(regs.OpcodePC + 1));
-        }
+        //public u8 ReadParm8() {
+        //    return (u8)mmu.Read8((u16)(regs.OpcodePC + 1));
+        //}
 
     }
 }

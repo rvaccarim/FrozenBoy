@@ -45,7 +45,7 @@ namespace FrozenBoyCore.Processor {
                 { 0x8D, new Opcode(0x8D, "ADC A, L",             1,  4, new Step[] { () => { ADC(regs.L); } })},
                 { 0x8F, new Opcode(0x8F, "ADC A, A",             1,  4, new Step[] { () => { ADC(regs.A); } })},
                 { 0x8E, new Opcode(0x8E, "ADC A, (HL)",          1,  8, new Step[] { () => { ADC(mmu.Read8(regs.HL)); } })},
-                { 0xCE, new Opcode(0xCE, "ADC A, ${0:x2}",       2,  8, new Step[] { () => { ADC(OpcodeParm1()); } })},  // no need to split it in two steps,
+                { 0xCE, new Opcode(0xCE, "ADC A, ${0:x2}",       2,  8, new Step[] { () => { ADC(mmu.Read8(regs.PC++)); } })},  // no need to split it in two steps,
                                                                                                                           // because the memory access and the
                                                                                                                           // arithmetic operations and memory access
                                                                                                                           // can be done in the same cycle
@@ -63,9 +63,9 @@ namespace FrozenBoyCore.Processor {
                 { 0x85, new Opcode(0x85, "ADD A, L",             1,  4, new Step[] { () => { ADD(regs.L); } })},
                 { 0x87, new Opcode(0x87, "ADD A, A",             1,  4, new Step[] { () => { ADD(regs.A); } })},
                 { 0x86, new Opcode(0x86, "ADD A, (HL)",          1,  8, new Step[] { () => { ADD(mmu.Read8(regs.HL)); } })},
-                { 0xC6, new Opcode(0xC6, "ADD A, ${0:x2}",       2,  8, new Step[] { () => { ADD(OpcodeParm1()); } })},
+                { 0xC6, new Opcode(0xC6, "ADD A, ${0:x2}",       2,  8, new Step[] { () => { ADD(mmu.Read8(regs.PC++)); } })},
                 { 0xE8, new Opcode(0xE8, "ADD SP, ${0:x2}",      2, 16, new Step[] {
-                                                                             () => { operand8 = OpcodeParm1(); },
+                                                                             () => { operand8 = mmu.Read8(regs.PC++); },
                                                                              () => { result16 = ADD_Signed8(regs.SP, operand8); },
                                                                              () => { regs.SP = result16; }
                                                                          })},
@@ -98,7 +98,7 @@ namespace FrozenBoyCore.Processor {
                 { 0xA5, new Opcode(0xA5, "AND L",                1,  4, new Step[] { () => { AND(regs.L); } })},
                 { 0xA7, new Opcode(0xA7, "AND A",                1,  4, new Step[] { () => { AND(regs.A); } })},
                 { 0xA6, new Opcode(0xA6, "AND (HL)",             1,  8, new Step[] { () => { AND(mmu.Read8(regs.HL)); }, })},
-                { 0xE6, new Opcode(0xE6, "AND ${0:x2}",          2,  8, new Step[] { () => { AND(OpcodeParm1()); } })},
+                { 0xE6, new Opcode(0xE6, "AND ${0:x2}",          2,  8, new Step[] { () => { AND(mmu.Read8(regs.PC++)); } })},
                 // OR
                 { 0xB0, new Opcode(0xB0, "OR B",                 1,  4, new Step[] { () => { OR(regs.B); } })},
                 { 0xB1, new Opcode(0xB1, "OR C",                 1,  4, new Step[] { () => { OR(regs.C); } })},
@@ -108,7 +108,7 @@ namespace FrozenBoyCore.Processor {
                 { 0xB5, new Opcode(0xB5, "OR L",                 1,  4, new Step[] { () => { OR(regs.L); } })},
                 { 0xB7, new Opcode(0xB7, "OR A",                 1,  4, new Step[] { () => { OR(regs.A); } })},
                 { 0xB6, new Opcode(0xB6, "OR (HL)",              1,  8, new Step[] { () => { OR(mmu.Read8(regs.HL)); } })},
-                { 0xF6, new Opcode(0xF6, "OR ${0:x2}",           2,  8, new Step[] { () => { OR(OpcodeParm1()); } })},
+                { 0xF6, new Opcode(0xF6, "OR ${0:x2}",           2,  8, new Step[] { () => { OR(mmu.Read8(regs.PC++)); } })},
                 // XOR
                 { 0xA8, new Opcode(0xA8, "XOR B",                1,  4, new Step[] { () => { XOR(regs.B); } })},
                 { 0xA9, new Opcode(0xA9, "XOR C",                1,  4, new Step[] { () => { XOR(regs.C); } })},
@@ -118,44 +118,44 @@ namespace FrozenBoyCore.Processor {
                 { 0xAD, new Opcode(0xAD, "XOR L",                1,  4, new Step[] { () => { XOR(regs.L); } })},
                 { 0xAF, new Opcode(0xAF, "XOR A",                1,  4, new Step[] { () => { XOR(regs.A); } })},
                 { 0xAE, new Opcode(0xAE, "XOR (HL)",             1,  8, new Step[] { () => { XOR(mmu.Read8(regs.HL)); ; } })},
-                { 0xEE, new Opcode(0xEE, "XOR ${0:x2}",          2,  8, new Step[] { () => { XOR(OpcodeParm1()); } })},
+                { 0xEE, new Opcode(0xEE, "XOR ${0:x2}",          2,  8, new Step[] { () => { XOR(mmu.Read8(regs.PC++)); } })},
 
                 // ==================================================================================================================
                 // CALL AND RETURN
                 // ==================================================================================================================
                 // Push address of next instruction onto stack and then jump to address nn.
                 { 0xCD, new Opcode(0xCD, "CALL ${0:x4}",         3, 24, new Step[] {
-                                                                             () => { lsb = OpcodeParm1(); }, //  8t
-                                                                             () => { msb = OpcodeParm2(); }, // 12t
+                                                                             () => { lsb = mmu.Read8(regs.PC++); }, //  8t
+                                                                             () => { msb = mmu.Read8(regs.PC++); }, // 12t
                                                                              () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.PC)); }, // 16t
                                                                              () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.PC)); }, // 20t                        
                                                                              () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); }, // 24t
                                                                              })},
                 // In C# you can't pass a value by reference to an anonymous function
                 { 0xC4, new Opcode(0xC4, "CALL NZ, ${0:x4}",     3, 24, new Step[] {
-                                                                             () => { lsb = OpcodeParm1(); }, //  8t
-                                                                             () => { msb = OpcodeParm2(); if ( regs.FlagZ) { stop = true; } }, // 12t
+                                                                             () => { lsb = mmu.Read8(regs.PC++); }, //  8t
+                                                                             () => { msb = mmu.Read8(regs.PC++); if ( regs.FlagZ) { stop = true; } }, // 12t
                                                                              () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.PC)); }, // 16t
                                                                              () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.PC)); }, // 20t                        
                                                                              () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); }, // 24t
                                                                              })},
                 { 0xCC, new Opcode(0xCC, "CALL Z, ${0:x4}",      3, 24, new Step[] {
-                                                                             () => { lsb = OpcodeParm1(); }, //  8t
-                                                                             () => { msb = OpcodeParm2(); if (!regs.FlagZ) { stop = true; } }, // 12t
+                                                                             () => { lsb = mmu.Read8(regs.PC++); }, //  8t
+                                                                             () => { msb = mmu.Read8(regs.PC++); if (!regs.FlagZ) { stop = true; } }, // 12t
                                                                              () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.PC)); }, // 16t
                                                                              () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.PC)); }, // 20t                        
                                                                              () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); }, // 24t
                                                                              })},
                 { 0xD4, new Opcode(0xD4, "CALL NC, ${0:x4}",     3, 24, new Step[] {
-                                                                             () => { lsb = OpcodeParm1(); }, //  8t
-                                                                             () => { msb = OpcodeParm2(); if (regs.FlagC) { stop = true; } }, // 12t
+                                                                             () => { lsb = mmu.Read8(regs.PC++); }, //  8t
+                                                                             () => { msb = mmu.Read8(regs.PC++); if (regs.FlagC) { stop = true; } }, // 12t
                                                                              () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.PC)); }, // 16t
                                                                              () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.PC)); }, // 20t                        
                                                                              () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); }, // 24t
                                                                              })},
                 { 0xDC, new Opcode(0xDC, "CALL C, ${0:x4}",      3, 24, new Step[] {
-                                                                             () => { lsb = OpcodeParm1(); }, //  8t
-                                                                             () => { msb = OpcodeParm2(); if (!regs.FlagC) { stop = true; } }, // 12t
+                                                                             () => { lsb = mmu.Read8(regs.PC++); }, //  8t
+                                                                             () => { msb = mmu.Read8(regs.PC++); if (!regs.FlagC) { stop = true; } }, // 12t
                                                                              () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.PC)); }, // 16t
                                                                              () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.PC)); }, // 20t                        
                                                                              () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); }, // 24t 
@@ -204,7 +204,7 @@ namespace FrozenBoyCore.Processor {
                 { 0xBD, new Opcode(0xBD, "CP L",                 1,  4, new Step[] { () => { CP(regs.L); } })},
                 { 0xBE, new Opcode(0xBE, "CP (HL)",              1,  8, new Step[] { () => { CP(mmu.Read8(regs.HL)); } })},
                 { 0xBF, new Opcode(0xBF, "CP A",                 1,  4, new Step[] { () => { CP(regs.A); } })},
-                { 0xFE, new Opcode(0xFE, "CP ${0:x2}",           2,  8, new Step[] { () => { CP(OpcodeParm1()); } })},
+                { 0xFE, new Opcode(0xFE, "CP ${0:x2}",           2,  8, new Step[] { () => { CP(mmu.Read8(regs.PC++)); } })},
 
                 // ==================================================================================================================
                 // INTERRUPTS
@@ -220,70 +220,70 @@ namespace FrozenBoyCore.Processor {
                 // JP - Jump to location
                 { 0xE9, new Opcode(0xE9, "JP (HL)",              1,  4, new Step[] { () => { regs.PC = regs.HL; } })},
                 { 0xC3, new Opcode(0xC3, "JP ${0:x4}",           3, 16, new Step[] {
-                                                                             () => { lsb = OpcodeParm1(); },
-                                                                             () => { msb = OpcodeParm2(); },
+                                                                             () => { lsb = mmu.Read8(regs.PC++); },
+                                                                             () => { msb = mmu.Read8(regs.PC++); },
                                                                              () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); } })},
                 { 0xC2, new Opcode(0xC2, "JP NZ, ${0:x4}",       3, 16, new Step[] {
-                                                                             () => { lsb = OpcodeParm1(); },
-                                                                             () => { msb = OpcodeParm2(); if (regs.FlagZ) { stop=true; } },
+                                                                             () => { lsb = mmu.Read8(regs.PC++); },
+                                                                             () => { msb = mmu.Read8(regs.PC++); if (regs.FlagZ) { stop=true; } },
                                                                              () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); } })},
                 { 0xCA, new Opcode(0xCA, "JP Z, ${0:x4}",        3, 16, new Step[] {
-                                                                             () => { lsb = OpcodeParm1(); },
-                                                                             () => { msb = OpcodeParm2(); if (! regs.FlagZ) { stop=true; } },
+                                                                             () => { lsb = mmu.Read8(regs.PC++); },
+                                                                             () => { msb = mmu.Read8(regs.PC++); if (! regs.FlagZ) { stop=true; } },
                                                                              () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); } })},
                 { 0xD2, new Opcode(0xD2, "JP NC, ${0:x4}",       3, 16, new Step[] {
-                                                                             () => { lsb = OpcodeParm1(); },
-                                                                             () => { msb = OpcodeParm2(); if (regs.FlagC) { stop=true; } },
+                                                                             () => { lsb = mmu.Read8(regs.PC++); },
+                                                                             () => { msb = mmu.Read8(regs.PC++); if (regs.FlagC) { stop=true; } },
                                                                              () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); } })},
                 { 0xDA, new Opcode(0xDA, "JP C, ${0:x4}",        3, 16, new Step[] {
-                                                                             () => { lsb = OpcodeParm1(); },
-                                                                             () => { msb = OpcodeParm2(); if (! regs.FlagC) { stop=true; } },
+                                                                             () => { lsb = mmu.Read8(regs.PC++); },
+                                                                             () => { msb = mmu.Read8(regs.PC++); if (! regs.FlagC) { stop=true; } },
                                                                              () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); } })},
                 // Jump to location relative to the current location
                 // 12t if branched, 8 if not branched 
                 { 0x18, new Opcode(0x18, "JR ${0:x2}",           2, 12, new Step[] {
-                                                                             () => { operand8 = OpcodeParm1(); },
-                                                                             () => { regs.PC = (u16)(regs.OpcodePC + 2 + ToSigned(operand8)); } })},
+                                                                             () => { operand8 = mmu.Read8(regs.PC++); },
+                                                                             () => { regs.PC = (u16)(regs.PC + ToSigned(operand8)); } })},
                 { 0x20, new Opcode(0x20, "JR NZ, ${0:x2}",       2, 12, new Step[] {
-                                                                             () => { operand8 = OpcodeParm1(); if ( regs.FlagZ) { stop = true; } },
-                                                                             () => { regs.PC = (u16)(regs.OpcodePC + 2 + ToSigned(operand8)); } })},
+                                                                             () => { operand8 = mmu.Read8(regs.PC++); if ( regs.FlagZ) { stop = true; } },
+                                                                             () => { regs.PC = (u16)(regs.PC + ToSigned(operand8)); } })},
                 { 0x28, new Opcode(0x28, "JR Z, ${0:x2}",        2, 12, new Step[] {
-                                                                             () => { operand8 = OpcodeParm1(); if (!regs.FlagZ) { stop = true; } },
-                                                                             () => { regs.PC = (u16)(regs.OpcodePC + 2 + ToSigned(operand8));  } })},
+                                                                             () => { operand8 = mmu.Read8(regs.PC++); if (!regs.FlagZ) { stop = true; } },
+                                                                             () => { regs.PC = (u16)(regs.PC + ToSigned(operand8));  } })},
                 { 0x30, new Opcode(0x30, "JR NC, ${0:x2}",       2, 12, new Step[] {
-                                                                             () => { operand8 = OpcodeParm1(); if ( regs.FlagC) { stop = true; } },
-                                                                             () => { regs.PC = (u16)(regs.OpcodePC + 2 + ToSigned(operand8));  } })},
+                                                                             () => { operand8 = mmu.Read8(regs.PC++); if ( regs.FlagC) { stop = true; } },
+                                                                             () => { regs.PC = (u16)(regs.PC + ToSigned(operand8));  } })},
                 { 0x38, new Opcode(0x38, "JR C, ${0:x2}",        2, 12, new Step[] {
-                                                                             () => { operand8 = OpcodeParm1(); if (!regs.FlagC) { stop = true; } },
-                                                                             () => { regs.PC = (u16)(regs.OpcodePC + 2 + ToSigned(operand8)); } })},
+                                                                             () => { operand8 = mmu.Read8(regs.PC++); if (!regs.FlagC) { stop = true; } },
+                                                                             () => { regs.PC = (u16)(regs.PC + ToSigned(operand8)); } })},
                                                                        
                 // ==================================================================================================================
                 // LOAD FANILY
                 // ==================================================================================================================
                 // load direct value into register - 8 bit
-                { 0x06, new Opcode(0x06, "LD B, ${0:x2}",        2,  8, new Step[] { () => { regs.B = OpcodeParm1(); } })},
-                { 0x0E, new Opcode(0x0E, "LD C, ${0:x2}",        2,  8, new Step[] { () => { regs.C = OpcodeParm1(); } })},
-                { 0x16, new Opcode(0x16, "LD D, ${0:x2}",        2,  8, new Step[] { () => { regs.D = OpcodeParm1(); } })},
-                { 0x1E, new Opcode(0x1E, "LD E, ${0:x2}",        2,  8, new Step[] { () => { regs.E = OpcodeParm1(); } })},
-                { 0x26, new Opcode(0x26, "LD H, ${0:x2}",        2,  8, new Step[] { () => { regs.H = OpcodeParm1(); } })},
-                { 0x2E, new Opcode(0x2E, "LD L, ${0:x2}",        2,  8, new Step[] { () => { regs.L = OpcodeParm1(); } })},
-                { 0x3E, new Opcode(0x3E, "LD A, ${0:x2}",        2,  8, new Step[] { () => { regs.A = OpcodeParm1(); } })},
+                { 0x06, new Opcode(0x06, "LD B, ${0:x2}",        2,  8, new Step[] { () => { regs.B = mmu.Read8(regs.PC++); } })},
+                { 0x0E, new Opcode(0x0E, "LD C, ${0:x2}",        2,  8, new Step[] { () => { regs.C = mmu.Read8(regs.PC++); } })},
+                { 0x16, new Opcode(0x16, "LD D, ${0:x2}",        2,  8, new Step[] { () => { regs.D = mmu.Read8(regs.PC++); } })},
+                { 0x1E, new Opcode(0x1E, "LD E, ${0:x2}",        2,  8, new Step[] { () => { regs.E = mmu.Read8(regs.PC++); } })},
+                { 0x26, new Opcode(0x26, "LD H, ${0:x2}",        2,  8, new Step[] { () => { regs.H = mmu.Read8(regs.PC++); } })},
+                { 0x2E, new Opcode(0x2E, "LD L, ${0:x2}",        2,  8, new Step[] { () => { regs.L = mmu.Read8(regs.PC++); } })},
+                { 0x3E, new Opcode(0x3E, "LD A, ${0:x2}",        2,  8, new Step[] { () => { regs.A = mmu.Read8(regs.PC++); } })},
                 { 0x36, new Opcode(0x36, "LD (HL), ${0:x2}",     2, 12, new Step[] {
-                                                                             () => { operand8 = OpcodeParm1(); },
+                                                                             () => { operand8 = mmu.Read8(regs.PC++); },
                                                                              () => { mmu.Write8(regs.HL, operand8); }, })},
                 // load direct value into register - 16 bit
                 { 0x01, new Opcode(0x01, "LD BC, ${0:x4}",       3, 12, new Step[] {
-                                                                             () => { lsb = OpcodeParm1(); },
-                                                                             () => { msb = OpcodeParm2(); regs.BC = BitUtils.ToUnsigned16(msb, lsb); }, })},
+                                                                             () => { lsb = mmu.Read8(regs.PC++); },
+                                                                             () => { msb = mmu.Read8(regs.PC++); regs.BC = BitUtils.ToUnsigned16(msb, lsb); }, })},
                 { 0x11, new Opcode(0x11, "LD DE, ${0:x4}",       3, 12, new Step[] {
-                                                                             () => { lsb = OpcodeParm1(); },
-                                                                             () => { msb = OpcodeParm2(); regs.DE = BitUtils.ToUnsigned16(msb, lsb); }, })},
+                                                                             () => { lsb = mmu.Read8(regs.PC++); },
+                                                                             () => { msb = mmu.Read8(regs.PC++); regs.DE = BitUtils.ToUnsigned16(msb, lsb); }, })},
                 { 0x21, new Opcode(0x21, "LD HL, ${0:x4}",       3, 12, new Step[] {
-                                                                             () => { lsb = OpcodeParm1(); },
-                                                                             () => { msb = OpcodeParm2(); regs.HL = BitUtils.ToUnsigned16(msb, lsb); }, })},
+                                                                             () => { lsb = mmu.Read8(regs.PC++); },
+                                                                             () => { msb = mmu.Read8(regs.PC++); regs.HL = BitUtils.ToUnsigned16(msb, lsb); }, })},
                 { 0x31, new Opcode(0x31, "LD SP, ${0:x4}",       3, 12, new Step[] {
-                                                                             () => { lsb = OpcodeParm1(); },
-                                                                             () => { msb = OpcodeParm2(); regs.SP = BitUtils.ToUnsigned16(msb, lsb); }, })},
+                                                                             () => { lsb = mmu.Read8(regs.PC++); },
+                                                                             () => { msb = mmu.Read8(regs.PC++); regs.SP = BitUtils.ToUnsigned16(msb, lsb); }, })},
                                                                          
                 // load register to register
                 { 0x40, new Opcode(0x40, "LD B, B",              1,  4, new Step[] { () => { } })},
@@ -336,8 +336,8 @@ namespace FrozenBoyCore.Processor {
                 { 0x7C, new Opcode(0x7C, "LD A, H",              1,  4, new Step[] { () => { regs.A = regs.H; } })},
                 { 0x7D, new Opcode(0x7D, "LD A, L",              1,  4, new Step[] { () => { regs.A = regs.L; } })},
                 { 0x08, new Opcode(0x08, "LD (${0:x4}), SP",     3, 20, new Step[] {
-                                                                             () => { lsb = OpcodeParm1(); },
-                                                                             () => { msb = OpcodeParm2(); address16 = BitUtils.ToUnsigned16(msb, lsb); },
+                                                                             () => { lsb = mmu.Read8(regs.PC++); },
+                                                                             () => { msb = mmu.Read8(regs.PC++); address16 = BitUtils.ToUnsigned16(msb, lsb); },
                                                                              () => { mmu.Write8(address16, BitUtils.Lsb(regs.SP)); },
                                                                              () => { mmu.Write8((u16)(address16 + 1), BitUtils.Msb(regs.SP)); }, })},
 
@@ -365,23 +365,23 @@ namespace FrozenBoyCore.Processor {
                 { 0x77, new Opcode(0x77, "LD (HL), A",           1,  8, new Step[] { () => { mmu.Write8(regs.HL, regs.A); } })},
 
                 { 0xF8, new Opcode(0xF8, "LD HL, SP+${0:x2}",    2, 12, new Step[] {
-                                                                             () => { operand8 = OpcodeParm1(); },
+                                                                             () => { operand8 = mmu.Read8(regs.PC++); },
                                                                              () => { regs.HL = ADD_Signed8(regs.SP, operand8); }, })},
                 { 0xF9, new Opcode(0xF9, "LD SP, HL",            1,  8, new Step[] { () => { regs.SP = regs.HL; } })},
                 { 0xEA, new Opcode(0xEA, "LD (${0:x4}), A",      3, 16, new Step[] {
-                                                                             () => { lsb = OpcodeParm1(); },
-                                                                             () => { msb = OpcodeParm2(); },
+                                                                             () => { lsb = mmu.Read8(regs.PC++); },
+                                                                             () => { msb = mmu.Read8(regs.PC++); },
                                                                              () => { mmu.Write8(BitUtils.ToUnsigned16(msb, lsb), regs.A); }, })},
                 { 0xFA, new Opcode(0xFA, "LD A, (${0:x4})",      3, 16, new Step[] {
-                                                                             () => { lsb = OpcodeParm1(); },
-                                                                             () => { msb = OpcodeParm2(); },
+                                                                             () => { lsb = mmu.Read8(regs.PC++); },
+                                                                             () => { msb = mmu.Read8(regs.PC++); },
                                                                              () => { regs.A = mmu.Read8(BitUtils.ToUnsigned16(msb, lsb)); }, })},                                                                 
                 // LDH - Put memory address $FF00+n into A
                 { 0xE0, new Opcode(0xE0, "LDH (${0:x2}), A",     2, 12, new Step[] {
-                                                                             () => { operand8 = OpcodeParm1(); },
+                                                                             () => { operand8 = mmu.Read8(regs.PC++); },
                                                                              () => { mmu.Write8((u16)(0xFF00 + operand8), regs.A); }, })},
                 { 0xF0, new Opcode(0xF0, "LDH A, (${0:x2})",     2, 12, new Step[] {
-                                                                             () => { operand8 = OpcodeParm1(); },
+                                                                             () => { operand8 = mmu.Read8(regs.PC++); },
                                                                              () => { regs.A = mmu.Read8((u16)(0xFF00 + operand8)); }, })},
 
                 { 0xE2, new Opcode(0xE2, "LDH (C), A",           1,  8, new Step[] { () => { mmu.Write8((u16)(0xFF00 + regs.C), regs.A); } })},
@@ -473,7 +473,7 @@ namespace FrozenBoyCore.Processor {
                 { 0x9D, new Opcode(0x9D, "SBC A, L",             1,  4, new Step[] { () => { SBC(regs.L); } })},
                 { 0x9F, new Opcode(0x9F, "SBC A, A",             1,  4, new Step[] { () => { SBC(regs.A); } })},
                 { 0x9E, new Opcode(0x9E, "SBC A, (HL)",          1,  8, new Step[] { () => { SBC(mmu.Read8(regs.HL)); } })},
-                { 0xDE, new Opcode(0xDE, "SBC A, ${0:x2}",       2,  8, new Step[] { () => { SBC(OpcodeParm1()); } })},
+                { 0xDE, new Opcode(0xDE, "SBC A, ${0:x2}",       2,  8, new Step[] { () => { SBC(mmu.Read8(regs.PC++)); } })},
                 // Subtract value from A
                 { 0x90, new Opcode(0x90, "SUB A, B",             1,  4, new Step[] { () => { SUB(regs.B); } })},
                 { 0x91, new Opcode(0x91, "SUB A, C",             1,  4, new Step[] { () => { SUB(regs.C); } })},
@@ -483,7 +483,7 @@ namespace FrozenBoyCore.Processor {
                 { 0x95, new Opcode(0x95, "SUB A, L",             1,  4, new Step[] { () => { SUB(regs.L); } })},
                 { 0x97, new Opcode(0x97, "SUB A, A",             1,  4, new Step[] { () => { SUB(regs.A); } })},
                 { 0x96, new Opcode(0x96, "SUB A, (HL)",          1,  8, new Step[] { () => { SUB(mmu.Read8(regs.HL)); } })},
-                { 0xD6, new Opcode(0xD6, "SUB ${0:x2}",          2,  8, new Step[] { () => { SUB(OpcodeParm1()); } })},
+                { 0xD6, new Opcode(0xD6, "SUB ${0:x2}",          2,  8, new Step[] { () => { SUB(mmu.Read8(regs.PC++)); } })},
 
                 // ==================================================================================================================
                 // MISC
@@ -702,17 +702,17 @@ namespace FrozenBoyCore.Processor {
 
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public u8 OpcodeParm1() {
-            regs.PC++;
-            return (u8)mmu.Read8((u16)(regs.OpcodePC + 1));
-        }
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //public u8 mmu.Read8(regs.PC++) {
+        //    regs.PC++;
+        //    return (u8)mmu.Read8((u16)(regs.OpcodePC + 1));
+        //}
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public u8 OpcodeParm2() {
-            regs.PC++;
-            return (u8)mmu.Read8((u16)(regs.OpcodePC + 2));
-        }
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //public u8 mmu.Read8(regs.PC++) {
+        //    regs.PC++;
+        //    return (u8)mmu.Read8((u16)(regs.OpcodePC + 2));
+        //}
 
 
     }

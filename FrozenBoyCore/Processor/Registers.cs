@@ -15,7 +15,7 @@ namespace FrozenBoyCore.Processor {
         public u16 PC;
         public u16 SP;
         // unofficial
-        public u16 OpcodePC;
+        // public u16 OpcodePC;
 
         // 8 bit Real registers
         public u8 A;

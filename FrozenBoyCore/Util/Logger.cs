@@ -36,12 +36,12 @@ namespace FrozenBoyCore.Util {
             bool disAsm = false;
 
             if (cpu.opcode != null) {
-                if (disAsm) {
-                    instruction = Disassembler.OpcodeToStr(cpu, cpu.opcode, cpu.regs.OpcodePC);
-                }
-                else {
-                    instruction = String.Format("O=0x{0:x2}", cpu.opcode.value);
-                }
+                // if (disAsm) {
+                // instruction = Disassembler.OpcodeToStr(cpu, cpu.opcode, cpu.regs.OpcodePC);
+                // }
+                // else {
+                instruction = String.Format("O=0x{0:x2}", cpu.opcode.value);
+                // }
             }
             else {
                 instruction = "";
