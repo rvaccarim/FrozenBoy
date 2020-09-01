@@ -20,6 +20,65 @@ namespace FrozenBoyTest {
         }
 
         [Fact]
+        public void Test_div_timing() {
+            bool passed = Test(@"acceptance\", "div_timing.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_ei_sequence() {
+            bool passed = Test(@"acceptance\", "ei_sequence.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_ei_timing() {
+            bool passed = Test(@"acceptance\", "ei_timing.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_halt_ime1_timing() {
+            bool passed = Test(@"acceptance\", "halt_ime1_timing.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_if_ie_registers() {
+            bool passed = Test(@"acceptance\", "if_ie_registers.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_intr_timing() {
+            bool passed = Test(@"acceptance\", "intr_timing.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_pop_timing() {
+            bool passed = Test(@"acceptance\", "pop_timing.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_push_timing() {
+            bool passed = Test(@"acceptance\", "push_timing.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_rapid_di_ei() {
+            bool passed = Test(@"acceptance\", "rapid_di_ei.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_rereti_intr_timing() {
+            bool passed = Test(@"acceptance\", "reti_intr_timing.gb", false);
+            Assert.True(passed);
+        }
+        [Fact]
         public void Test_mem_oam() {
             bool passed = Test(@"acceptance\bits\", "mem_oam.gb", false);
             Assert.True(passed);
@@ -38,14 +97,81 @@ namespace FrozenBoyTest {
         }
 
         [Fact]
-        public void Test_pop_timing() {
-            bool passed = Test(@"acceptance\", "pop_timing.gb", false);
+        public void Test_basic_oam_dma() {
+            bool passed = Test(@"acceptance\oam_dma\", "basic.gb", false);
+            Assert.True(passed);
+        }
+
+
+        [Fact]
+        public void Test_div_write() {
+            bool passed = Test(@"acceptance\timer\", "div_write.gb", false);
             Assert.True(passed);
         }
 
         [Fact]
-        public void Test_push_timing() {
-            bool passed = Test(@"acceptance\", "push_timing.gb", false);
+        public void Test_rapid_toggle() {
+            bool passed = Test(@"acceptance\timer\", "rapid_toggle.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_tim00_div_trigger() {
+            bool passed = Test(@"acceptance\timer\", "tim00_div_trigger.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_tim01() {
+            bool passed = Test(@"acceptance\timer\", "tim01.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_tim01_div_trigger() {
+            bool passed = Test(@"acceptance\timer\", "tim01_div_trigger.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_tim10() {
+            bool passed = Test(@"acceptance\timer\", "tim10.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_tim10_div_trigger() {
+            bool passed = Test(@"acceptance\timer\", "tim10_div_trigger.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_tim11() {
+            bool passed = Test(@"acceptance\timer\", "tim11.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_tim11_div_trigger() {
+            bool passed = Test(@"acceptance\timer\", "tim11_div_trigger.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_tima_reload() {
+            bool passed = Test(@"acceptance\timer\", "tima_reload.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_tima_write_reloading() {
+            bool passed = Test(@"acceptance\timer\", "tima_write_reloading.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_tma_write_reloading() {
+            bool passed = Test(@"acceptance\timer\", "tma_write_reloading.gb", false);
             Assert.True(passed);
         }
 
