@@ -12,10 +12,10 @@ using FrozenBoyCore.Util;
 namespace FrozenBoyCore.Graphics {
 
     public class GPU {
-        private const int MODE_HBLANK = 0b00;
-        private const int MODE_VBLANK = 0b01;
-        private const int MODE_SCANLINE_OAM = 0b10;
-        private const int MODE_SCANLINE_VRAM = 0b11;
+        public const int MODE_HBLANK = 0b00;
+        public const int MODE_VBLANK = 0b01;
+        public const int MODE_SCANLINE_OAM = 0b10;
+        public const int MODE_SCANLINE_VRAM = 0b11;
 
         // for the STATUS register
         private const int STATUS_COINCIDENCE_BITPOS = 2;

@@ -18,6 +18,8 @@ namespace FrozenBoyTest {
         private const string MemTimingPath1 = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\blargg\mem_timing\individual\";
         private const string MemTimingPath2 = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\blargg\mem_timing-2\rom_singles\";
         private const string HaltPath = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\blargg\halt_bug\";
+        private const string OAMPath = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\blargg\oam_bug\rom_singles\";
+
 
         private const string debugPath = @"D:\Users\frozen\Documents\99_temp\GB_Debug\";
 
@@ -142,6 +144,50 @@ namespace FrozenBoyTest {
             bool passed = Test(HaltPath, @"halt_bug.gb", logExecution: false, TestOutput.Memory);
             Assert.True(passed);
         }
+
+        [Fact]
+        public void TestOAM_LCD_Sync() {
+            bool passed = Test(OAMPath, @"1-lcd_sync.gb", logExecution: false, TestOutput.Memory);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void TestOAM_Causes() {
+            bool passed = Test(OAMPath, @"2-causes.gb", logExecution: false, TestOutput.Memory);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void TestOAM_NonCauses() {
+            bool passed = Test(OAMPath, @"3-non_causes.gb", logExecution: false, TestOutput.Memory);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void TestOAM_Scanline_Timing() {
+            bool passed = Test(OAMPath, @"4-scanline_timing.gb", logExecution: false, TestOutput.Memory);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void TestOAM_TimingBug() {
+            bool passed = Test(OAMPath, @"5-timing_bug.gb", logExecution: false, TestOutput.Memory);
+            Assert.True(passed);
+        }
+
+        //[Fact]
+        //public void TestOAM_TimingEffect() {
+        //    bool passed = Test(OAMPath, @"7-timing_effect.gb", logExecution: false, TestOutput.Memory);
+        //    Assert.True(passed);
+        //}
+
+
+        [Fact]
+        public void TestOAM_InstrEffect() {
+            bool passed = Test(OAMPath, @"8-instr_effect.gb", logExecution: false, TestOutput.Memory);
+            Assert.True(passed);
+        }
+
 
         public bool Test(string path, string romName, bool logExecution, TestOutput testOutput) {
             string romFilename = path + romName;

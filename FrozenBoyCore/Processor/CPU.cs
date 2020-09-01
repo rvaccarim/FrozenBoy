@@ -7,6 +7,7 @@ using System.Reflection.Emit;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using FrozenBoyCore.Util;
+using FrozenBoyCore.Graphics;
 
 namespace FrozenBoyCore.Processor {
     public enum InstructionState {
@@ -20,6 +21,7 @@ namespace FrozenBoyCore.Processor {
         public MMU mmu;
         public Timer timer;
         public InterruptManager intManager;
+        public GPU gpu;
 
         public OpcodeHandler opHandler;
         public CB_OpcodeHandler cbHandler;
@@ -40,10 +42,11 @@ namespace FrozenBoyCore.Processor {
         private int currM;
         private int totalM;
 
-        public CPU(MMU mmu, Timer timer, InterruptManager intManager) {
+        public CPU(MMU mmu, Timer timer, InterruptManager intManager, GPU gpu) {
             this.mmu = mmu;
             this.timer = timer;
             this.intManager = intManager;
+            this.gpu = gpu;
 
             regs = new Registers {
                 AF = 0x01B0,
@@ -55,7 +58,7 @@ namespace FrozenBoyCore.Processor {
             };
             this.intManager.IME = false;
 
-            opHandler = new OpcodeHandler(regs, mmu, intManager);
+            opHandler = new OpcodeHandler(regs, mmu, intManager, gpu);
             cbHandler = new CB_OpcodeHandler(regs, mmu);
 
             state = InstructionState.Fetch;
@@ -255,10 +258,6 @@ namespace FrozenBoyCore.Processor {
 
             return null;
         }
-
-        //public u8 ReadParm8() {
-        //    return (u8)mmu.Read8((u16)(regs.OpcodePC + 1));
-        //}
 
     }
 }

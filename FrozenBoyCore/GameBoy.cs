@@ -35,7 +35,7 @@ namespace FrozenBoyCore {
             joypad = new Joypad(intManager);
             dma = new Dma();
             mmu = new MMU(timer, intManager, gpu, joypad, dma);
-            cpu = new CPU(mmu, timer, intManager);
+            cpu = new CPU(mmu, timer, intManager, gpu);
 
             gpu.SetMMU(mmu);
             dma.SetMMU(mmu);
@@ -66,7 +66,7 @@ namespace FrozenBoyCore {
 
             while (true) {
 
-                if (totalCycles == 5524 && cpu.opcode.value == 0xc3) {
+                if (totalCycles == 5524 && cpu.opcode.value == 0xcd) {
                     int z = 0;
                 }
 

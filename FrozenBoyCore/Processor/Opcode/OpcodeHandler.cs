@@ -6,11 +6,14 @@ using u16 = System.UInt16;
 using FrozenBoyCore.Memory;
 using FrozenBoyCore.Util;
 using System.Runtime.CompilerServices;
+using FrozenBoyCore.Graphics;
+using System.IO;
 
 namespace FrozenBoyCore.Processor {
     public class OpcodeHandler {
         private readonly Registers regs;
         private readonly MMU mmu;
+        private readonly GPU gpu;
         private readonly InterruptManager intManager;
 
         private u8 lsb;
@@ -23,9 +26,10 @@ namespace FrozenBoyCore.Processor {
 
         public Dictionary<u8, Opcode> opcodes;
 
-        public OpcodeHandler(Registers regs, MMU mmu, InterruptManager intManager) {
+        public OpcodeHandler(Registers regs, MMU mmu, InterruptManager intManager, GPU gpu) {
             this.regs = regs;
             this.mmu = mmu;
+            this.gpu = gpu;
             this.intManager = intManager;
 
             opcodes = InitializeOpcodes();
@@ -82,10 +86,14 @@ namespace FrozenBoyCore.Processor {
                                                                              () => { mmu.Write8(regs.HL, INC(operand8)); },
                                                                          })},
                 // INC - 16 bit
-                { 0x03, new Opcode(0x03, "INC BC",               1,  8, new Step[] { () => { regs.BC++; } })},
-                { 0x13, new Opcode(0x13, "INC DE",               1,  8, new Step[] { () => { regs.DE++; } })},
-                { 0x23, new Opcode(0x23, "INC HL",               1,  8, new Step[] { () => { regs.HL++; } })},
-                { 0x33, new Opcode(0x33, "INC SP",               1,  8, new Step[] { () => { regs.SP++; } })},
+                { 0x03, new Opcode(0x03, "INC BC",               1,  8, new Step[] { () => { if (WillCorrupt(regs.BC)) Patch(CorruptionType.INC_DEC);
+                                                                                             regs.BC++; } })},
+                { 0x13, new Opcode(0x13, "INC DE",               1,  8, new Step[] { () => { if (WillCorrupt(regs.DE)) Patch(CorruptionType.INC_DEC);
+                                                                                             regs.DE++; } })},
+                { 0x23, new Opcode(0x23, "INC HL",               1,  8, new Step[] { () => { if (WillCorrupt(regs.HL)) Patch(CorruptionType.INC_DEC);
+                                                                                             regs.HL++; } })},
+                { 0x33, new Opcode(0x33, "INC SP",               1,  8, new Step[] { () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.INC_DEC);
+                                                                                             regs.SP++; } })}, 
 
                 // ==================================================================================================================
                 // AND, OR, XOR
@@ -125,39 +133,49 @@ namespace FrozenBoyCore.Processor {
                 // ==================================================================================================================
                 // Push address of next instruction onto stack and then jump to address nn.
                 { 0xCD, new Opcode(0xCD, "CALL ${0:x4}",         3, 24, new Step[] {
-                                                                             () => { lsb = mmu.Read8(regs.PC++); }, //  8t
-                                                                             () => { msb = mmu.Read8(regs.PC++); }, // 12t
-                                                                             () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.PC)); }, // 16t
-                                                                             () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.PC)); }, // 20t                        
-                                                                             () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); }, // 24t
+                                                                             () => { lsb = mmu.Read8(regs.PC++); },
+                                                                             () => { msb = mmu.Read8(regs.PC++); },
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.PUSH_1);
+                                                                                     regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.PC)); },
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.PUSH_2);
+                                                                                     regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.PC)); },
+                                                                             () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); },
                                                                              })},
                 // In C# you can't pass a value by reference to an anonymous function
                 { 0xC4, new Opcode(0xC4, "CALL NZ, ${0:x4}",     3, 24, new Step[] {
                                                                              () => { lsb = mmu.Read8(regs.PC++); }, //  8t
                                                                              () => { msb = mmu.Read8(regs.PC++); if ( regs.FlagZ) { stop = true; } }, // 12t
-                                                                             () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.PC)); }, // 16t
-                                                                             () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.PC)); }, // 20t                        
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.PUSH_1);
+                                                                                     regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.PC)); }, // 16t
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.PUSH_2);
+                                                                                     regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.PC)); }, // 20t                        
                                                                              () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); }, // 24t
                                                                              })},
                 { 0xCC, new Opcode(0xCC, "CALL Z, ${0:x4}",      3, 24, new Step[] {
                                                                              () => { lsb = mmu.Read8(regs.PC++); }, //  8t
                                                                              () => { msb = mmu.Read8(regs.PC++); if (!regs.FlagZ) { stop = true; } }, // 12t
-                                                                             () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.PC)); }, // 16t
-                                                                             () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.PC)); }, // 20t                        
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.PUSH_1);
+                                                                                     regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.PC)); }, // 16t
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.PUSH_2);
+                                                                                     regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.PC)); }, // 20t                        
                                                                              () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); }, // 24t
                                                                              })},
                 { 0xD4, new Opcode(0xD4, "CALL NC, ${0:x4}",     3, 24, new Step[] {
                                                                              () => { lsb = mmu.Read8(regs.PC++); }, //  8t
                                                                              () => { msb = mmu.Read8(regs.PC++); if (regs.FlagC) { stop = true; } }, // 12t
-                                                                             () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.PC)); }, // 16t
-                                                                             () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.PC)); }, // 20t                        
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.PUSH_1);
+                                                                                     regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.PC)); }, // 16t
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.PUSH_2);
+                                                                                     regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.PC)); }, // 20t                        
                                                                              () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); }, // 24t
                                                                              })},
                 { 0xDC, new Opcode(0xDC, "CALL C, ${0:x4}",      3, 24, new Step[] {
                                                                              () => { lsb = mmu.Read8(regs.PC++); }, //  8t
                                                                              () => { msb = mmu.Read8(regs.PC++); if (!regs.FlagC) { stop = true; } }, // 12t
-                                                                             () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.PC)); }, // 16t
-                                                                             () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.PC)); }, // 20t                        
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.PUSH_1);
+                                                                                     regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.PC)); }, // 16t
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.PUSH_2);
+                                                                                     regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.PC)); }, // 20t                        
                                                                              () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); }, // 24t 
                                                                              })},
 
@@ -165,31 +183,43 @@ namespace FrozenBoyCore.Processor {
                 { 0xC0, new Opcode(0xC0, "RET NZ",               1, 20, new Step[] {
                                                                              // You can't pass a value by ref to an anonymous function
                                                                              () => { if (regs.FlagZ) {stop = true; } },
-                                                                             () => { lsb = mmu.Read8(regs.SP); regs.SP++; },
-                                                                             () => { msb = mmu.Read8(regs.SP); regs.SP++; },
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.POP_1);
+                                                                                     lsb = mmu.Read8(regs.SP); regs.SP++; },
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.POP_2);
+                                                                                     msb = mmu.Read8(regs.SP); regs.SP++; },
                                                                              () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); }, })},
                 { 0xC8, new Opcode(0xC8, "RET Z",                1, 20, new Step[] {
                                                                              () => { if (! regs.FlagZ) {stop = true; } },
-                                                                             () => { lsb = mmu.Read8(regs.SP); regs.SP++; },
-                                                                             () => { msb = mmu.Read8(regs.SP); regs.SP++; },
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.POP_1);
+                                                                                     lsb = mmu.Read8(regs.SP); regs.SP++; },
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.POP_2);
+                                                                                     msb = mmu.Read8(regs.SP); regs.SP++; },
                                                                              () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); }, })},
                 { 0xD0, new Opcode(0xD0, "RET NC",               1, 20, new Step[] {
                                                                              () => { if (regs.FlagC) {stop = true; } },
-                                                                             () => { lsb = mmu.Read8(regs.SP); regs.SP++; },
-                                                                             () => { msb = mmu.Read8(regs.SP); regs.SP++; },
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.POP_1);
+                                                                                     lsb = mmu.Read8(regs.SP); regs.SP++; },
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.POP_2);
+                                                                                     msb = mmu.Read8(regs.SP); regs.SP++; },
                                                                              () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); }, })},
                 { 0xD8, new Opcode(0xD8, "RET C",                1, 20, new Step[] {
                                                                              () => { if (! regs.FlagC) {stop = true; } },
-                                                                             () => { lsb = mmu.Read8(regs.SP); regs.SP++; },
-                                                                             () => { msb = mmu.Read8(regs.SP); regs.SP++; },
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.POP_1);
+                                                                                     lsb = mmu.Read8(regs.SP); regs.SP++; },
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.POP_2);
+                                                                                     msb = mmu.Read8(regs.SP); regs.SP++; },
                                                                              () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); }, })},
                 { 0xC9, new Opcode(0xC9, "RET",                  1, 16, new Step[] {
-                                                                             () => { lsb = mmu.Read8(regs.SP); regs.SP++; },
-                                                                             () => { msb = mmu.Read8(regs.SP); regs.SP++; },
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.POP_1);
+                                                                                     lsb = mmu.Read8(regs.SP); regs.SP++; },
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.POP_2);
+                                                                                     msb = mmu.Read8(regs.SP); regs.SP++; },
                                                                              () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); }, })},
                 { 0xD9, new Opcode(0xD9, "RETI",                 1, 16, new Step[] {
-                                                                             () => { lsb = mmu.Read8(regs.SP); regs.SP++; },
-                                                                             () => { msb = mmu.Read8(regs.SP); regs.SP++; },
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.POP_1);
+                                                                                     lsb = mmu.Read8(regs.SP); regs.SP++; },
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.POP_2);
+                                                                                     msb = mmu.Read8(regs.SP); regs.SP++; },
                                                                              () => { regs.PC = BitUtils.ToUnsigned16(msb, lsb); intManager.IME = true; }, })},
 
                 // ==================================================================================================================
@@ -279,8 +309,11 @@ namespace FrozenBoyCore.Processor {
                                                                              () => { lsb = mmu.Read8(regs.PC++); },
                                                                              () => { msb = mmu.Read8(regs.PC++); regs.DE = BitUtils.ToUnsigned16(msb, lsb); }, })},
                 { 0x21, new Opcode(0x21, "LD HL, ${0:x4}",       3, 12, new Step[] {
-                                                                             () => { lsb = mmu.Read8(regs.PC++); },
-                                                                             () => { msb = mmu.Read8(regs.PC++); regs.HL = BitUtils.ToUnsigned16(msb, lsb); }, })},
+                                                                             () => { if (WillCorrupt(regs.PC)) Patch(CorruptionType.LD_HL);
+                                                                                     lsb = mmu.Read8(regs.PC++); },
+                                                                             () => { if (WillCorrupt(regs.PC)) Patch(CorruptionType.LD_HL);
+                                                                                     msb = mmu.Read8(regs.PC++);
+                                                                                     regs.HL = BitUtils.ToUnsigned16(msb, lsb); }, })},
                 { 0x31, new Opcode(0x31, "LD SP, ${0:x4}",       3, 12, new Step[] {
                                                                              () => { lsb = mmu.Read8(regs.PC++); },
                                                                              () => { msb = mmu.Read8(regs.PC++); regs.SP = BitUtils.ToUnsigned16(msb, lsb); }, })},
@@ -347,8 +380,10 @@ namespace FrozenBoyCore.Processor {
                 { 0x1A, new Opcode(0x1A, "LD A, (DE)",           1,  8, new Step[] { () => { regs.A = mmu.Read8(regs.DE); } })},
                 { 0x22, new Opcode(0x22, "LD (HL+), A",          1,  8, new Step[] { () => { mmu.Write8(regs.HL, regs.A); regs.HL++; } })},
                 { 0x32, new Opcode(0x32, "LD (HL-), A",          1,  8, new Step[] { () => { mmu.Write8(regs.HL, regs.A); regs.HL--; } })},
-                { 0x2A, new Opcode(0x2A, "LD A, (HL+)",          1,  8, new Step[] { () => { regs.A = mmu.Read8(regs.HL); regs.HL++; } })},
-                { 0x3A, new Opcode(0x3A, "LD A, (HL-)",          1,  8, new Step[] { () => { regs.A = mmu.Read8(regs.HL); regs.HL--; } })},
+                { 0x2A, new Opcode(0x2A, "LD A, (HL+)",          1,  8, new Step[] { () => { if (WillCorrupt(regs.HL)) Patch(CorruptionType.LD_HL);
+                                                                                             regs.A = mmu.Read8(regs.HL); regs.HL++; } })},
+                { 0x3A, new Opcode(0x3A, "LD A, (HL-)",          1,  8, new Step[] { () => { if (WillCorrupt(regs.HL)) Patch(CorruptionType.LD_HL);
+                                                                                             regs.A = mmu.Read8(regs.HL); regs.HL--; } })},
                 { 0x46, new Opcode(0x46, "LD B, (HL)",           1,  8, new Step[] { () => { regs.B = mmu.Read8(regs.HL); } })},
                 { 0x4E, new Opcode(0x4E, "LD C, (HL)",           1,  8, new Step[] { () => { regs.C = mmu.Read8(regs.HL); } })},
                 { 0x56, new Opcode(0x56, "LD D, (HL)",           1,  8, new Step[] { () => { regs.D = mmu.Read8(regs.HL); } })},
@@ -392,38 +427,55 @@ namespace FrozenBoyCore.Processor {
                 // ==================================================================================================================
                 // Pop
                 { 0xC1, new Opcode(0xC1, "POP BC",               1, 12, new Step[] {
-                                                                             () => { lsb = mmu.Read8(regs.SP); regs.SP++; },
-                                                                             () => { msb = mmu.Read8(regs.SP); regs.SP++;
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.POP_1);
+                                                                                     lsb = mmu.Read8(regs.SP); regs.SP++; },
+                                                                             () => {  if (WillCorrupt(regs.SP)) Patch(CorruptionType.POP_2);
+                                                                                     msb = mmu.Read8(regs.SP); regs.SP++;
                                                                                      regs.BC = BitUtils.ToUnsigned16(msb, lsb); }, })},
                 { 0xD1, new Opcode(0xD1, "POP DE",               1, 12, new Step[] {
-                                                                             () => { lsb = mmu.Read8(regs.SP); regs.SP++; },
-                                                                             () => { msb = mmu.Read8(regs.SP); regs.SP++;
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.POP_1);
+                                                                                     lsb = mmu.Read8(regs.SP); regs.SP++;
+                                                                                   },
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.POP_2);
+                                                                                     msb = mmu.Read8(regs.SP); regs.SP++;
                                                                                      regs.DE = BitUtils.ToUnsigned16(msb, lsb); }, })},
                 { 0xE1, new Opcode(0xE1, "POP HL",               1, 12, new Step[] {
-                                                                             () => { lsb = mmu.Read8(regs.SP); regs.SP++; },
-                                                                             () => { msb = mmu.Read8(regs.SP); regs.SP++;
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.POP_1);
+                                                                                     lsb = mmu.Read8(regs.SP); regs.SP++; },
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.POP_2);
+                                                                                     msb = mmu.Read8(regs.SP); regs.SP++;
                                                                                      regs.HL = BitUtils.ToUnsigned16(msb, lsb); }, })},
                 { 0xF1, new Opcode(0xF1, "POP AF",               1, 12, new Step[] {
-                                                                             () => { lsb = mmu.Read8(regs.SP); regs.SP++; },
-                                                                             () => { msb = mmu.Read8(regs.SP); regs.SP++;
+                                                                             () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.POP_1);
+                                                                                     lsb = mmu.Read8(regs.SP); regs.SP++; },
+                                                                             () => {  if (WillCorrupt(regs.SP)) Patch(CorruptionType.POP_2);
+                                                                                     msb = mmu.Read8(regs.SP); regs.SP++;
                                                                                      regs.AF = BitUtils.ToUnsigned16(msb, lsb); }, })},                                                                     
                 // Push
                 { 0xC5, new Opcode(0xC5, "PUSH BC",              1, 16, new Step[] {
                                                                             () => { },
-                                                                            () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.BC)); },
-                                                                            () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.BC)); }, })},
+                                                                            () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.PUSH_1);
+                                                                                    regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.BC)); },
+                                                                            () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.PUSH_2);
+                                                                                    regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.BC)); }, })},
                 { 0xD5, new Opcode(0xD5, "PUSH DE",              1, 16, new Step[] {
                                                                             () => { },
-                                                                            () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.DE)); },
-                                                                            () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.DE)); }, })},
+                                                                            () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.PUSH_1);
+                                                                                    regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.DE)); },
+                                                                            () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.PUSH_2);
+                                                                                    regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.DE)); }, })},
                 { 0xE5, new Opcode(0xE5, "PUSH HL",              1, 16, new Step[] {
                                                                             () => { },
-                                                                            () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.HL)); },
-                                                                            () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.HL)); }, })},
+                                                                            () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.PUSH_1);
+                                                                                    regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.HL)); },
+                                                                            () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.PUSH_2);
+                                                                                    regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.HL)); }, })},
                 { 0xF5, new Opcode(0xF5, "PUSH AF",              1, 16, new Step[] {
                                                                             () => { },
-                                                                            () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.AF)); },
-                                                                            () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.AF)); }, })},
+                                                                            () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.PUSH_1);
+                                                                                    regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.AF)); },
+                                                                            () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.PUSH_2);
+                                                                                    regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.AF)); }, })},
                                                                        
                 // Rotate A left. Old bit 7 to Carry flag.
                 { 0x07, new Opcode(0x07, "RLCA",                 1,  4, new Step[] { () => { regs.A = RLC(regs.A); regs.FlagZ = false; } })},
@@ -460,10 +512,18 @@ namespace FrozenBoyCore.Processor {
                                                                              () => { operand8 = mmu.Read8(regs.HL); },
                                                                              () => { mmu.Write8(regs.HL, DEC(operand8)); }, })},
                 // DEC 16 bit                                  
-                { 0x0B, new Opcode(0x0B, "DEC BC",               1,  8, new Step[] { () => { regs.BC--; } })},
-                { 0x1B, new Opcode(0x1B, "DEC DE",               1,  8, new Step[] { () => { regs.DE--; } })},
-                { 0x2B, new Opcode(0x2B, "DEC HL",               1,  8, new Step[] { () => { regs.HL--; } })},
-                { 0x3B, new Opcode(0x3B, "DEC SP",               1,  8, new Step[] { () => { regs.SP--; } })},
+                { 0x0B, new Opcode(0x0B, "DEC BC",               1,  8, new Step[] { () => { if (WillCorrupt(regs.BC)) Patch(CorruptionType.INC_DEC);
+                                                                                             regs.BC--;
+                                                                                           } })},
+                { 0x1B, new Opcode(0x1B, "DEC DE",               1,  8, new Step[] { () => { if (WillCorrupt(regs.DE)) Patch(CorruptionType.INC_DEC);
+                                                                                             regs.DE--;
+                                                                                           } })},
+                { 0x2B, new Opcode(0x2B, "DEC HL",               1,  8, new Step[] { () => { if (WillCorrupt(regs.HL)) Patch(CorruptionType.INC_DEC);
+                                                                                             regs.HL--;
+                                                                                           } })},
+                { 0x3B, new Opcode(0x3B, "DEC SP",               1,  8, new Step[] { () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.INC_DEC);
+                                                                                             regs.SP--;
+                                                                                           } })},
                 // Subtract value + Carry flag from A
                 { 0x98, new Opcode(0x98, "SBC A, B",             1,  4, new Step[] { () => { SBC(regs.B); } })},
                 { 0x99, new Opcode(0x99, "SBC A, C",             1,  4, new Step[] { () => { SBC(regs.C); } })},
@@ -514,8 +574,10 @@ namespace FrozenBoyCore.Processor {
         private Step[] RST_Steps(u16 address) {
             // the two first steps are equivalent to a PUSH, but done step by step
             return new Step[] {
-                () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.PC)); },
-                () => { regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.PC)); },
+                () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.PUSH_1);
+                        regs.SP--; mmu.Write8(regs.SP, BitUtils.Msb(regs.PC)); },
+                () => { if (WillCorrupt(regs.SP)) Patch(CorruptionType.PUSH_2);
+                        regs.SP--; mmu.Write8(regs.SP, BitUtils.Lsb(regs.PC)); },
                 () => { regs.PC = address; },
             };
         }
@@ -702,18 +764,85 @@ namespace FrozenBoyCore.Processor {
 
         }
 
-        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //public u8 mmu.Read8(regs.PC++) {
-        //    regs.PC++;
-        //    return (u8)mmu.Read8((u16)(regs.OpcodePC + 1));
-        //}
+        private bool WillCorrupt(u16 value) {
+            if (value >= 0xfe00 && value <= 0xfeff) {
 
-        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //public u8 mmu.Read8(regs.PC++) {
-        //    regs.PC++;
-        //    return (u8)mmu.Read8((u16)(regs.OpcodePC + 2));
-        //}
+                if (!gpu.IsLcdEnabled()) {
+                    return false;
+                }
 
+                var stat = gpu.STAT;
+                if ((stat & 0b11) == GPU.MODE_SCANLINE_OAM && gpu.lineTicks < 79) {
+                    return true;
+                }
+            }
 
+            return false;
+        }
+
+        public enum CorruptionType {
+            INC_DEC,
+            POP_1,
+            POP_2,
+            PUSH_1,
+            PUSH_2,
+            LD_HL
+        }
+
+        public void Patch(CorruptionType type) {
+
+            var cpuCycle = (gpu.lineTicks + 1) / 4 + 1;
+            switch (type) {
+                case CorruptionType.INC_DEC:
+                    if (cpuCycle >= 2) {
+                        CopyValues(mmu, (cpuCycle - 2) * 8 + 2, (cpuCycle - 1) * 8 + 2, 6);
+                    }
+                    break;
+
+                case CorruptionType.POP_1:
+                    if (cpuCycle >= 4) {
+                        CopyValues(mmu, (cpuCycle - 3) * 8 + 2, (cpuCycle - 4) * 8 + 2, 8);
+                        CopyValues(mmu, (cpuCycle - 3) * 8 + 8, (cpuCycle - 4) * 8 + 0, 2);
+                        CopyValues(mmu, (cpuCycle - 4) * 8 + 2, (cpuCycle - 2) * 8 + 2, 6);
+                    }
+                    break;
+
+                case CorruptionType.POP_2:
+                    if (cpuCycle >= 5) {
+                        CopyValues(mmu, (cpuCycle - 5) * 8 + 0, (cpuCycle - 2) * 8 + 0, 8);
+                    }
+                    break;
+
+                case CorruptionType.PUSH_1:
+                    if (cpuCycle >= 4) {
+                        CopyValues(mmu, (cpuCycle - 4) * 8 + 2, (cpuCycle - 3) * 8 + 2, 8);
+                        CopyValues(mmu, (cpuCycle - 3) * 8 + 2, (cpuCycle - 1) * 8 + 2, 6);
+                    }
+                    break;
+
+                case CorruptionType.PUSH_2:
+                    if (cpuCycle >= 5) {
+                        CopyValues(mmu, (cpuCycle - 4) * 8 + 2, (cpuCycle - 3) * 8 + 2, 8);
+                    }
+                    break;
+
+                case CorruptionType.LD_HL:
+                    if (cpuCycle >= 4) {
+                        CopyValues(mmu, (cpuCycle - 3) * 8 + 2, (cpuCycle - 4) * 8 + 2, 8);
+                        CopyValues(mmu, (cpuCycle - 3) * 8 + 8, (cpuCycle - 4) * 8 + 0, 2);
+                        CopyValues(mmu, (cpuCycle - 4) * 8 + 2, (cpuCycle - 2) * 8 + 2, 6);
+                    }
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(type), type, null);
+            }
+        }
+
+        private static void CopyValues(MMU mmu, int from, int to, int length) {
+            for (var i = length - 1; i >= 0; i--) {
+                var b = mmu.data[0xfe00 + from + i] % 0xff;
+                mmu.data[0xfe00 + to + i] = (u8)b;
+            }
+        }
     }
 }

@@ -19,6 +19,12 @@ namespace FrozenBoyTest {
             this.output = output;
         }
 
+        //[Fact]
+        //public void Test_call_timing() {
+        //    bool passed = Test(@"acceptance\", "call_timing.gb", true);
+        //    Assert.True(passed);
+        //}
+
         [Fact]
         public void Test_div_timing() {
             bool passed = Test(@"acceptance\", "div_timing.gb", false);
@@ -57,7 +63,7 @@ namespace FrozenBoyTest {
 
         [Fact]
         public void Test_jp_timing() {
-            bool passed = Test(@"acceptance\", "jp_timing.gb", false);
+            bool passed = Test(@"acceptance\", "jp_timing.gb", true);
             Assert.True(passed);
         }
 
