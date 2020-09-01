@@ -66,7 +66,7 @@ namespace FrozenBoyCore {
 
             while (true) {
 
-                if (totalCycles == 4855 && cpu.opcode.value == 0xe0) {
+                if (totalCycles == 5524 && cpu.opcode.value == 0xc3) {
                     int z = 0;
                 }
 

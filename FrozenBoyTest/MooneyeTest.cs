@@ -56,6 +56,12 @@ namespace FrozenBoyTest {
         }
 
         [Fact]
+        public void Test_jp_timing() {
+            bool passed = Test(@"acceptance\", "jp_timing.gb", true);
+            Assert.True(passed);
+        }
+
+        [Fact]
         public void Test_pop_timing() {
             bool passed = Test(@"acceptance\", "pop_timing.gb", false);
             Assert.True(passed);
