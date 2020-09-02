@@ -102,6 +102,17 @@ namespace FrozenBoyCore.Memory {
                 return;
             }
 
+            // this area is restricted
+            if ((address >= 0xFEA0) && (address < 0xFEFF)) {
+                return;
+            }
+
+            // writing to ECHO ram also writes in RAM
+            if ((address >= 0xE000) && (address < 0xFE00)) {
+                data[address] = value;
+                Write8((ushort)(address - 0x2000), value);
+            }
+
             // output to serial port
             if (address == 0xFF02 && value == 0x81) {
                 linkPortOutput += System.Convert.ToChar(data[0xFF01]);
