@@ -278,7 +278,7 @@ namespace FrozenBoyCore.Graphics {
 
             // RENDER SPRITES       
             if (SpriteEnabled) {
-                RenderSprites(Obj0Palette, Obj1Palette);
+                RenderSprites(BgPalette, Obj0Palette, Obj1Palette);
             }
 
         }
@@ -354,7 +354,7 @@ namespace FrozenBoyCore.Graphics {
         //    Bit3: Not used in standard gameboy
         //    Bit2 - 0: Not used in standard gameboy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RenderSprites(u8[] Obj0Palette, u8[] Obj1Palette) {
+        private void RenderSprites(u8[] BgPalette, u8[] Obj0Palette, u8[] Obj1Palette) {
             for (int i = 0; i < 40; i++) {
                 u8 spriteY = (u8)(mmu.Read8((u16)(0xFE00 + i * 4)) - 16);
                 u8 spriteX = (u8)(mmu.Read8((u16)(0xFE01 + i * 4)) - 8);
@@ -384,13 +384,28 @@ namespace FrozenBoyCore.Graphics {
                         byte[] colorData = { color, color, color, 255 }; // B G R
 
                         if ((spriteX + p) >= 0 && (spriteX + p) < 160) {
-                            if (!IsTransparent(colorId) && IsAboveBG(spriteAttr)) {
+                            if (!IsTransparent(colorId) && (IsAboveBG(spriteAttr) || IsBgWhite(spriteX + p, LY, BgPalette))) {
                                 WriteBuffer(spriteX + p, LY, colorData);
                             }
                         }
                     }
                 }
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsBgWhite(int x, int y, byte[] palette) {
+            // check if the background is "white". 
+            // White means the first color of the palette, it's not necessarily color white
+            byte color = (byte)((3 - palette[0]) * 85);
+
+            if (frameBuffer[(x + y * 160) * 4 + 0] == color &&
+                frameBuffer[(x + y * 160) * 4 + 1] == color &&
+                frameBuffer[(x + y * 160) * 4 + 2] == color &&
+                frameBuffer[(x + y * 160) * 4 + 3] == 255)
+                return true;
+
+            return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
