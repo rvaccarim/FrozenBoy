@@ -21,7 +21,7 @@ namespace FrozenBoyCore.Serial {
 
         // FF01 - SB - Serial transfer data (R/W)
         public u8 SB {
-            get => _sb;
+            get => 0xff;  // 0xff means no other gameboy connected
             set => _sb = value;
         }
 
