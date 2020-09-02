@@ -9,25 +9,27 @@ using System.Diagnostics;
 using FrozenBoyCore.Graphics;
 using FrozenBoyCore.Controls;
 using System.Runtime.InteropServices.WindowsRuntime;
+using FrozenBoyCore.Serial;
 
 namespace FrozenBoyCore.Memory {
 
     public class MMU {
         public u8[] data = new u8[0xFFFF + 1];
-        public string linkPortOutput = "";
 
-        private Timer timer;
-        private InterruptManager intManager;
-        private GPU gpu;
-        private Joypad joypad;
-        private Dma dma;
+        private readonly Timer timer;
+        private readonly InterruptManager intManager;
+        private readonly GPU gpu;
+        private readonly Joypad joypad;
+        private readonly Dma dma;
+        private readonly SerialPort serial;
 
-        public MMU(Timer timer, InterruptManager intManager, GPU gpu, Joypad joypad, Dma dma) {
+        public MMU(Timer timer, InterruptManager intManager, GPU gpu, Joypad joypad, Dma dma, SerialPort serial) {
             this.timer = timer;
             this.intManager = intManager;
             this.gpu = gpu;
             this.joypad = joypad;
             this.dma = dma;
+            this.serial = serial;
 
             intManager.IF = 0b_0000_0001;
 
@@ -91,6 +93,9 @@ namespace FrozenBoyCore.Memory {
                 0xFF4B => gpu.WindowX,
                 // joypad
                 0xFF00 => joypad.JOYP,
+                // serial
+                0xFF01 => serial.SB,
+                0xFF02 => serial.SC,
                 _ => data[address],
             };
         }
@@ -113,10 +118,10 @@ namespace FrozenBoyCore.Memory {
                 Write8((ushort)(address - 0x2000), value);
             }
 
-            // output to serial port
-            if (address == 0xFF02 && value == 0x81) {
-                linkPortOutput += System.Convert.ToChar(data[0xFF01]);
-            }
+            //// output to serial port
+            //if (address == 0xFF02 && value == 0x81) {
+            //    linkPortOutput += System.Convert.ToChar(data[0xFF01]);
+            //}
 
             switch (address) {
                 case 0xFF04: timer.DIV = value; break;
@@ -141,6 +146,9 @@ namespace FrozenBoyCore.Memory {
                 case 0xFF4B: gpu.WindowX = value; break;
                 // joypad
                 case 0xFF00: joypad.JOYP = value; break;
+                // serial
+                case 0xFF01: serial.SB = value; break;
+                case 0xFF02: serial.SC = value; break;
                 default: data[address] = value; break;
             }
         }

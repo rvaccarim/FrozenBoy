@@ -8,6 +8,7 @@ using u16 = System.UInt16;
 using FrozenBoyCore.Controls;
 using System.Text;
 using System.ComponentModel.Design;
+using FrozenBoyCore.Serial;
 
 namespace FrozenBoyCore {
 
@@ -20,6 +21,7 @@ namespace FrozenBoyCore {
         public Dma dma;
         public InterruptManager intManager;
         public Timer timer;
+        public SerialPort serial;
         public Joypad joypad;
         public Logger logger;
 
@@ -34,7 +36,8 @@ namespace FrozenBoyCore {
             gpu = new GPU(intManager);
             joypad = new Joypad(intManager);
             dma = new Dma();
-            mmu = new MMU(timer, intManager, gpu, joypad, dma);
+            serial = new SerialPort(intManager);
+            mmu = new MMU(timer, intManager, gpu, joypad, dma, serial);
             cpu = new CPU(mmu, timer, intManager, gpu);
 
             gpu.SetMMU(mmu);
@@ -47,6 +50,7 @@ namespace FrozenBoyCore {
             timer.Tick();
             cpu.ExecuteNext();
             dma.Tick();
+            serial.Tick();
             gpu.Tick();
             return 1;
         }
@@ -123,12 +127,12 @@ namespace FrozenBoyCore {
         private int TestCompleted(TestOptions options) {
             if (options.testOutput == TestOutput.LinkPort) {
                 // This is for Blargg testing, the ROMS write to the link port I/O
-                if (mmu.linkPortOutput.Contains("Passed")) {
-                    testResult = mmu.linkPortOutput;
+                if (serial.log.Contains("Passed")) {
+                    testResult = serial.log;
                     return 1;
                 }
-                if (mmu.linkPortOutput.Contains("Failed")) {
-                    testResult = mmu.linkPortOutput;
+                if (serial.log.Contains("Failed")) {
+                    testResult = serial.log;
                     return 0;
                 }
             }
