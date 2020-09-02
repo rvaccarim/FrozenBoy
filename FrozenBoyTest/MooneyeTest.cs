@@ -170,6 +170,11 @@ namespace FrozenBoyTest {
             Assert.True(passed);
         }
 
+        [Fact]
+        public void Test_basic_reg_dma() {
+            bool passed = Test(@"acceptance\oam_dma\", "reg_read.gb", false);
+            Assert.True(passed);
+        }
 
         [Fact]
         public void Test_div_write() {

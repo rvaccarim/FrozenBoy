@@ -175,6 +175,12 @@ namespace FrozenBoyTest {
             Assert.True(passed);
         }
 
+        [Fact]
+        public void TestOAM_TimingNoBug() {
+            bool passed = Test(OAMPath, @"6-timing_no_bug.gb", logExecution: false, TestOutput.Memory);
+            Assert.True(passed);
+        }
+
         //[Fact]
         //public void TestOAM_TimingEffect() {
         //    bool passed = Test(OAMPath, @"7-timing_effect.gb", logExecution: false, TestOutput.Memory);
