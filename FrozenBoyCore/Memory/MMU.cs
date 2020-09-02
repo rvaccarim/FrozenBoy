@@ -8,6 +8,7 @@ using System.IO;
 using System.Diagnostics;
 using FrozenBoyCore.Graphics;
 using FrozenBoyCore.Controls;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace FrozenBoyCore.Memory {
 
@@ -57,6 +58,14 @@ namespace FrozenBoyCore.Memory {
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public u8 Read8(u16 address) {
+
+            // OAM range
+            if (address >= 0xFE00 && address <= 0xFE9F) {
+                if (dma.IsOamBlocked()) {
+                    return 0xff;
+                }
+            }
+
             return address switch
             {
                 // timer
@@ -129,12 +138,6 @@ namespace FrozenBoyCore.Memory {
             data[address] = (u8)(value & 0b_00000000_11111111);
         }
 
-        //public void DMATransfer(u8 data) {
-        //    u16 address = (u16)(data << 8); // source address is data * 100
-        //    for (int i = 0; i < 0xA0; i++) {
-        //        Write8((u16)(0xFE00 + i), Read8((u16)(address + i)));
-        //    }
-        //}
 
     }
 }

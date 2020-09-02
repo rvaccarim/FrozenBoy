@@ -99,6 +99,9 @@ namespace FrozenBoyCore {
                         string md5 = MD5(gpu.GetScreenBuffer());
                         if (options.expectedMD5 == md5) {
                             testResult = md5;
+                            if (logger != null) {
+                                logger.Close();
+                            }
                             return true;
                         }
 
@@ -108,6 +111,9 @@ namespace FrozenBoyCore {
 
                     if (MD5_attemtps == MD5_max_attempts) {
                         testResult = "MD5s didn't match, timeout reached";
+                        if (logger != null) {
+                            logger.Close();
+                        }
                         return false;
                     }
                 }

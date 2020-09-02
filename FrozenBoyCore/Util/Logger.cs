@@ -24,11 +24,11 @@ namespace FrozenBoyCore.Util {
             logFile.Dispose();
         }
 
-        ~Logger() {
-            if (logFile != null) {
-                Close();
-            }
-        }
+        //~Logger() {
+        //    if (logFile != null) {
+        //        Close();
+        //    }
+        //}
 
         public void LogState(CPU cpu, GPU gpu, Timer timer, MMU mmu, InterruptManager intManager, int cycle) {
             string instruction;

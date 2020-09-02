@@ -36,6 +36,7 @@ namespace FrozenBoyCore.Memory {
 
         public void Tick() {
             if (!transferInProgress) return;
+            // 162 * 4
             if (++ticks < 648) return;
 
             transferInProgress = false;

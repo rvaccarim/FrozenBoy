@@ -19,11 +19,17 @@ namespace FrozenBoyTest {
             this.output = output;
         }
 
-        //[Fact]
-        //public void Test_call_timing() {
-        //    bool passed = Test(@"acceptance\", "call_timing.gb", true);
-        //    Assert.True(passed);
-        //}
+        [Fact]
+        public void Test_call_timing() {
+            bool passed = Test(@"acceptance\", "call_timing.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_call_cc_timing() {
+            bool passed = Test(@"acceptance\", "call_cc_timing.gb", false);
+            Assert.True(passed);
+        }
 
         [Fact]
         public void Test_div_timing() {
@@ -63,7 +69,37 @@ namespace FrozenBoyTest {
 
         [Fact]
         public void Test_jp_timing() {
-            bool passed = Test(@"acceptance\", "jp_timing.gb", true);
+            bool passed = Test(@"acceptance\", "jp_timing.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_jp_cc_timing() {
+            bool passed = Test(@"acceptance\", "jp_cc_timing.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_oam_dma_start() {
+            bool passed = Test(@"acceptance\", "oam_dma_start.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_oam_dma_restart() {
+            bool passed = Test(@"acceptance\", "oam_dma_restart.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_oam_dma_timing() {
+            bool passed = Test(@"acceptance\", "oam_dma_timing.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_ld_hl_sp_e_timing() {
+            bool passed = Test(@"acceptance\", "ld_hl_sp_e_timing.gb", false);
             Assert.True(passed);
         }
 
@@ -80,16 +116,36 @@ namespace FrozenBoyTest {
         }
 
         [Fact]
+        public void Test_reti_intr_timing() {
+            bool passed = Test(@"acceptance\", "reti_intr_timing.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_ret_timing() {
+            bool passed = Test(@"acceptance\", "ret_timing.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_reti_timing() {
+            bool passed = Test(@"acceptance\", "reti_timing.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_ret_cc_timing() {
+            bool passed = Test(@"acceptance\", "ret_cc_timing.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
         public void Test_rapid_di_ei() {
             bool passed = Test(@"acceptance\", "rapid_di_ei.gb", false);
             Assert.True(passed);
         }
 
-        [Fact]
-        public void Test_rereti_intr_timing() {
-            bool passed = Test(@"acceptance\", "reti_intr_timing.gb", false);
-            Assert.True(passed);
-        }
+
         [Fact]
         public void Test_mem_oam() {
             bool passed = Test(@"acceptance\bits\", "mem_oam.gb", false);
