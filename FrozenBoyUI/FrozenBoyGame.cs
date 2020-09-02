@@ -47,7 +47,7 @@ namespace FrozenBoyUI {
 
                 gameboy = new GameBoy(ofd.FileName);
 
-                base.Window.Title = "FrozeBoy - " + romFilename;
+                base.Window.Title = "FrozenBoy - " + romFilename;
 
             }
 

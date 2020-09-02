@@ -98,7 +98,9 @@ namespace FrozenBoyCore.Graphics {
         // 01: Light Grey
         // 10: Dark Grey
         // 11: Black
-        public u8 BGPalette { get; set; }
+        public u8 BGP { get; set; }
+        public u8 OBP0 { get; set; }
+        public u8 OBP1 { get; set; }
 
         // 0xFF4A The Y Position of the VIEWING AREA to start drawing the window from
         public u8 WindowY { get; set; }
@@ -247,147 +249,36 @@ namespace FrozenBoyCore.Graphics {
             bool WindowEnabled = BitUtils.IsBitSet(lcd_control, 5);
             bool TileDataSelect = BitUtils.IsBitSet(lcd_control, 4);
             bool BgTileMapSelect = BitUtils.IsBitSet(lcd_control, 3);
-            int SpriteSize = lcd_control & 0x04; // 0 = 8x8 else 8x16
             bool SpriteEnabled = BitUtils.IsBitSet(lcd_control, 1);
             bool BgEnabled = BitUtils.IsBitSet(lcd_control, 0);
 
-            u8[] BgPalette = GetPalette(0xFF47);
-            u8[] Obj0Palette = GetPalette(0xFF48);
-            u8[] Obj1Palette = GetPalette(0xFF49);
+            u8[] BgPalette = GetPalette(BGP);
+            u8[] Obj0Palette = GetPalette(OBP0);
+            u8[] Obj1Palette = GetPalette(OBP1);
 
             byte winX = (u8)(WindowX - 7);
 
             int y = line;
 
-            //if (BgEnabled)
-            //    Render2();
-
             // RENDER TILES
             // the display is 166x144
-            for (int x = 0; x < 160; x++) {
-                // background
-                if (BgEnabled) {
+            if (BgEnabled) {
+                for (int x = 0; x < 160; x++) {
                     RenderTile(x, y, ScrollX, ScrollY, BgTileMapSelect, TileDataSelect, BgPalette);
                 }
-                // window
-                if (WindowEnabled && y >= WindowY && x >= winX) {
-                    RenderTile(x, y, -winX, -WindowY, WindowTileMapSelect, TileDataSelect, BgPalette);
-                }
+            }
 
+            if (WindowEnabled) {
+                for (int x = 0; x < 160; x++) {
+                    if (y >= WindowY && x >= winX) {
+                        RenderTile(x, y, -winX, -WindowY, WindowTileMapSelect, TileDataSelect, BgPalette);
+                    }
+                }
             }
 
             // RENDER SPRITES       
             if (SpriteEnabled) {
-                int[] priorityListId = new int[40];
-                int[] priorityListX = new int[40];
-
-                for (int i = 0; i < 40; i++) {
-                    int x = mmu.data[0xFE01 + i * 4];
-
-                    priorityListId[i] = i;
-
-                    if (x <= 0 || x >= 168) {
-                        x = -1;
-                    }
-                    priorityListX[i] = x;
-                }
-
-                int pos = 1;
-                while (pos < 40) {
-                    if (priorityListX[pos] <= priorityListX[pos - 1])
-                        pos++;
-                    else {
-                        int tmp = priorityListX[pos];
-                        priorityListX[pos] = priorityListX[pos - 1];
-                        priorityListX[pos - 1] = tmp;
-                        tmp = priorityListId[pos];
-                        priorityListId[pos] = priorityListId[pos - 1];
-                        priorityListId[pos - 1] = tmp;
-                        if (pos > 1)
-                            pos--;
-                        else
-                            pos++;
-                    }
-                }
-
-                for (int i = 0; i < 40; i++) {
-                    if (priorityListX[i] == -1)
-                        break;
-                    int id = priorityListId[i];
-
-                    byte SpriteY = mmu.Read8((ushort)(0xFE00 + id * 4));
-                    if (SpriteY <= 0 || SpriteY >= 160)
-                        continue;
-                    byte SpriteX = mmu.Read8((ushort)(0xFE01 + id * 4));
-                    int Sprite = mmu.Read8((ushort)(0xFE02 + id * 4));
-                    byte SpriteAttr = mmu.Read8((ushort)(0xFE03 + id * 4));
-
-                    int startX = SpriteX - 1;
-                    int startY = SpriteY - 9;
-
-                    if (SpriteSize != 0) {
-                        Sprite = Sprite & 0xFE;
-                        startY = SpriteY - 1;
-                    }
-
-                    //int endX = SpriteX - 8;
-                    //int endY = SpriteY - 8 - SpriteSize * 2;
-                    int stepX = -1;
-                    int stepY = -1;
-                    if ((SpriteAttr & 0x20) != 0) // X-flip
-                    {
-                        //startX = Math.Abs(SpriteX - 7);
-                        startX = SpriteX - 8;
-                        //endX = SpriteX;
-                        stepX = 1;
-                    }
-                    if ((SpriteAttr & 0x40) != 0) // Y-flip
-                    {
-                        //startY = Math.Abs(SpriteY - (SpriteSize - 1));
-                        startY = Math.Abs(SpriteY - 8 - 9 - SpriteSize * 2);
-                        //endY = SpriteY;
-                        stepY = 1;
-                    }
-
-                    // draw
-                    int yInTile = 7 + SpriteSize * 2;
-                    int xInTile = 7;
-
-                    for (y = startY; yInTile >= 0; y += stepY) {
-                        if (y != line) {
-                            yInTile--;
-                            continue;
-                        }
-
-                        byte tileData0 = mmu.Read8((ushort)(0x8000 + Sprite * 16 + yInTile * 2));
-                        byte tileData1 = mmu.Read8((ushort)(0x8000 + Sprite * 16 + yInTile * 2 + 1));
-
-                        for (int x = startX; xInTile >= 0; x += stepX) {
-                            if (x < 0 || x >= 160) {
-                                xInTile--;
-                                continue;
-                            }
-
-                            byte tileData2 = (byte)((byte)(tileData0 << xInTile) >> 7);
-                            byte tileData3 = (byte)((byte)(tileData1 << xInTile) >> 7);
-                            int colorId = (tileData3 << 1) + tileData2;
-
-                            if (colorId != 0) {
-                                byte[] palette = ((SpriteAttr & 0x10) != 0 ? Obj1Palette : Obj0Palette);
-                                byte color = (byte)((3 - palette[colorId]) * 85);
-                                byte[] ColorData = { color, color, color, 255 }; // B G R
-                                frameBuffer[(x + y * 160) * 4] = ColorData[0];
-                                frameBuffer[(x + y * 160) * 4 + 1] = ColorData[1];
-                                frameBuffer[(x + y * 160) * 4 + 2] = ColorData[2];
-                                frameBuffer[(x + y * 160) * 4 + 3] = ColorData[3];
-                            }
-                            xInTile--;
-                        }
-                        yInTile--;
-                        xInTile = 7;
-                    }
-                }
-
+                RenderSprites(Obj0Palette, Obj1Palette);
             }
 
         }
@@ -446,131 +337,94 @@ namespace FrozenBoyCore.Graphics {
             u8 color = (u8)((3 - BgPalette[colorId]) * 85);
             u8[] colorData = { color, color, color, 255 }; // B G R
             WriteBuffer(x, y, colorData);
-
         }
 
 
-        //private void Render2() {
-        //    bool unsig = true;
 
-        //    // where to draw the visual area and the window
-        //    u8 scrollY = ScrollY;
-        //    u8 scrollX = ScrollX;
-        //    u8 windowY = WindowY;
-        //    u8 windowX = (byte)(WindowX - 7);
+        // Sprite attribute table, 0xFE00-0xFE9F
+        // Each sprite has 4 bytes associated
+        // 0: Sprite Y Position: Position of the sprite on the Y axis of the viewing display minus 16
+        // 1: Sprite X Position: Position of the sprite on the X axis of the viewing display minus 8
+        // 2: Pattern number: This is the sprite identifier used for looking up the sprite data in memory region 0x8000 - 0x8FFF
+        // 3: Attributes: These are the attributes of the sprite
+        //    Bit7: Sprite to Background Priority
+        //    Bit6: Y flip
+        //    Bit5: X flip
+        //    Bit4: Palette number
+        //    Bit3: Not used in standard gameboy
+        //    Bit2 - 0: Not used in standard gameboy
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void RenderSprites(u8[] Obj0Palette, u8[] Obj1Palette) {
+            for (int i = 0; i < 40; i++) {
+                u8 spriteY = (u8)(mmu.Read8((u16)(0xFE00 + i * 4)) - 16);
+                u8 spriteX = (u8)(mmu.Read8((u16)(0xFE01 + i * 4)) - 8);
+                u8 spriteNumber = mmu.Read8((u16)(0xFE02 + i * 4));
+                u8 spriteAttr = mmu.Read8((u16)(0xFE03 + i * 4));
 
-        //    bool usingWindow = false;
+                int size = GetSpriteSize();
 
-        //    // is the window enabled?
-        //    if (IsBitSet(lcd_control, 5)) {
-        //        // is the current scanline we're drawing
-        //        // within the windows Y pos?,
-        //        if (windowY <= LY)
-        //            usingWindow = true;
-        //    }
+                if ((LY >= spriteY) && (LY < (spriteY + size))) {
+                    int tileRow = IsYFlipped(spriteAttr) ? size - 1 - (LY - spriteY) : (LY - spriteY);
 
-        //    ushort tileData;
-        //    // which tile data are we using?
-        //    if (IsBitSet(lcd_control, 4)) {
-        //        tileData = 0x8000;
-        //    }
-        //    else {
-        //        // IMPORTANT: This memory region uses signed
-        //        // bytes as tile identifiers
-        //        tileData = 0x8800;
-        //        unsig = false;
-        //    }
+                    u16 spriteAddress = (u16)(0x8000 + (spriteNumber * 16) + (tileRow * 2));
+                    u8 low = mmu.Read8(spriteAddress);
+                    u8 high = mmu.Read8((u16)(spriteAddress + 1));
 
-        //    ushort backgroundMemory;
-        //    // which background mem?
-        //    if (false == usingWindow) {
-        //        if (IsBitSet(lcd_control, 3))
-        //            backgroundMemory = 0x9C00;
-        //        else
-        //            backgroundMemory = 0x9800;
-        //    }
-        //    else {
-        //        // which window memory?
-        //        if (IsBitSet(lcd_control, 6))
-        //            backgroundMemory = 0x9C00;
-        //        else
-        //            backgroundMemory = 0x9800;
-        //    }
+                    // render the 8x8 sprite pixels
+                    for (int p = 0; p < 8; p++) {
+                        int bitPos = !IsXFlipped(spriteAttr) ? p : 7 - p;
 
-        //    u8 yPos = 0;
+                        byte b1 = (byte)((byte)(low << bitPos) >> 7);
+                        byte b2 = (byte)((byte)(high << bitPos) >> 7);
+                        int colorId = (b2 << 1) + b1;
 
-        //    // yPos is used to calculate which of 32 vertical tiles the
-        //    // current scanline is drawing
-        //    if (!usingWindow)
-        //        yPos = (byte)(scrollY + LY);
-        //    else
-        //        yPos = (byte)(LY - windowY);
+                        byte[] palette = BitUtils.IsBitSet(spriteAttr, 4) ? Obj1Palette : Obj0Palette;
+                        byte color = (byte)((3 - palette[colorId]) * 85);
 
-        //    // which of the 8 vertical pixels of the current
-        //    // tile is the scanline on?
-        //    u16 tileRow = ((ushort)(((u8)(yPos / 8)) * 32));
+                        byte[] colorData = { color, color, color, 255 }; // B G R
 
-        //    // time to start drawing the 160 horizontal pixels
-        //    // for this scanline
-        //    for (int pixel = 0; pixel < 160; pixel++) {
-        //        u8 xPos = (byte)(pixel + scrollX);
-
-        //        // translate the current x pos to window space if necessary
-        //        if (usingWindow) {
-        //            if (pixel >= windowX) {
-        //                xPos = (byte)(pixel - windowX);
-        //            }
-        //        }
-
-        //        // which of the 32 horizontal tiles does this xPos fall within?
-        //        u16 tileCol = ((ushort)(xPos / 8));
-        //        s16 tileNum;
-
-        //        // get the tile identity number. Remember it can be signed
-        //        // or unsigned
-        //        u16 tileAddrss = (ushort)(backgroundMemory + tileRow + tileCol);
-        //        if (unsig)
-        //            tileNum = (u8)mmu.Read8(tileAddrss);
-        //        else
-        //            tileNum = (s8)mmu.Read8(tileAddrss);
-
-        //        // deduce where this tile identifier is in memory. Remember i
-        //        // shown this algorithm earlier
-        //        u16 tileLocation = tileData;
-
-        //        if (unsig)
-        //            tileLocation += (u16)(tileNum * 16);
-        //        else
-        //            tileLocation += (u16)((tileNum + 128) * 16);
-
-        //        // find the correct vertical line we're on of the
-        //        // tile to get the tile data
-        //        //from in memory
-        //        u8 line = (byte)(yPos % 8);
-        //        line *= 2; // each vertical line takes up two bytes of memory
-        //        u8 tileLow = mmu.Read8((ushort)(tileLocation + line));
-        //        u8 tileHigh = mmu.Read8((ushort)(tileLocation + line + 1));
-
-        //        int zzz = (byte)(xPos % 8);
-
-        //        tileLow = (u8)((u8)(tileLow << zzz) >> 7);
-        //        tileHigh = (u8)((u8)(tileHigh << zzz) >> 7);
-
-        //        u8[] BgPalette = GetPalette(0xFF47);
-
-        //        int colorId = (tileHigh << 1) + tileLow;
-        //        u8 color = (u8)((3 - BgPalette[colorId]) * 85);
-        //        u8[] colorData = { color, color, color, 255 }; // B G R
-        //        WriteBuffer(pixel, LY, colorData);
-        //    }
-
-        //}
-
+                        if ((spriteX + p) >= 0 && (spriteX + p) < 160) {
+                            if (!IsTransparent(colorId) && IsAboveBG(spriteAttr)) {
+                                WriteBuffer(spriteX + p, LY, colorData);
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private byte[] GetPalette(u16 address) {
+        private bool IsTransparent(int b) {
+            return b == 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsAboveBG(byte attr) {
+            //Bit7 OBJ-to - BG Priority(0 = OBJ Above BG, 1 = OBJ Behind BG color 1 - 3)
+            return attr >> 7 == 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsXFlipped(u8 attr) {
+            //Bit5   X flip(0 = Normal, 1 = Horizontally mirrored)
+            return BitUtils.IsBitSet(attr, 5);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsYFlipped(u8 attr) {
+            //Bit6 Y flip(0 = Normal, 1 = Vertically mirrored)
+            return BitUtils.IsBitSet(attr, 6);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private int GetSpriteSize() {
+            //Bit 2 - OBJ (Sprite) Size (0=8x8, 1=8x16)
+            return BitUtils.IsBitSet(lcd_control, 2) ? 16 : 8;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private byte[] GetPalette(u8 rawPalette) {
             byte[] palette = new byte[4];
-            byte rawPalette = mmu.Read8(address);
             palette[0] = (byte)(rawPalette & 0x03);
             palette[1] = (byte)((rawPalette & 0x0C) >> 2);
             palette[2] = (byte)((rawPalette & 0x30) >> 4);
