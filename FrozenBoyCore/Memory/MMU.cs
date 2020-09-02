@@ -97,6 +97,11 @@ namespace FrozenBoyCore.Memory {
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Write8(u16 address, u8 value) {
+            // dont allow any writing to the read only memory
+            if (address < 0x8000) {
+                return;
+            }
+
             // output to serial port
             if (address == 0xFF02 && value == 0x81) {
                 linkPortOutput += System.Convert.ToChar(data[0xFF01]);
