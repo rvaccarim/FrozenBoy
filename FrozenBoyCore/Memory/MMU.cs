@@ -12,7 +12,7 @@ using u16 = System.UInt16;
 namespace FrozenBoyCore.Memory {
 
     public class MMU {
-        public u8[] data = new u8[0xFFFF * 20];
+        public u8[] IO = new u8[0xFFFF * 20];
 
         private Cartridge cartridge;
         private readonly Timer timer;
@@ -32,24 +32,24 @@ namespace FrozenBoyCore.Memory {
 
             intManager.IF = 0b_0000_0001;
 
-            data[0xFF10] = 0x80;
-            data[0xFF11] = 0xBF;
-            data[0xFF12] = 0xF3;
-            data[0xFF14] = 0xBF;
-            data[0xFF16] = 0x3F;
-            data[0xFF19] = 0xBF;
-            data[0xFF1A] = 0x7F;
-            data[0xFF1B] = 0xFF;
-            data[0xFF1C] = 0x9F;
-            data[0xFF1E] = 0xBF;
-            data[0xFF20] = 0xFF;
-            data[0xFF23] = 0xBF;
-            data[0xFF24] = 0x77;
-            data[0xFF25] = 0xF3;
-            data[0xFF26] = 0xF1;
+            Write8(0xFF10, 0x80);
+            Write8(0xFF11, 0xBF);
+            Write8(0xFF12, 0xF3);
+            Write8(0xFF14, 0xBF);
+            Write8(0xFF16, 0x3F);
+            Write8(0xFF19, 0xBF);
+            Write8(0xFF1A, 0x7F);
+            Write8(0xFF1B, 0xFF);
+            Write8(0xFF1C, 0x9F);
+            Write8(0xFF1E, 0xBF);
+            Write8(0xFF20, 0xFF);
+            Write8(0xFF23, 0xBF);
+            Write8(0xFF24, 0x77);
+            Write8(0xFF25, 0xF3);
+            Write8(0xFF26, 0xF1);
 
-            data[0xFF48] = 0xFF;
-            data[0xFF49] = 0xFF;
+            Write8(0xFF48, 0xFF);
+            Write8(0xFF49, 0xFF);
         }
 
         public void LoadData(string romName) {
@@ -57,7 +57,7 @@ namespace FrozenBoyCore.Memory {
 
             cartridge = new Cartridge(romData);
 
-            Buffer.BlockCopy(romData, 0, data, 0, romData.Length);
+            // Buffer.BlockCopy(romData, 0, data, 0, romData.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -72,6 +72,11 @@ namespace FrozenBoyCore.Memory {
             if (address >= 0x4000 && address < 0x8000) {
                 u16 newAdress = (u16)(address - 0x4000);
                 return cartridge.rom[newAdress + (cartridge.currentRomBank * 0x4000)];
+            }
+
+            // Video Ram
+            if (address >= 0x8000 && address < 0xA000) {
+                return gpu.ram[address];
             }
 
             // Switchable RAM 
@@ -117,16 +122,22 @@ namespace FrozenBoyCore.Memory {
                 0xFF01 => serial.SB,
                 0xFF02 => serial.SC,
                 // Case none of the above
-                _ => data[address],
+                _ => IO[address],
             };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Write8(u16 address, u8 value) {
 
-            // ROM memory is read only, but there are some interaction to enable ROM and RAM banking
+            // ROM memory is read only, but there are some interactions to enable ROM and RAM banking
             if (address < 0x8000) {
                 HandleBanking(address, value);
+                return;
+            }
+
+            // Video Ram
+            if (address >= 0x8000 && address < 0xA000) {
+                gpu.ram[address - 0x8000] = value;
                 return;
             }
 
@@ -145,7 +156,7 @@ namespace FrozenBoyCore.Memory {
 
             // writing to ECHO ram also writes in RAM
             if ((address >= 0xE000) && (address < 0xFE00)) {
-                data[address] = value;
+                IO[address] = value;
                 Write8((ushort)(address - 0x2000), value);
             }
 
@@ -180,7 +191,7 @@ namespace FrozenBoyCore.Memory {
                 // serial
                 case 0xFF01: serial.SB = value; break;
                 case 0xFF02: serial.SC = value; break;
-                default: data[address] = value; break;
+                default: IO[address] = value; break;
             }
         }
 

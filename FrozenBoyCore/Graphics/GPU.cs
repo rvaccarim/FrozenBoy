@@ -12,6 +12,9 @@ using FrozenBoyCore.Util;
 namespace FrozenBoyCore.Graphics {
 
     public class GPU {
+        public u8[] ram = new byte[0x2000];
+        public u16 ramOffset = 0x8000;
+
         public const int MODE_HBLANK = 0b00;
         public const int MODE_VBLANK = 0b01;
         public const int MODE_SCANLINE_OAM = 0b10;
@@ -300,26 +303,26 @@ namespace FrozenBoyCore.Graphics {
 
             u8 tileNumber;
             if (mapSelect) {
-                tileNumber = mmu.Read8((u16)(0x9C00 + tileId));
+                tileNumber = ram[0x9C00 - ramOffset + tileId];
             }
             else {
-                tileNumber = mmu.Read8((u16)(0x9800 + tileId));
+                tileNumber = ram[0x9800 - ramOffset + tileId];
             }
 
             // get tile data
             u16 tileAddress;
             if (tileDataSelect) {
                 // unsigned $8000-8FFF
-                tileAddress = (u16)(0x8000 + (tileNumber * 16));
+                tileAddress = (u16)(0x8000 - ramOffset + (tileNumber * 16));
             }
             else {
                 // signed $8800-97FF (9000 = 0)
                 s8 id = (s8)tileNumber;
                 if (id >= 0) {
-                    tileAddress = (u16)(0x9000 + (id * 16));
+                    tileAddress = (u16)(0x9000 - ramOffset + (id * 16));
                 }
                 else {
-                    tileAddress = (u16)(0x8800 + ((id + 128) * 16));
+                    tileAddress = (u16)(0x8800 - ramOffset + ((id + 128) * 16));
                 }
             }
 
@@ -327,8 +330,8 @@ namespace FrozenBoyCore.Graphics {
             int tileYPos = realY % 8;
 
             // each pixel in the tile data set is represented by two bits
-            u8 tileLow = mmu.Read8((u16)(tileAddress + tileYPos * 2));
-            u8 tileHigh = mmu.Read8((u16)(tileAddress + tileYPos * 2 + 1));
+            u8 tileLow = ram[tileAddress + tileYPos * 2];
+            u8 tileHigh = ram[tileAddress + tileYPos * 2 + 1];
 
             tileLow = (u8)((u8)(tileLow << tileXpos) >> 7);
             tileHigh = (u8)((u8)(tileHigh << tileXpos) >> 7);
@@ -366,9 +369,9 @@ namespace FrozenBoyCore.Graphics {
                 if ((LY >= spriteY) && (LY < (spriteY + size))) {
                     int tileRow = IsYFlipped(spriteAttr) ? size - 1 - (LY - spriteY) : (LY - spriteY);
 
-                    u16 spriteAddress = (u16)(0x8000 + (spriteNumber * 16) + (tileRow * 2));
-                    u8 low = mmu.Read8(spriteAddress);
-                    u8 high = mmu.Read8((u16)(spriteAddress + 1));
+                    u16 spriteAddress = (u16)(0x8000 - ramOffset + (spriteNumber * 16) + (tileRow * 2));
+                    u8 low = ram[spriteAddress];
+                    u8 high = ram[spriteAddress + 1];
 
                     // render the 8x8 sprite pixels
                     for (int p = 0; p < 8; p++) {

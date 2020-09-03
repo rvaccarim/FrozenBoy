@@ -1,10 +1,10 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using System.Threading;
 using FrozenBoyCore;
 using System.IO;
 using System.Text;
+using System;
 
 namespace FrozenBoyUI {
 
@@ -49,6 +49,9 @@ namespace FrozenBoyUI {
 
                 base.Window.Title = "FrozenBoy - " + romFilename;
 
+            }
+            else {
+                Environment.Exit(0);
             }
 
             base.Initialize();
