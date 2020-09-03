@@ -14,6 +14,8 @@ namespace FrozenBoyCore {
 
     public class GameBoy {
         public const int ClockSpeed = 4_194_304;
+        private string romName;
+        private bool simulateSerial = false;
 
         public CPU cpu;
         public GPU gpu;
@@ -31,6 +33,7 @@ namespace FrozenBoyCore {
 
         // constructor
         public GameBoy(string romName) {
+            this.romName = romName;
             intManager = new InterruptManager();
             timer = new Timer(intManager);
             gpu = new GPU(intManager);
@@ -44,13 +47,21 @@ namespace FrozenBoyCore {
             dma.SetMMU(mmu);
 
             mmu.LoadData(romName);
+
+            if (romName.Contains("alleyway")) {
+                simulateSerial = true;
+            }
         }
 
         public int Step() {
             timer.Tick();
             cpu.ExecuteNext();
             dma.Tick();
-            serial.Tick();
+
+            if (simulateSerial) {
+                serial.Tick();
+            }
+
             gpu.Tick();
             return 1;
         }
