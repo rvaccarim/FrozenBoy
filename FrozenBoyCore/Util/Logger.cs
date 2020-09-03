@@ -3,6 +3,8 @@ using FrozenBoyCore.Memory;
 using FrozenBoyCore.Processor;
 using System;
 using System.IO;
+using u8 = System.Byte;
+using u16 = System.UInt16;
 
 namespace FrozenBoyCore.Util {
     public class Logger {
@@ -23,12 +25,6 @@ namespace FrozenBoyCore.Util {
             logFile.Close();
             logFile.Dispose();
         }
-
-        //~Logger() {
-        //    if (logFile != null) {
-        //        Close();
-        //    }
-        //}
 
         public void LogState(CPU cpu, GPU gpu, Timer timer, MMU mmu, InterruptManager intManager, int cycle) {
             string instruction;
@@ -60,12 +56,12 @@ namespace FrozenBoyCore.Util {
                 timer.DIV, timer.TIMA, timer.TMA, timer.tac,
                 Convert.ToString(gpu.LCDC, 2).PadLeft(8, '0'), "",
                 gpu.LY, gpu.LYC, gpu.lineTicks, (gpu.wasDisabled && !gpu.IsLcdEnabled()) ? -1 : gpu.enableDelay,
-                mmu.data[cpu.regs.SP],
-                mmu.data[cpu.regs.SP - 1],
-                mmu.data[cpu.regs.SP - 2],
-                mmu.data[0xFFDE],
-                mmu.data[0xFDFF],
-                mmu.data[0xFE00]
+                mmu.Read8(cpu.regs.SP),
+                mmu.Read8((u16)(cpu.regs.SP - 1)),
+                mmu.Read8((u16)(cpu.regs.SP - 2)),
+                mmu.Read8(0xFFDE),
+                mmu.Read8(0xFDFF),
+                mmu.Read8(0xFE00)
             )); ; ;
             // }
         }

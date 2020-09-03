@@ -17,6 +17,7 @@ namespace FrozenBoyCore {
         private string romName;
         private bool simulateSerial = false;
 
+        public Cartridge cartridge;
         public CPU cpu;
         public GPU gpu;
         public MMU mmu;
@@ -34,6 +35,7 @@ namespace FrozenBoyCore {
         // constructor
         public GameBoy(string romName) {
             this.romName = romName;
+
             intManager = new InterruptManager();
             timer = new Timer(intManager);
             gpu = new GPU(intManager);
@@ -81,9 +83,9 @@ namespace FrozenBoyCore {
 
             while (true) {
 
-                if (totalCycles == 5524 && cpu.opcode.value == 0xcd) {
-                    int z = 0;
-                }
+                //if (totalCycles == 5524 && cpu.opcode.value == 0xcd) {
+                //    int z = 0;
+                //}
 
                 Step();
 
@@ -152,10 +154,10 @@ namespace FrozenBoyCore {
                 u16 address = 0xA000;
                 testResult = "";
 
-                if (mmu.data[0xA000] != 0x80) {
+                if (mmu.Read8(0xA000) != 0x80) {
                     address++;
-                    while (mmu.data[address] != 0x0) {
-                        testResult += Convert.ToChar(mmu.data[address]);
+                    while (mmu.Read8(address) != 0x0) {
+                        testResult += Convert.ToChar(mmu.Read8(address));
                         address++;
                     }
 

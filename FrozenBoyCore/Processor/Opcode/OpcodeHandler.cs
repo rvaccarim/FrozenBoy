@@ -840,8 +840,8 @@ namespace FrozenBoyCore.Processor {
 
         private static void CopyValues(MMU mmu, int from, int to, int length) {
             for (var i = length - 1; i >= 0; i--) {
-                var b = mmu.data[0xfe00 + from + i] % 0xff;
-                mmu.data[0xfe00 + to + i] = (u8)b;
+                var b = mmu.Read8((u16)(0xfe00 + from + i)) % 0xff;
+                mmu.Write8((u16)(0xfe00 + to + i), (u8)b);
             }
         }
     }

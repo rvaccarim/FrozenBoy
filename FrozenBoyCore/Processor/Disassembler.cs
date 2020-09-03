@@ -1,7 +1,7 @@
 ﻿using System;
 using u8 = System.Byte;
 using u16 = System.UInt16;
-
+using FrozenBoyCore.Util;
 
 namespace FrozenBoyCore.Processor {
     public class Disassembler {
@@ -17,7 +17,7 @@ namespace FrozenBoyCore.Processor {
                                    o.value),
 
                 3 => String.Format(opcodeFormat,
-                                   String.Format(o.label, cpu.mmu.Read16((u16)(address + 1))),
+                                   String.Format(o.label, BitUtils.ToUnsigned16(cpu.mmu.Read8((u16)(address + 2)), cpu.mmu.Read8((u16)(address + 1)))),
                                    address,
                                    o.value),
 

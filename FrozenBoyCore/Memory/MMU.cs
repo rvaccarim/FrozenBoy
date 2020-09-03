@@ -1,21 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
-using u8 = System.Byte;
-using u16 = System.UInt16;
 using FrozenBoyCore.Processor;
 using System.Runtime.CompilerServices;
 using System.IO;
-using System.Diagnostics;
 using FrozenBoyCore.Graphics;
 using FrozenBoyCore.Controls;
-using System.Runtime.InteropServices.WindowsRuntime;
 using FrozenBoyCore.Serial;
+using FrozenBoyCore.Util;
+using u8 = System.Byte;
+using u16 = System.UInt16;
 
 namespace FrozenBoyCore.Memory {
 
     public class MMU {
-        public u8[] data = new u8[0xFFFF + 1];
+        public u8[] data = new u8[0xFFFF * 20];
 
+        private Cartridge cartridge;
         private readonly Timer timer;
         private readonly InterruptManager intManager;
         private readonly GPU gpu;
@@ -55,11 +54,31 @@ namespace FrozenBoyCore.Memory {
 
         public void LoadData(string romName) {
             byte[] romData = File.ReadAllBytes(romName);
+
+            cartridge = new Cartridge(romData);
+
             Buffer.BlockCopy(romData, 0, data, 0, romData.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public u8 Read8(u16 address) {
+
+            // Regular ROM
+            if (address >= 0 && address < 0x4000) {
+                return cartridge.rom[address];
+            }
+
+            // Switchable ROM / ROM memory bank
+            if (address >= 0x4000 && address < 0x8000) {
+                u16 newAdress = (u16)(address - 0x4000);
+                return cartridge.rom[newAdress + (cartridge.currentRomBank * 0x4000)];
+            }
+
+            // Switchable RAM 
+            if (address >= 0xA000 && address < 0xC000) {
+                u16 newAdress = (u16)(address - 0xA000);
+                return cartridge.switchableRAM[newAdress + (cartridge.currentRamBank * 0x2000)];
+            }
 
             // OAM range
             if (address >= 0xFE00 && address <= 0xFE9F) {
@@ -68,6 +87,7 @@ namespace FrozenBoyCore.Memory {
                 }
             }
 
+            // IO Registers
             return address switch
             {
                 // timer
@@ -96,14 +116,25 @@ namespace FrozenBoyCore.Memory {
                 // serial
                 0xFF01 => serial.SB,
                 0xFF02 => serial.SC,
+                // Case none of the above
                 _ => data[address],
             };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Write8(u16 address, u8 value) {
-            // dont allow any writing to the read only memory
+
+            // ROM memory is read only, but there are some interaction to enable ROM and RAM banking
             if (address < 0x8000) {
+                HandleBanking(address, value);
+                return;
+            }
+
+            if ((address >= 0xA000) && (address < 0xC000)) {
+                if (cartridge.RAMEnabled) {
+                    u16 newAddress = (u16)(address - 0xA000);
+                    cartridge.switchableRAM[newAddress + (cartridge.currentRamBank * 0x2000)] = value;
+                }
                 return;
             }
 
@@ -153,17 +184,98 @@ namespace FrozenBoyCore.Memory {
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public u16 Read16(u16 address) {
-            u8 a = data[address];
-            u8 b = data[address + 1];
-            return (u16)(b << 8 | a);
+        public void HandleBanking(u16 address, u8 data) {
+            // do RAM enabling
+            if (address < 0x2000) {
+                if (cartridge.mbc1 || cartridge.mbc2) {
+                    DoRAMBankEnable(address, data);
+                }
+            }
+            else {
+                // do ROM bank change
+                if ((address >= 0x200) && (address < 0x4000)) {
+                    if (cartridge.mbc1 || cartridge.mbc2) {
+                        DoChangeLowROMBank(data);
+                    }
+                }
+                else {
+                    // do ROM or RAM bank change
+                    if ((address >= 0x4000) && (address < 0x6000)) {
+                        // there is no rambank in mbc2 so always use rambank 0
+                        if (cartridge.mbc1) {
+                            if (cartridge.romBanking) {
+                                DoChangeHighRomBank(data);
+                            }
+                            else {
+                                DoRAMBankChange(data);
+                            }
+                        }
+                    }
+                    else {
+                        // this will change whether we are doing ROM banking
+                        // or RAM banking with the above if statement
+                        if ((address >= 0x6000) && (address < 0x8000)) {
+                            if (cartridge.mbc1) {
+                                DoChangeROMRAMMode(data);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Write16(u16 address, u16 value) {
-            data[address + 1] = (u8)((value & 0b_11111111_00000000) >> 8);
-            data[address] = (u8)(value & 0b_00000000_11111111);
+        private void DoRAMBankChange(u8 data) {
+            cartridge.currentRamBank = data & 0x3;
+        }
+
+        private void DoRAMBankEnable(u16 address, u8 data) {
+            if (cartridge.mbc2) {
+                if (BitUtils.IsBitSet(BitUtils.Lsb(address), 4)) return;
+            }
+
+            u8 testData = (u8)(data & 0xF);
+            if (testData == 0xA)
+                cartridge.RAMEnabled = true;
+            else if (testData == 0x0)
+                cartridge.RAMEnabled = false;
+        }
+
+        private void DoChangeROMRAMMode(u8 data) {
+            u8 newData = (u8)(data & 0x1);
+            cartridge.romBanking = (newData == 0);
+            if (cartridge.romBanking)
+                cartridge.currentRamBank = 0;
+        }
+
+        private void DoChangeLowROMBank(u8 data) {
+            if (cartridge.mbc2) {
+                cartridge.currentRomBank = (u8)(data & 0xF);
+                if (cartridge.currentRomBank == 0) {
+                    cartridge.currentRomBank++;
+                }
+
+                return;
+            }
+
+            u8 lower5 = (u8)(data & 31);
+            cartridge.currentRomBank &= 224; // turn off the lower 5
+            cartridge.currentRomBank |= lower5;
+
+            if (cartridge.currentRomBank == 0)
+                cartridge.currentRomBank++;
+        }
+
+        private void DoChangeHighRomBank(u8 data) {
+            // turn off the upper 3 bits of the current rom
+            cartridge.currentRomBank &= 31;
+
+            // turn off the lower 5 bits of the data
+            data &= 224;
+            cartridge.currentRomBank |= data;
+
+            if (cartridge.currentRomBank == 0) {
+                cartridge.currentRomBank++;
+            }
         }
     }
 }
