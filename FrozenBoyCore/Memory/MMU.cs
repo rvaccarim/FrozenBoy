@@ -12,7 +12,11 @@ using u16 = System.UInt16;
 namespace FrozenBoyCore.Memory {
 
     public class MMU {
-        public u8[] IO = new u8[0xFFFF * 20];
+        public Space internalRam;
+        public Space echoRam;
+        public Space unusable;
+        public Space IO;
+        public Space highRam;
 
         private Cartridge cartridge;
         private readonly Timer timer;
@@ -29,6 +33,12 @@ namespace FrozenBoyCore.Memory {
             this.joypad = joypad;
             this.dma = dma;
             this.serial = serial;
+
+            internalRam = new Space(0xC000, 0xDFFF);
+            echoRam = new Space(0xE000, 0xFDFF);
+            unusable = new Space(0xFEA0, 0xFEFF);
+            IO = new Space(0xFF00, 0xFF7F);
+            highRam = new Space(0xFF80, 0xFFFE);
 
             intManager.IF = 0b_0000_0001;
 
@@ -52,12 +62,9 @@ namespace FrozenBoyCore.Memory {
             Write8(0xFF49, 0xFF);
         }
 
+
         public void LoadData(string romName) {
-            byte[] romData = File.ReadAllBytes(romName);
-
-            cartridge = new Cartridge(romData);
-
-            // Buffer.BlockCopy(romData, 0, data, 0, romData.Length);
+            cartridge = new Cartridge(romName);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -75,8 +82,8 @@ namespace FrozenBoyCore.Memory {
             }
 
             // Video Ram
-            if (address >= 0x8000 && address < 0xA000) {
-                return gpu.ram[address];
+            if (gpu.vRam.Manages(address)) {
+                return gpu.vRam[address];
             }
 
             // Switchable RAM 
@@ -85,11 +92,32 @@ namespace FrozenBoyCore.Memory {
                 return cartridge.switchableRAM[newAdress + (cartridge.currentRamBank * 0x2000)];
             }
 
-            // OAM range
-            if (address >= 0xFE00 && address <= 0xFE9F) {
+            if (internalRam.Manages(address)) {
+                return internalRam[address];
+            }
+
+            if (echoRam.Manages(address)) {
+                return echoRam[address];
+            }
+
+            // OAM range - Sprites
+            if (address >= 0xFE00 && address < 0xFEA0) {
                 if (dma.IsOamBlocked()) {
                     return 0xff;
                 }
+            }
+
+            if (gpu.oamRam.Manages(address)) {
+                return gpu.oamRam[address];
+            }
+
+            // not sure if I should return something...
+            if (unusable.Manages(address)) {
+                return unusable[address];
+            }
+
+            if (highRam.Manages(address)) {
+                return highRam[address];
             }
 
             // IO Registers
@@ -135,12 +163,13 @@ namespace FrozenBoyCore.Memory {
                 return;
             }
 
-            // Video Ram
-            if (address >= 0x8000 && address < 0xA000) {
-                gpu.ram[address - 0x8000] = value;
+            // video Ram
+            if (gpu.vRam.Manages(address)) {
+                gpu.vRam[address] = value;
                 return;
             }
 
+            // switchable RAM
             if ((address >= 0xA000) && (address < 0xC000)) {
                 if (cartridge.RAMEnabled) {
                     u16 newAddress = (u16)(address - 0xA000);
@@ -149,22 +178,36 @@ namespace FrozenBoyCore.Memory {
                 return;
             }
 
-            // this area is restricted
-            if ((address >= 0xFEA0) && (address < 0xFEFF)) {
+            // internal RAM 
+            if (internalRam.Manages(address)) {
+                internalRam[address] = value;
                 return;
             }
 
-            // writing to ECHO ram also writes in RAM
-            if ((address >= 0xE000) && (address < 0xFE00)) {
-                IO[address] = value;
-                Write8((ushort)(address - 0x2000), value);
+            // writing here also writes in RAM
+            if (echoRam.Manages(address)) {
+                echoRam[address] = value;
+                internalRam[(u16)(address - 0x2000)] = value;
+                return;
             }
 
-            //// output to serial port
-            //if (address == 0xFF02 && value == 0x81) {
-            //    linkPortOutput += System.Convert.ToChar(data[0xFF01]);
-            //}
+            if (gpu.oamRam.Manages(address)) {
+                gpu.oamRam[address] = value;
+                return;
+            }
 
+            // unusable memory
+            if (unusable.Manages(address)) {
+                return;
+            }
+
+            // High Ram
+            if (highRam.Manages(address)) {
+                highRam[address] = value;
+                return;
+            }
+
+            // IO
             switch (address) {
                 case 0xFF04: timer.DIV = value; break;
                 case 0xFF05: timer.TIMA = value; break;

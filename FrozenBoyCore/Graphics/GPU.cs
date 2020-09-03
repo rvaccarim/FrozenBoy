@@ -3,17 +3,17 @@ using System.Runtime.ExceptionServices;
 using FrozenBoyCore.Processor;
 using System.Runtime.CompilerServices;
 using System;
+using FrozenBoyCore.Util;
 using u8 = System.Byte;
 using s8 = System.SByte;
 using u16 = System.UInt16;
 using s16 = System.Int16;
-using FrozenBoyCore.Util;
 
 namespace FrozenBoyCore.Graphics {
 
     public class GPU {
-        public u8[] ram = new byte[0x2000];
-        public u16 ramOffset = 0x8000;
+        public Space vRam;
+        public Space oamRam;
 
         public const int MODE_HBLANK = 0b00;
         public const int MODE_VBLANK = 0b01;
@@ -32,7 +32,6 @@ namespace FrozenBoyCore.Graphics {
         public bool wasDisabled = false;
         private byte[] frameBuffer = new byte[92160];
 
-        private MMU mmu;
         private readonly InterruptManager intManager;
 
         private readonly byte modeMask = 0b_0000_0011;
@@ -111,15 +110,14 @@ namespace FrozenBoyCore.Graphics {
         public u8 WindowX { get; set; }
 
         public GPU(InterruptManager iManager) {
+            vRam = new Space(0x8000, 0x9FFF);
+            oamRam = new Space(0xFE00, 0xFE9F);
+
             this.intManager = iManager;
             mode = 0;
             lcd_control = 0x91;
             STAT = 0b1000_0110;
             LYC = 0x0;
-        }
-
-        public void SetMMU(MMU mmu) {
-            this.mmu = mmu;
         }
 
         public void EnableLCD() {
@@ -303,26 +301,26 @@ namespace FrozenBoyCore.Graphics {
 
             u8 tileNumber;
             if (mapSelect) {
-                tileNumber = ram[0x9C00 - ramOffset + tileId];
+                tileNumber = vRam[(u16)(0x9C00 + tileId)];
             }
             else {
-                tileNumber = ram[0x9800 - ramOffset + tileId];
+                tileNumber = vRam[(u16)(0x9800 + tileId)];
             }
 
             // get tile data
             u16 tileAddress;
             if (tileDataSelect) {
                 // unsigned $8000-8FFF
-                tileAddress = (u16)(0x8000 - ramOffset + (tileNumber * 16));
+                tileAddress = (u16)(0x8000 + (tileNumber * 16));
             }
             else {
                 // signed $8800-97FF (9000 = 0)
                 s8 id = (s8)tileNumber;
                 if (id >= 0) {
-                    tileAddress = (u16)(0x9000 - ramOffset + (id * 16));
+                    tileAddress = (u16)(0x9000 + (id * 16));
                 }
                 else {
-                    tileAddress = (u16)(0x8800 - ramOffset + ((id + 128) * 16));
+                    tileAddress = (u16)(0x8800 + ((id + 128) * 16));
                 }
             }
 
@@ -330,8 +328,8 @@ namespace FrozenBoyCore.Graphics {
             int tileYPos = realY % 8;
 
             // each pixel in the tile data set is represented by two bits
-            u8 tileLow = ram[tileAddress + tileYPos * 2];
-            u8 tileHigh = ram[tileAddress + tileYPos * 2 + 1];
+            u8 tileLow = vRam[(u16)(tileAddress + (tileYPos * 2))];
+            u8 tileHigh = vRam[(u16)(tileAddress + (tileYPos * 2) + 1)];
 
             tileLow = (u8)((u8)(tileLow << tileXpos) >> 7);
             tileHigh = (u8)((u8)(tileHigh << tileXpos) >> 7);
@@ -359,19 +357,19 @@ namespace FrozenBoyCore.Graphics {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void RenderSprites(u8[] BgPalette, u8[] Obj0Palette, u8[] Obj1Palette) {
             for (int i = 0; i < 40; i++) {
-                u8 spriteY = (u8)(mmu.Read8((u16)(0xFE00 + i * 4)) - 16);
-                u8 spriteX = (u8)(mmu.Read8((u16)(0xFE01 + i * 4)) - 8);
-                u8 spriteNumber = mmu.Read8((u16)(0xFE02 + i * 4));
-                u8 spriteAttr = mmu.Read8((u16)(0xFE03 + i * 4));
+                u8 spriteY = (u8)(oamRam[(u16)(0xFE00 + i * 4)] - 16);
+                u8 spriteX = (u8)(oamRam[(u16)(0xFE01 + i * 4)] - 8);
+                u8 spriteNumber = oamRam[(u16)(0xFE02 + i * 4)];
+                u8 spriteAttr = oamRam[(u16)(0xFE03 + i * 4)];
 
                 int size = GetSpriteSize();
 
                 if ((LY >= spriteY) && (LY < (spriteY + size))) {
                     int tileRow = IsYFlipped(spriteAttr) ? size - 1 - (LY - spriteY) : (LY - spriteY);
 
-                    u16 spriteAddress = (u16)(0x8000 - ramOffset + (spriteNumber * 16) + (tileRow * 2));
-                    u8 low = ram[spriteAddress];
-                    u8 high = ram[spriteAddress + 1];
+                    u16 spriteAddress = (u16)(0x8000 + (spriteNumber * 16) + (tileRow * 2));
+                    u8 low = vRam[spriteAddress];
+                    u8 high = vRam[(u16)(spriteAddress + 1)];
 
                     // render the 8x8 sprite pixels
                     for (int p = 0; p < 8; p++) {

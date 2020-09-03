@@ -45,7 +45,6 @@ namespace FrozenBoyCore {
             mmu = new MMU(timer, intManager, gpu, joypad, dma, serial);
             cpu = new CPU(mmu, timer, intManager, gpu);
 
-            gpu.SetMMU(mmu);
             dma.SetMMU(mmu);
 
             mmu.LoadData(romName);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using u8 = System.Byte;
 using u16 = System.UInt16;
+using System.IO;
 
 namespace FrozenBoyCore.Memory {
     public class Cartridge {
@@ -23,7 +24,9 @@ namespace FrozenBoyCore.Memory {
         public bool RAMEnabled;
         public bool romBanking;
 
-        public Cartridge(byte[] data) {
+        public Cartridge(string romName) {
+
+            byte[] data = File.ReadAllBytes(romName);
             rom = new u8[data.Length];
 
             // 32K split in 16K
