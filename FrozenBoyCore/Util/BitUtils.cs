@@ -41,5 +41,13 @@ namespace FrozenBoyCore.Util {
         public static u8 BitSet(u8 value, int bitPosition) {
             return (u8)(value | (0b_0000_0001 << bitPosition));
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static u8 ChangeBits(u8 val, u8 mask, u8 newvalue) {
+            val &= (u8)~mask;
+            val |= (u8)(newvalue & mask);
+            return val;
+        }
+
     }
 }

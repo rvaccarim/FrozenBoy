@@ -218,7 +218,7 @@ namespace FrozenBoyCore.Memory {
                 case 0xFF0F: intManager.IF = value; break;
                 // graphics
                 case 0xFF40: gpu.LCDC = value; break;
-                case 0xFF41: gpu.STAT = 0; break;      // STAT
+                case 0xFF41: gpu.STAT = BitUtils.ChangeBits(gpu.STAT, 0b_1111_1000, value); break; // last 3 are read only
                 case 0xFF42: gpu.ScrollY = value; break;
                 case 0xFF43: gpu.ScrollX = value; break;
                 case 0xFF44: gpu.LY = 0; break;        // LY = 0 if someone writes to it

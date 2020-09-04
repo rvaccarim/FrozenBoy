@@ -154,7 +154,7 @@ namespace FrozenBoyCore.Graphics {
             }
 
             u8 status = STAT;
-            var mode = STAT & modeMask;
+            u8 mode = (byte)(STAT & modeMask);
 
             modeTicks++;
             lineTicks++;
@@ -180,6 +180,13 @@ namespace FrozenBoyCore.Graphics {
                         if (modeTicks == 172) {
                             modeTicks = 0;
                             mode = MODE_HBLANK;
+
+                            if (LY == LYC) {
+                                if (BitUtils.IsBitSet(status, STATUS_LC_EQUALS_LYC)) {
+                                    intManager.RequestInterruption(InterruptionType.LCD);
+                                }
+                            }
+
                             RenderLine(LY);
                         }
                         break;
@@ -191,9 +198,8 @@ namespace FrozenBoyCore.Graphics {
 
                             if (LY == 144) {
                                 mode = MODE_VBLANK;
-                                // _canvas.putImageData(GPU._scrn, 0, 0);
-
                                 intManager.RequestInterruption(InterruptionType.VBlank);
+
                                 if (BitUtils.IsBitSet(status, STATUS_VBLANK_BITPOS)) {
                                     intManager.RequestInterruption(InterruptionType.LCD);
                                 }
@@ -225,20 +231,13 @@ namespace FrozenBoyCore.Graphics {
             }
 
             // Set STAT flags according to the new mode
-            status = (u8)(STAT & ~0b_0000_0011);
-            status = (u8)(status | mode);
+            status = BitUtils.ChangeBits(STAT, modeMask, mode);
 
             if (LY == LYC) {
-                status = (u8)(status | (1 << STATUS_COINCIDENCE_BITPOS));
-
-                if (mode == MODE_HBLANK || mode == MODE_VBLANK) {
-                    if (BitUtils.IsBitSet(status, STATUS_LC_EQUALS_LYC)) {
-                        intManager.RequestInterruption(InterruptionType.LCD);
-                    }
-                }
+                status = BitUtils.BitSet(status, STATUS_COINCIDENCE_BITPOS);
             }
             else {
-                status = (u8)(status & ~(1 << STATUS_COINCIDENCE_BITPOS));
+                status = BitUtils.BitReset(status, STATUS_COINCIDENCE_BITPOS);
             }
 
             STAT = status;
@@ -257,22 +256,22 @@ namespace FrozenBoyCore.Graphics {
             u8[] Obj0Palette = GetPalette(OBP0);
             u8[] Obj1Palette = GetPalette(OBP1);
 
-            byte winX = (u8)(WindowX - 7);
-
             int y = line;
 
             // RENDER TILES
             // the display is 166x144
-            if (BgEnabled) {
-                for (int x = 0; x < 160; x++) {
-                    RenderTile(x, y, ScrollX, ScrollY, BgTileMapSelect, TileDataSelect, BgPalette);
+            for (int x = 0; x < 160; x++) {
+                if (BgEnabled) {
+                    int realX = (x + ScrollX) % 256;
+                    int realY = (y + ScrollY) % 256;
+                    RenderTile(x, y, realX, realY, BgTileMapSelect, TileDataSelect, BgPalette);
                 }
-            }
 
-            if (WindowEnabled) {
-                for (int x = 0; x < 160; x++) {
-                    if (y >= WindowY && x >= winX) {
-                        RenderTile(x, y, -winX, -WindowY, WindowTileMapSelect, TileDataSelect, BgPalette);
+                if (WindowEnabled) {
+                    if (y >= WindowY && x >= (WindowX - 7)) {
+                        int realX = x - WindowX - 7;
+                        int realY = y - WindowY;
+                        RenderTile(x, y, realX, realY, WindowTileMapSelect, TileDataSelect, BgPalette);
                     }
                 }
             }
@@ -285,10 +284,7 @@ namespace FrozenBoyCore.Graphics {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RenderTile(int x, int y, int offsetX, int offsetY, bool mapSelect, bool tileDataSelect, u8[] BgPalette) {
-            int realX = x + offsetX;
-            int realY = y + offsetY;
-
+        private void RenderTile(int x, int y, int realX, int realY, bool mapSelect, bool tileDataSelect, u8[] BgPalette) {
             // the BG is 256x256 pixels
             // calculate the coordinates of the tile where the pixel belongs
             // there are 32 possible tiles (256 / 8)

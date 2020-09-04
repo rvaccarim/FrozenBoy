@@ -19,7 +19,7 @@ namespace FrozenBoyCore.Memory {
         public u8[] rom;
 
         // max is 4 banks, 32K
-        public u8[] switchableRAM = new u8[4 * 0x2000];
+        public u8[] switchableRAM;
 
         public bool RAMEnabled;
         public bool romBanking;
@@ -62,6 +62,10 @@ namespace FrozenBoyCore.Memory {
                 case 0x05: ramSize = 8 * 8192; break;
             }
 
+            // 0 means no RAM, but the Halt Bug Blargg test sets 0 and then expects to use the memory...
+            if (ramSize == 0) {
+                ramSize = 2048;
+            }
             switchableRAM = new u8[ramSize];
         }
 
