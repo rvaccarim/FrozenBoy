@@ -15,7 +15,6 @@ namespace FrozenBoyCore {
     public class GameBoy {
         public const int ClockSpeed = 4_194_304;
         private string romName;
-        private bool simulateSerial = false;
 
         public Cartridge cartridge;
         public CPU cpu;
@@ -49,20 +48,13 @@ namespace FrozenBoyCore {
 
             mmu.LoadData(romName);
 
-            if (romName.Contains("alleyway")) {
-                simulateSerial = true;
-            }
         }
 
         public int Step() {
             timer.Tick();
             cpu.ExecuteNext();
             dma.Tick();
-
-            if (simulateSerial) {
-                serial.Tick();
-            }
-
+            serial.Tick();
             gpu.Tick();
             return 1;
         }
@@ -94,9 +86,9 @@ namespace FrozenBoyCore {
                 }
 
                 if (options.logExecution) {
-                    // if (cpu.shouldLog) {
-                    logger.LogState(cpu, gpu, timer, mmu, intManager, totalCycles);
-                    // }
+                    if (cpu.shouldLog) {
+                        logger.LogState(cpu, gpu, timer, mmu, intManager, totalCycles);
+                    }
                 }
 
                 if (options.testOutput == TestOutput.LinkPort || options.testOutput == TestOutput.Memory) {

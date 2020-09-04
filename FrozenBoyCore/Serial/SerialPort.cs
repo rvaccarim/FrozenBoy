@@ -10,7 +10,7 @@ namespace FrozenBoyCore.Serial {
 
         private u8 _sb;
         private u8 _sc;
-        private bool _transferInProgress;
+        private bool _transferInProgress = false;
         private int _divider;
         private readonly InterruptManager interruptManager;
         public string log = "";
@@ -21,7 +21,7 @@ namespace FrozenBoyCore.Serial {
 
         // FF01 - SB - Serial transfer data (R/W)
         public u8 SB {
-            get => 0xff;  // 0xff means no other gameboy connected
+            get => _sb;  // 0xff means no other gameboy connected
             set => _sb = value;
         }
 
@@ -35,12 +35,13 @@ namespace FrozenBoyCore.Serial {
                 _sc = value;
 
                 // log bytes, for Blargg tests
+                // The gameboy acting as master will load up a data byte in SB and then set SC to 0x81
                 if (value == 0x81) {
                     log += System.Convert.ToChar(_sb);
-                }
 
-                if ((_sc & (1 << 7)) != 0) {
-                    StartTransfer();
+                    if ((_sc & (1 << 7)) != 0) {
+                        StartTransfer();
+                    }
                 }
             }
         }
@@ -54,6 +55,7 @@ namespace FrozenBoyCore.Serial {
                 _transferInProgress = false;
 
                 // Transfer data
+                _sb = 0xff;
 
                 interruptManager.RequestInterruption(InterruptionType.SerialLink);
             }
