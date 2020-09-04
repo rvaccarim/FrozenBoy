@@ -83,8 +83,16 @@ namespace FrozenBoyCore.Controls {
                     intManager.RequestInterruption(InterruptionType.Joypad);
                 }
 
-                _JOYP = (u8)(newState | (prevState & 0b_1111_0000));
+                u8 tmp = (u8)(newState | (prevState & 0b_0011_0000));
 
+                // Prevents the emulator to be detected as a Super Gameboy
+                // https://www.reddit.com/r/EmuDev/comments/5bgcw1/gb_lcd_disableenable_behavior/
+                if ((tmp & 0x30) == 0x10 || (tmp & 0x30) == 0x20) {
+                    _JOYP = tmp;
+                }
+                else {
+                    _JOYP = 0xff;
+                }
             }
         }
     }
