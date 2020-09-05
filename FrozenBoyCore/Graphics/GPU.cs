@@ -309,7 +309,7 @@ namespace FrozenBoyCore.Graphics {
 
             // RENDER SPRITES       
             if (SpriteEnabled) {
-                RenderSprites(BgPalette, Obj0Palette, Obj1Palette);
+                RenderSprites(Obj0Palette, Obj1Palette);
             }
 
         }
@@ -363,8 +363,7 @@ namespace FrozenBoyCore.Graphics {
 
             int colorId = (tileHigh << 1) + tileLow;
             u8 color = (u8)((3 - BgPalette[colorId]) * 85);
-            u8[] colorData = { color, color, color, 255 }; // B G R
-            WriteBuffer(x, y, colorData);
+            WriteBuffer(x, y, color);
         }
 
         // Sprite attribute table, 0xFE00-0xFE9F
@@ -380,38 +379,42 @@ namespace FrozenBoyCore.Graphics {
         //    Bit3: Not used in standard gameboy
         //    Bit2 - 0: Not used in standard gameboy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RenderSprites(u8[] BgPalette, u8[] Obj0Palette, u8[] Obj1Palette) {
-            for (int i = 0; i < 40; i++) {
-                u8 spriteY = (u8)(oamRam[(u16)(0xFE00 + i * 4)] - 16);
-                u8 spriteX = (u8)(oamRam[(u16)(0xFE01 + i * 4)] - 8);
-                u8 spriteNumber = oamRam[(u16)(0xFE02 + i * 4)];
-                u8 spriteAttr = oamRam[(u16)(0xFE03 + i * 4)];
+        private void RenderSprites(u8[] Obj0Palette, u8[] Obj1Palette) {
 
-                int size = GetSpriteSize();
+            // this is system wide, not on a tile by tile 
+            int size = GetSpriteSize();
+
+            for (int i = 0; i < 40; i++) {
+                int offset = i * 4;
+
+                u8 spriteY = (u8)(oamRam[(u16)(0xFE00 + offset)] - 0x10);
+                u8 spriteX = (u8)(oamRam[(u16)(0xFE01 + offset)] - 0x08);
 
                 if ((_LY >= spriteY) && (_LY < (spriteY + size))) {
+                    u8 spriteNumber = oamRam[(u16)(0xFE02 + offset)];
+                    u8 spriteAttr = oamRam[(u16)(0xFE03 + offset)];
+
                     int tileRow = IsYFlipped(spriteAttr) ? size - 1 - (_LY - spriteY) : (_LY - spriteY);
 
                     u16 spriteAddress = (u16)(0x8000 + (spriteNumber * 16) + (tileRow * 2));
                     u8 low = vRam[spriteAddress];
                     u8 high = vRam[(u16)(spriteAddress + 1)];
 
+                    u8[] spritePalette = BitUtils.IsBitSet(spriteAttr, 4) ? Obj1Palette : Obj0Palette;
+                    int priority = BitUtils.IsBitSet(spriteAttr, 7) ? 1 : 0;
+
                     // render the 8x8 sprite pixels
                     for (int p = 0; p < 8; p++) {
-                        int bitPos = !IsXFlipped(spriteAttr) ? p : 7 - p;
-
-                        byte b1 = (byte)((byte)(low << bitPos) >> 7);
-                        byte b2 = (byte)((byte)(high << bitPos) >> 7);
-                        int colorId = (b2 << 1) + b1;
-
-                        byte[] palette = BitUtils.IsBitSet(spriteAttr, 4) ? Obj1Palette : Obj0Palette;
-                        byte color = (byte)((3 - palette[colorId]) * 85);
-
-                        byte[] colorData = { color, color, color, 255 }; // B G R
-
                         if ((spriteX + p) >= 0 && (spriteX + p) < 160) {
-                            if (!IsTransparent(colorId) && (IsAboveBG(spriteAttr) || IsBgWhite(spriteX + p, _LY, BgPalette))) {
-                                WriteBuffer(spriteX + p, _LY, colorData);
+                            int bitPos = !IsXFlipped(spriteAttr) ? p : 7 - p;
+
+                            u8 b1 = (u8)((u8)(low << bitPos) >> 7);
+                            u8 b2 = (u8)((u8)(high << bitPos) >> 7);
+                            int colorId = (b2 << 1) + b1;
+
+                            if (DrawPixel(spriteX + p, _LY, colorId, priority)) {
+                                u8 color = (u8)((3 - spritePalette[colorId]) * 85);
+                                WriteBuffer(spriteX + p, _LY, color);
                             }
                         }
                     }
@@ -420,30 +423,31 @@ namespace FrozenBoyCore.Graphics {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsBgWhite(int x, int y, byte[] palette) {
-            // check if the background is "white". 
-            // White means the first color of the palette, it's not necessarily color white
-            byte color = (byte)((3 - palette[0]) * 85);
+        private bool DrawPixel(int x, int y, int spriteColorId, int spritePriority) {
+            // 0 is transparent, no need to do anything
+            if (spriteColorId == 0) {
+                return false;
+            }
 
-            if (frameBuffer[(x + y * 160) * 4 + 0] == color &&
-                frameBuffer[(x + y * 160) * 4 + 1] == color &&
-                frameBuffer[(x + y * 160) * 4 + 2] == color &&
-                frameBuffer[(x + y * 160) * 4 + 3] == 255)
+            // priority 0 draws on top of everything
+            if (spritePriority == 0) {
                 return true;
+            }
+            else {
+                // priority 1 draws the pixel only if the background is "white". 
+                // White means the first color in the palette, it's not necessarily color white
+                u8 bgWhitePositionColor = (u8)((3 - GetPalette(BGP)[0]) * 85);
 
-            return false;
+                int offset = (y * 160) + x;
 
-        }
+                if (frameBuffer[(offset * 4) + 0] == bgWhitePositionColor &&
+                    frameBuffer[(offset * 4) + 1] == bgWhitePositionColor &&
+                    frameBuffer[(offset * 4) + 2] == bgWhitePositionColor)
+                    return true;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsTransparent(int b) {
-            return b == 0;
-        }
+                return false;
+            }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsAboveBG(byte attr) {
-            //Bit7 OBJ-to - BG Priority(0 = OBJ Above BG, 1 = OBJ Behind BG color 1 - 3)
-            return attr >> 7 == 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -466,20 +470,22 @@ namespace FrozenBoyCore.Graphics {
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private byte[] GetPalette(u8 rawPalette) {
-            byte[] palette = new byte[4];
-            palette[0] = (byte)(rawPalette & 0x03);
-            palette[1] = (byte)((rawPalette & 0x0C) >> 2);
-            palette[2] = (byte)((rawPalette & 0x30) >> 4);
-            palette[3] = (byte)((rawPalette & 0xC0) >> 6);
+            u8[] palette = new u8[4];
+            palette[0] = (u8)(rawPalette & 0x03);
+            palette[1] = (u8)((rawPalette & 0x0C) >> 2);
+            palette[2] = (u8)((rawPalette & 0x30) >> 4);
+            palette[3] = (u8)((rawPalette & 0xC0) >> 6);
             return palette;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void WriteBuffer(int x, int y, byte[] ColorData) {
-            frameBuffer[(x + y * 160) * 4] = ColorData[0];
-            frameBuffer[(x + y * 160) * 4 + 1] = ColorData[1];
-            frameBuffer[(x + y * 160) * 4 + 2] = ColorData[2];
-            frameBuffer[(x + y * 160) * 4 + 3] = ColorData[3];
+        private void WriteBuffer(int x, int y, u8 color) {
+            int offset = (y * 160) + x;
+            // B G R Alpha
+            frameBuffer[(offset * 4) + 0] = color;
+            frameBuffer[(offset * 4) + 1] = color;
+            frameBuffer[(offset * 4) + 2] = color;
+            frameBuffer[(offset * 4) + 3] = 255;
         }
 
         public void SetCoincidenceFlag() {
