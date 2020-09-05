@@ -22,6 +22,7 @@ namespace FrozenBoyCore.Graphics {
 
         // for the STATUS register
         private const int STATUS_COINCIDENCE_BITPOS = 2;
+        private const int STATUS_HBLANK_BITPOS = 3;
         private const int STATUS_VBLANK_BITPOS = 4;
         private const int STATUS_SCANLINE_OAM_BITPOS = 5;
         private const int STATUS_LC_EQUALS_LYC = 6;
@@ -82,14 +83,37 @@ namespace FrozenBoyCore.Graphics {
         // 3, 4, 5 are interrupt enabled flags (similar to how the IE Register works), when the mode changes the
         //         corresponding bit 3,4,5 is set
         // 6       LYC=LY Coincidence Interrupt (1=Enable) (Read/Write)
-        public u8 STAT { get; set; }
+        public u8 _stat;
+
+        public u8 STAT {
+            get => _stat;
+            set {
+                // undocumented bug
+                // http://www.devrs.com/gb/files/faqs.html#GBBugs
+                if (mode == MODE_VBLANK || mode == MODE_HBLANK) {
+                    if (IsLcdEnabled()) {
+                        intManager.RequestInterruption(InterruptionType.LCD);
+                    }
+                }
+                BitUtils.ChangeBits(_stat, 0b_1111_1000, value);
+            }
+        }
 
         // 0xFF42, The Y Position of the BACKGROUND where to start drawing the viewing area from
-        public u8 ScrollY { get; set; }
+        public u8 SCY { get; set; }
         // 0xFF43 The X Position of the BACKGROUND to start drawing the viewing area from
-        public u8 ScrollX { get; set; }
+        public u8 SCX { get; set; }
         // 0xFF44 This is Y coordinate of the current line
-        public u8 LY { get; set; }
+        private byte _LY;
+        public u8 LY {
+            get { return _LY; }
+            set { // it's ignored if the screen is enabled
+                if (!IsLcdEnabled()) {
+                    _LY = 0;
+                }
+            }
+        }
+
         // 0xFF45 LYC - Scanline compare register
         public u8 LYC { get; set; }
         // 0xFF47
@@ -105,9 +129,9 @@ namespace FrozenBoyCore.Graphics {
         public u8 OBP1 { get; set; }
 
         // 0xFF4A The Y Position of the VIEWING AREA to start drawing the window from
-        public u8 WindowY { get; set; }
+        public u8 WY { get; set; }
         // 0xFF4B The X Positions -7 of the VIEWING AREA to start drawing the window from
-        public u8 WindowX { get; set; }
+        public u8 WX { get; set; }
 
         public GPU(InterruptManager iManager) {
             vRam = new Space(0x8000, 0x9FFF);
@@ -115,9 +139,10 @@ namespace FrozenBoyCore.Graphics {
 
             this.intManager = iManager;
             mode = 0;
-            lcd_control = 0x91;
-            STAT = 0b1000_0110;
-            LYC = 0x0;
+            //lcd_control = 0x91;
+            _stat = 0b1000_0110;
+            _LY = 0;
+            //LYC = 0x0;
         }
 
         public void EnableLCD() {
@@ -130,8 +155,8 @@ namespace FrozenBoyCore.Graphics {
             wasDisabled = true;
             enableDelay = 244;
 
-            LY = 0;
-            STAT = (byte)(STAT & ~0x3);
+            _LY = 0;
+            _stat = (byte)(_stat & ~0x3);
             SetCoincidenceFlag();
         }
 
@@ -153,15 +178,15 @@ namespace FrozenBoyCore.Graphics {
                 return;
             }
 
-            u8 status = STAT;
-            u8 mode = (byte)(STAT & modeMask);
+            u8 status = _stat;
+            u8 mode = (byte)(_stat & modeMask);
 
             modeTicks++;
             lineTicks++;
 
             // The VBlank interrupt triggers as soon as VBlank starts
-            if (modeTicks == 4 && mode == MODE_VBLANK && LY == 153) {
-                LY = 0;
+            if (modeTicks == 4 && mode == MODE_VBLANK && _LY == 153) {
+                _LY = 0;
                 if (BitUtils.IsBitSet(status, STATUS_SCANLINE_OAM_BITPOS)) {
                     intManager.RequestInterruption(InterruptionType.LCD);
                 }
@@ -181,22 +206,26 @@ namespace FrozenBoyCore.Graphics {
                             modeTicks = 0;
                             mode = MODE_HBLANK;
 
-                            if (LY == LYC) {
+                            if (_LY == LYC) {
                                 if (BitUtils.IsBitSet(status, STATUS_LC_EQUALS_LYC)) {
                                     intManager.RequestInterruption(InterruptionType.LCD);
                                 }
                             }
 
-                            RenderLine(LY);
+                            RenderLine(_LY);
+
+                            if (BitUtils.IsBitSet(_stat, STATUS_HBLANK_BITPOS)) {
+                                intManager.RequestInterruption(InterruptionType.LCD);
+                            }
                         }
                         break;
                     case MODE_HBLANK:
                         if (modeTicks == 204) {
                             modeTicks = 0;
                             lineTicks = 0;
-                            LY++;
+                            _LY++;
 
-                            if (LY == 144) {
+                            if (_LY == 144) {
                                 mode = MODE_VBLANK;
                                 intManager.RequestInterruption(InterruptionType.VBlank);
 
@@ -214,12 +243,12 @@ namespace FrozenBoyCore.Graphics {
                         if (modeTicks == 456) {
                             modeTicks = 0;
                             lineTicks = 0;
-                            LY++;
+                            _LY++;
 
-                            if (LY == 1) {
+                            if (_LY == 1) {
                                 // Restart scanning modes
                                 mode = MODE_SCANLINE_OAM;
-                                LY = 0;
+                                _LY = 0;
 
                                 if (BitUtils.IsBitSet(status, STATUS_SCANLINE_OAM_BITPOS)) {
                                     intManager.RequestInterruption(InterruptionType.LCD);
@@ -231,16 +260,16 @@ namespace FrozenBoyCore.Graphics {
             }
 
             // Set STAT flags according to the new mode
-            status = BitUtils.ChangeBits(STAT, modeMask, mode);
+            status = BitUtils.ChangeBits(_stat, modeMask, mode);
 
-            if (LY == LYC) {
+            if (_LY == LYC) {
                 status = BitUtils.BitSet(status, STATUS_COINCIDENCE_BITPOS);
             }
             else {
                 status = BitUtils.BitReset(status, STATUS_COINCIDENCE_BITPOS);
             }
 
-            STAT = status;
+            _stat = status;
 
         }
 
@@ -257,20 +286,22 @@ namespace FrozenBoyCore.Graphics {
             u8[] Obj1Palette = GetPalette(OBP1);
 
             int y = line;
+            // do not move this inside the loop
+            int winx = WX - 7;
 
             // RENDER TILES
             // the display is 166x144
             for (int x = 0; x < 160; x++) {
                 if (BgEnabled) {
-                    int realX = (x + ScrollX) % 256;
-                    int realY = (y + ScrollY) % 256;
+                    int realX = (x + SCX) % 256;
+                    int realY = (y + SCY) % 256;
                     RenderTile(x, y, realX, realY, BgTileMapSelect, TileDataSelect, BgPalette);
                 }
 
                 if (WindowEnabled) {
-                    if (y >= WindowY && x >= (WindowX - 7)) {
-                        int realX = x - WindowX - 7;
-                        int realY = y - WindowY;
+                    if (y >= WY && x >= winx) {
+                        int realX = x - winx;
+                        int realY = y - WY;
                         RenderTile(x, y, realX, realY, WindowTileMapSelect, TileDataSelect, BgPalette);
                     }
                 }
@@ -336,8 +367,6 @@ namespace FrozenBoyCore.Graphics {
             WriteBuffer(x, y, colorData);
         }
 
-
-
         // Sprite attribute table, 0xFE00-0xFE9F
         // Each sprite has 4 bytes associated
         // 0: Sprite Y Position: Position of the sprite on the Y axis of the viewing display minus 16
@@ -360,8 +389,8 @@ namespace FrozenBoyCore.Graphics {
 
                 int size = GetSpriteSize();
 
-                if ((LY >= spriteY) && (LY < (spriteY + size))) {
-                    int tileRow = IsYFlipped(spriteAttr) ? size - 1 - (LY - spriteY) : (LY - spriteY);
+                if ((_LY >= spriteY) && (_LY < (spriteY + size))) {
+                    int tileRow = IsYFlipped(spriteAttr) ? size - 1 - (_LY - spriteY) : (_LY - spriteY);
 
                     u16 spriteAddress = (u16)(0x8000 + (spriteNumber * 16) + (tileRow * 2));
                     u8 low = vRam[spriteAddress];
@@ -381,8 +410,8 @@ namespace FrozenBoyCore.Graphics {
                         byte[] colorData = { color, color, color, 255 }; // B G R
 
                         if ((spriteX + p) >= 0 && (spriteX + p) < 160) {
-                            if (!IsTransparent(colorId) && (IsAboveBG(spriteAttr) || IsBgWhite(spriteX + p, LY, BgPalette))) {
-                                WriteBuffer(spriteX + p, LY, colorData);
+                            if (!IsTransparent(colorId) && (IsAboveBG(spriteAttr) || IsBgWhite(spriteX + p, _LY, BgPalette))) {
+                                WriteBuffer(spriteX + p, _LY, colorData);
                             }
                         }
                     }
@@ -403,6 +432,7 @@ namespace FrozenBoyCore.Graphics {
                 return true;
 
             return false;
+
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -453,11 +483,11 @@ namespace FrozenBoyCore.Graphics {
         }
 
         public void SetCoincidenceFlag() {
-            if (LY == LYC) {
-                STAT = (u8)(STAT | (1 << STATUS_COINCIDENCE_BITPOS));
+            if (_LY == LYC) {
+                _stat = (u8)(_stat | (1 << STATUS_COINCIDENCE_BITPOS));
             }
             else {
-                STAT = (u8)(STAT & ~(1 << STATUS_COINCIDENCE_BITPOS));
+                _stat = (u8)(_stat & ~(1 << STATUS_COINCIDENCE_BITPOS));
             }
         }
 

@@ -42,12 +42,22 @@ namespace FrozenBoyCore.Memory {
 
             intManager.IF = 0b_0000_0001;
 
-            Write8(0xFF10, 0x80);
-            Write8(0xFF11, 0xBF);
-            Write8(0xFF12, 0xF3);
-            Write8(0xFF14, 0xBF);
-            Write8(0xFF16, 0x3F);
-            Write8(0xFF19, 0xBF);
+            Write8(0xFF00, 0xCF);  // JOYP
+            Write8(0xFF02, 0x7E);  // SC
+            Write8(0xFF04, 0xAB);  // DIV
+            Write8(0xFF08, 0xF8);  // TAC 
+            Write8(0xFF0F, 0xE1);  // IF 
+
+            // Sound 1
+            Write8(0xFF10, 0x80);  // ENT1
+            Write8(0xFF11, 0xBF);  // LEN1
+            Write8(0xFF12, 0xF3);  // ENV1
+            Write8(0xFF13, 0xC1);  // FRQ1
+            Write8(0xFF14, 0xBF);  // KIK1
+
+            Write8(0xFF15, 0xFF);  // N/A
+            Write8(0xFF16, 0x3F);  // LEN2
+            Write8(0xFF19, 0xB8);  // KIK2
             Write8(0xFF1A, 0x7F);
             Write8(0xFF1B, 0xFF);
             Write8(0xFF1C, 0x9F);
@@ -58,8 +68,19 @@ namespace FrozenBoyCore.Memory {
             Write8(0xFF25, 0xF3);
             Write8(0xFF26, 0xF1);
 
-            Write8(0xFF48, 0xFF);
-            Write8(0xFF49, 0xFF);
+            // graphics
+            Write8(0xFF40, 0x91);  // LCDC
+            Write8(0xFF41, 0x85);  // STAT
+            Write8(0xFF46, 0xFF);  // DMA
+            Write8(0xFF47, 0xFC);  // BGP
+            Write8(0xFF48, 0xFF);  // OBJ0
+            Write8(0xFF49, 0xFF);  // OBJ1
+
+            Write8(0xFF70, 0xFF);  // SVBK
+            Write8(0xFF4F, 0xFF);  // VBK
+            Write8(0xFF4D, 0xFF);  // KEY1
+
+
         }
 
 
@@ -134,16 +155,16 @@ namespace FrozenBoyCore.Memory {
                 // graphics
                 0xFF40 => gpu.LCDC,
                 0xFF41 => gpu.STAT,
-                0xFF42 => gpu.ScrollY,
-                0xFF43 => gpu.ScrollX,
+                0xFF42 => gpu.SCY,
+                0xFF43 => gpu.SCX,
                 0xFF44 => gpu.LY,
                 0xFF45 => gpu.LYC,
                 0xFF46 => dma.DMA_Register,
                 0xFF47 => gpu.BGP,
                 0xFF48 => gpu.OBP0,
                 0xFF49 => gpu.OBP1,
-                0xFF4A => gpu.WindowY,
-                0xFF4B => gpu.WindowX,
+                0xFF4A => gpu.WY,
+                0xFF4B => gpu.WX,
                 // joypad
                 0xFF00 => joypad.JOYP,
                 // serial
@@ -218,17 +239,17 @@ namespace FrozenBoyCore.Memory {
                 case 0xFF0F: intManager.IF = value; break;
                 // graphics
                 case 0xFF40: gpu.LCDC = value; break;
-                case 0xFF41: gpu.STAT = BitUtils.ChangeBits(gpu.STAT, 0b_1111_1000, value); break; // last 3 are read only
-                case 0xFF42: gpu.ScrollY = value; break;
-                case 0xFF43: gpu.ScrollX = value; break;
-                case 0xFF44: gpu.LY = 0; break;        // LY = 0 if someone writes to it
+                case 0xFF41: gpu.STAT = value; break;
+                case 0xFF42: gpu.SCY = value; break;
+                case 0xFF43: gpu.SCX = value; break;
+                case 0xFF44: gpu.LY = value; break;
                 case 0xFF45: gpu.LYC = value; break;
                 case 0xFF46: dma.DMA_Register = value; break;
                 case 0xFF47: gpu.BGP = value; break;
                 case 0xFF48: gpu.OBP0 = value; break;
                 case 0xFF49: gpu.OBP1 = value; break;
-                case 0xFF4A: gpu.WindowY = value; break;
-                case 0xFF4B: gpu.WindowX = value; break;
+                case 0xFF4A: gpu.WY = value; break;
+                case 0xFF4B: gpu.WX = value; break;
                 // joypad
                 case 0xFF00: joypad.JOYP = value; break;
                 // serial
