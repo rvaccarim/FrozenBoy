@@ -8,6 +8,8 @@ using u8 = System.Byte;
 using s8 = System.SByte;
 using u16 = System.UInt16;
 using s16 = System.Int16;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace FrozenBoyCore.Graphics {
 
@@ -31,8 +33,8 @@ namespace FrozenBoyCore.Graphics {
         public int lineTicks;
         public int enableDelay = 0;
         public bool wasDisabled = false;
-        private byte[] frameBuffer = new byte[92160];
 
+        private readonly u8[] frameBuffer = new byte[160 * 144 * 4];
         private readonly InterruptManager intManager;
 
         private readonly byte modeMask = 0b_0000_0011;
@@ -89,13 +91,14 @@ namespace FrozenBoyCore.Graphics {
             get => _stat;
             set {
                 // undocumented bug
+                // This is needed by Road Rash
                 // http://www.devrs.com/gb/files/faqs.html#GBBugs
                 if (mode == MODE_VBLANK || mode == MODE_HBLANK) {
                     if (IsLcdEnabled()) {
                         intManager.RequestInterruption(InterruptionType.LCD);
                     }
                 }
-                BitUtils.ChangeBits(_stat, 0b_1111_1000, value);
+                _stat = BitUtils.ChangeBits(_stat, 0b_1111_1000, value);
             }
         }
 
@@ -274,10 +277,10 @@ namespace FrozenBoyCore.Graphics {
         }
 
         private void RenderLine(int line) {
-            bool WindowTileMapSelect = BitUtils.IsBitSet(lcd_control, 6);
+            bool WindowTileMap = BitUtils.IsBitSet(lcd_control, 6);
             bool WindowEnabled = BitUtils.IsBitSet(lcd_control, 5);
-            bool TileDataSelect = BitUtils.IsBitSet(lcd_control, 4);
-            bool BgTileMapSelect = BitUtils.IsBitSet(lcd_control, 3);
+            bool tileSelect = BitUtils.IsBitSet(lcd_control, 4);
+            bool BgTileMap = BitUtils.IsBitSet(lcd_control, 3);
             bool SpriteEnabled = BitUtils.IsBitSet(lcd_control, 1);
             bool BgEnabled = BitUtils.IsBitSet(lcd_control, 0);
 
@@ -295,17 +298,18 @@ namespace FrozenBoyCore.Graphics {
                 if (BgEnabled) {
                     int realX = (x + SCX) % 256;
                     int realY = (y + SCY) % 256;
-                    RenderTile(x, y, realX, realY, BgTileMapSelect, TileDataSelect, BgPalette);
+                    RenderTile(x, y, realX, realY, BgTileMap, tileSelect, BgPalette);
                 }
 
                 if (WindowEnabled) {
                     if (y >= WY && x >= winx) {
                         int realX = x - winx;
                         int realY = y - WY;
-                        RenderTile(x, y, realX, realY, WindowTileMapSelect, TileDataSelect, BgPalette);
+                        RenderTile(x, y, realX, realY, WindowTileMap, tileSelect, BgPalette);
                     }
                 }
             }
+
 
             // RENDER SPRITES       
             if (SpriteEnabled) {
@@ -315,7 +319,7 @@ namespace FrozenBoyCore.Graphics {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RenderTile(int x, int y, int realX, int realY, bool mapSelect, bool tileDataSelect, u8[] BgPalette) {
+        private void RenderTile(int x, int y, int realX, int realY, bool tileMap, bool tileSelect, u8[] palette) {
             // the BG is 256x256 pixels
             // calculate the coordinates of the tile where the pixel belongs
             // there are 32 possible tiles (256 / 8)
@@ -327,7 +331,7 @@ namespace FrozenBoyCore.Graphics {
             int tileId = (tileRow * 32) + tileCol;
 
             u8 tileNumber;
-            if (mapSelect) {
+            if (tileMap) {
                 tileNumber = vRam[(u16)(0x9C00 + tileId)];
             }
             else {
@@ -336,7 +340,7 @@ namespace FrozenBoyCore.Graphics {
 
             // get tile data
             u16 tileAddress;
-            if (tileDataSelect) {
+            if (tileSelect) {
                 // unsigned $8000-8FFF
                 tileAddress = (u16)(0x8000 + (tileNumber * 16));
             }
@@ -355,14 +359,12 @@ namespace FrozenBoyCore.Graphics {
             int tileYPos = realY % 8;
 
             // each pixel in the tile data set is represented by two bits
-            u8 tileLow = vRam[(u16)(tileAddress + (tileYPos * 2))];
-            u8 tileHigh = vRam[(u16)(tileAddress + (tileYPos * 2) + 1)];
+            u8 tileLsb = vRam[(u16)(tileAddress + (tileYPos * 2))];
+            u8 tileMsb = vRam[(u16)(tileAddress + (tileYPos * 2) + 1)];
 
-            tileLow = (u8)((u8)(tileLow << tileXpos) >> 7);
-            tileHigh = (u8)((u8)(tileHigh << tileXpos) >> 7);
+            int colorIndex = GetColorIndex(tileMsb, tileLsb, tileXpos);
+            u8 color = (u8)((0b_0000_0011 - palette[colorIndex]) * 85);
 
-            int colorId = (tileHigh << 1) + tileLow;
-            u8 color = (u8)((3 - BgPalette[colorId]) * 85);
             WriteBuffer(x, y, color);
         }
 
@@ -384,36 +386,44 @@ namespace FrozenBoyCore.Graphics {
             // this is system wide, not on a tile by tile 
             int size = GetSpriteSize();
 
+            // SORT, see Sprites_DrawPriority1.png and Sprites_DrawPriority2.png
+            var sprites = new List<Tuple<int, int>>();
             for (int i = 0; i < 40; i++) {
-                int offset = i * 4;
+                // we store X and index
+                sprites.Add(Tuple.Create((oamRam[(u16)(0xFE01 + (i * 4))] - 0x08), i));
+            }
+            sprites = sprites.OrderByDescending(t => t.Item1).ThenByDescending(t => t.Item2).ToList();
+
+            foreach (var sprite in sprites) {
+                int offset = sprite.Item2 * 4;
 
                 u8 spriteY = (u8)(oamRam[(u16)(0xFE00 + offset)] - 0x10);
-                u8 spriteX = (u8)(oamRam[(u16)(0xFE01 + offset)] - 0x08);
+                u8 spriteX = (u8)sprite.Item1;
 
                 if ((_LY >= spriteY) && (_LY < (spriteY + size))) {
-                    u8 spriteNumber = oamRam[(u16)(0xFE02 + offset)];
+                    u8 spriteID = oamRam[(u16)(0xFE02 + offset)];
                     u8 spriteAttr = oamRam[(u16)(0xFE03 + offset)];
 
-                    int tileRow = IsYFlipped(spriteAttr) ? size - 1 - (_LY - spriteY) : (_LY - spriteY);
+                    int spriteRow = IsYFlipped(spriteAttr) ? size - 1 - (_LY - spriteY) : (_LY - spriteY);
+                    u16 spriteAddress = (u16)(0x8000 + (spriteID * 16) + (spriteRow * 2));
 
-                    u16 spriteAddress = (u16)(0x8000 + (spriteNumber * 16) + (tileRow * 2));
-                    u8 low = vRam[spriteAddress];
-                    u8 high = vRam[(u16)(spriteAddress + 1)];
+                    u8 spriteRowLsb = vRam[spriteAddress];
+                    u8 spriteRowMsb = vRam[(u16)(spriteAddress + 1)];
 
-                    u8[] spritePalette = BitUtils.IsBitSet(spriteAttr, 4) ? Obj1Palette : Obj0Palette;
+                    u8[] spritePalette = BitUtils.IsBitSet(spriteAttr, 4) ? GetPalette(OBP1) : GetPalette(OBP0);
                     int priority = BitUtils.IsBitSet(spriteAttr, 7) ? 1 : 0;
 
-                    // render the 8x8 sprite pixels
+                    // render the 8 pixels in the row
                     for (int p = 0; p < 8; p++) {
                         if ((spriteX + p) >= 0 && (spriteX + p) < 160) {
                             int bitPos = !IsXFlipped(spriteAttr) ? p : 7 - p;
 
-                            u8 b1 = (u8)((u8)(low << bitPos) >> 7);
-                            u8 b2 = (u8)((u8)(high << bitPos) >> 7);
-                            int colorId = (b2 << 1) + b1;
+                            int colorIdx = GetColorIndex(spriteRowMsb, spriteRowLsb, bitPos);
 
-                            if (DrawPixel(spriteX + p, _LY, colorId, priority)) {
-                                u8 color = (u8)((3 - spritePalette[colorId]) * 85);
+                            if (DrawPixel(spriteX + p, _LY, colorIdx, priority)) {
+                                // 00 is white, but in RGB is black
+                                // we take the inverse and have 4 colors: 0, 85, 190, 255
+                                u8 color = (u8)((0b_0000_0011 - spritePalette[colorIdx]) * 85);
                                 WriteBuffer(spriteX + p, _LY, color);
                             }
                         }
@@ -451,6 +461,13 @@ namespace FrozenBoyCore.Graphics {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private int GetColorIndex(u8 msb, u8 lsb, int bitPos) {
+            u8 bitLsb = (u8)((u8)(lsb << bitPos) >> 7);
+            u8 bitMsb = (u8)((u8)(msb << bitPos) >> 7);
+            return (bitMsb << 1) | bitLsb;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsXFlipped(u8 attr) {
             //Bit5   X flip(0 = Normal, 1 = Horizontally mirrored)
             return BitUtils.IsBitSet(attr, 5);
@@ -471,10 +488,10 @@ namespace FrozenBoyCore.Graphics {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private byte[] GetPalette(u8 rawPalette) {
             u8[] palette = new u8[4];
-            palette[0] = (u8)(rawPalette & 0x03);
-            palette[1] = (u8)((rawPalette & 0x0C) >> 2);
-            palette[2] = (u8)((rawPalette & 0x30) >> 4);
-            palette[3] = (u8)((rawPalette & 0xC0) >> 6);
+            palette[0] = (u8)(rawPalette & 0b_0000_0011);
+            palette[1] = (u8)((rawPalette & 0b_0000_1100) >> 2);
+            palette[2] = (u8)((rawPalette & 0b_0011_0000) >> 4);
+            palette[3] = (u8)((rawPalette & 0b_1100_0000) >> 6);
             return palette;
         }
 
