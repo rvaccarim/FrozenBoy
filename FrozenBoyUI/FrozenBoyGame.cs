@@ -80,8 +80,8 @@ namespace FrozenBoyUI {
             gameboy.joypad.JoypadKeys[1] = keyboardState.IsKeyDown(Keys.Left);
             gameboy.joypad.JoypadKeys[2] = keyboardState.IsKeyDown(Keys.Up);
             gameboy.joypad.JoypadKeys[3] = keyboardState.IsKeyDown(Keys.Down);
-            gameboy.joypad.JoypadKeys[4] = keyboardState.IsKeyDown(Keys.Z);
-            gameboy.joypad.JoypadKeys[5] = keyboardState.IsKeyDown(Keys.X);
+            gameboy.joypad.JoypadKeys[4] = keyboardState.IsKeyDown(Keys.S);
+            gameboy.joypad.JoypadKeys[5] = keyboardState.IsKeyDown(Keys.A);
             gameboy.joypad.JoypadKeys[6] = keyboardState.IsKeyDown(Keys.Space);
             gameboy.joypad.JoypadKeys[7] = keyboardState.IsKeyDown(Keys.Enter);
 
