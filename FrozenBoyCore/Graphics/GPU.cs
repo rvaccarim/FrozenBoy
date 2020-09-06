@@ -388,17 +388,22 @@ namespace FrozenBoyCore.Graphics {
             // SORT, see Sprites_DrawPriority1.png and Sprites_DrawPriority2.png
             var sprites = new List<Tuple<int, int>>();
             for (int i = 0; i < 40; i++) {
-                // we store X and index
-                u8 z = oamRam[(u16)(0xFE02 + (i * 4))];
-                sprites.Add(Tuple.Create((oamRam[(u16)(0xFE01 + (i * 4))] - 0x08), i));
+                // we store the original X and index
+                sprites.Add(Tuple.Create((int)(oamRam[(u16)(0xFE01 + (i * 4))]), i));
             }
             sprites = sprites.OrderByDescending(t => t.Item1).ThenByDescending(t => t.Item2).ToList();
 
-            foreach (var sprite in sprites) {
-                int offset = sprite.Item2 * 4;
+            int spritesInRow = 0;
 
-                u8 spriteY = (u8)(oamRam[(u16)(0xFE00 + offset)] - 0x10);
-                u8 spriteX = (u8)sprite.Item1;
+            foreach (var sprite in sprites) {
+                // there's a limit on how many sprites can be drawn
+                if (spritesInRow == 10) {
+                    break;
+                }
+
+                int offset = sprite.Item2 * 4;
+                int spriteX = sprite.Item1 - 0x08;
+                int spriteY = oamRam[(u16)(0xFE00 + offset)] - 0x10;
 
                 if ((_LY >= spriteY) && (_LY < (spriteY + spriteSize))) {
                     u8 spriteID = oamRam[(u16)(0xFE02 + offset)];
@@ -445,12 +450,15 @@ namespace FrozenBoyCore.Graphics {
                             }
                         }
                     }
+
+                    spritesInRow++;
                 }
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool DrawPixel(int x, int y, int spriteColorId, int spritePriority) {
+
             // 0 is transparent, no need to do anything
             if (spriteColorId == 0) {
                 return false;
