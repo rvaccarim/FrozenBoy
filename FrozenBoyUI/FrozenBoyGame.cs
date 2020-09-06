@@ -5,6 +5,10 @@ using FrozenBoyCore;
 using System.IO;
 using System.Text;
 using System;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace FrozenBoyUI {
 
@@ -16,6 +20,7 @@ namespace FrozenBoyUI {
         private bool scheduledScreenshot;
         private byte[] backbuffer;
         private string romFilename;
+        private int screenshotCount = 1;
 
         // the amount of clock cycles the gameboy can exectue every second is 4194304
         // 4194304 / 60
@@ -83,13 +88,10 @@ namespace FrozenBoyUI {
             // upload backbuffer to texture
             backbuffer = gameboy.gpu.GetScreenBuffer();
 
-            if (keyboardState.IsKeyDown(Keys.F10)) {
+            if (keyboardState.IsKeyDown(Keys.F10) && !scheduledScreenshot) {
                 scheduledScreenshot = true;
-            }
-
-            if (scheduledScreenshot) {
-                TakeScreenshot();
-                scheduledScreenshot = false;
+                // F10 was being reported as pressed multiple times so multiple screenshots were being generated
+                Thread.Sleep(1500);
             }
 
             if (backbuffer != null)
@@ -99,10 +101,10 @@ namespace FrozenBoyUI {
         }
 
         protected override void Draw(GameTime gameTime) {
-            GraphicsDevice.Clear(Color.Black);
+            GraphicsDevice.Clear(Microsoft.Xna.Framework.Color.Black);
 
             // compute bounds
-            Rectangle bounds = GraphicsDevice.Viewport.Bounds;
+            Microsoft.Xna.Framework.Rectangle bounds = GraphicsDevice.Viewport.Bounds;
 
             float aspectRatio = GraphicsDevice.Viewport.Bounds.Width / (float)GraphicsDevice.Viewport.Bounds.Height;
             float targetAspectRatio = 160.0f / 144.0f;
@@ -124,10 +126,14 @@ namespace FrozenBoyUI {
             // Draw is called called 60 times per second
             UpdateWorld();
 
-            spriteBatch.Draw(gameboyBuffer, bounds, Color.White);
+            spriteBatch.Draw(gameboyBuffer, bounds, Microsoft.Xna.Framework.Color.White);
             spriteBatch.End();
 
             base.Draw(gameTime);
+
+            if (scheduledScreenshot) {
+                TakeScreenshotAndHash();
+            }
         }
 
         private void UpdateWorld() {
@@ -139,7 +145,15 @@ namespace FrozenBoyUI {
 
         }
 
-        private void TakeScreenshot() {
+        private void TakeScreenshotAndHash() {
+            string outputFile = @"D:\Users\frozen\Documents\99_temp\GB_Debug\" + romFilename + "_" + screenshotCount.ToString();
+
+            int width = 160;
+            int height = 144;
+            int bytesPerPixel = 4;
+            Bitmap bmp = BuildImage(backbuffer, width, height, width * bytesPerPixel, PixelFormat.Format32bppArgb);
+            bmp.Save(outputFile + ".png", ImageFormat.Png);
+
             byte[] hash;
             using var md5 = System.Security.Cryptography.MD5.Create();
             md5.TransformFinalBlock(backbuffer, 0, backbuffer.Length);
@@ -150,8 +164,32 @@ namespace FrozenBoyUI {
             for (int i = 0; i < hash.Length; i++)
                 result.Append(hash[i].ToString("X2"));
 
-            File.WriteAllText(@"D:\Users\frozen\Documents\99_temp\GB_Debug\" + romFilename + ".hash.txt", result.ToString());
+            File.WriteAllText(outputFile + ".hash.txt", result.ToString());
 
+            screenshotCount++;
+            scheduledScreenshot = false;
+
+        }
+
+        private Bitmap BuildImage(Byte[] sourceData, Int32 width, Int32 height, Int32 stride, PixelFormat pixelFormat) {
+            Bitmap newImage = new Bitmap(width, height, pixelFormat);
+            BitmapData targetData = newImage.LockBits(new System.Drawing.Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, newImage.PixelFormat);
+            Int32 newDataWidth = ((Image.GetPixelFormatSize(pixelFormat) * width) + 7) / 8;
+            // Compensate for possible negative stride on BMP format.
+            Boolean isFlipped = stride < 0;
+            stride = Math.Abs(stride);
+            // Cache these to avoid unnecessary getter calls.
+            Int32 targetStride = targetData.Stride;
+            Int64 scan0 = targetData.Scan0.ToInt64();
+            for (Int32 y = 0; y < height; y++)
+                Marshal.Copy(sourceData, y * stride, new IntPtr(scan0 + y * targetStride), newDataWidth);
+            newImage.UnlockBits(targetData);
+
+            // Fix negative stride on BMP format.
+            if (isFlipped)
+                newImage.RotateFlip(RotateFlipType.Rotate180FlipX);
+
+            return newImage;
         }
     }
 }
