@@ -310,7 +310,6 @@ namespace FrozenBoyCore.Graphics {
                 }
             }
 
-
             // RENDER SPRITES       
             if (SpriteEnabled) {
                 RenderSprites(Obj0Palette, Obj1Palette);
@@ -384,12 +383,13 @@ namespace FrozenBoyCore.Graphics {
         private void RenderSprites(u8[] Obj0Palette, u8[] Obj1Palette) {
 
             // this is system wide, not on a tile by tile 
-            int size = GetSpriteSize();
+            int spriteSize = GetSpriteSize();
 
             // SORT, see Sprites_DrawPriority1.png and Sprites_DrawPriority2.png
             var sprites = new List<Tuple<int, int>>();
             for (int i = 0; i < 40; i++) {
                 // we store X and index
+                u8 z = oamRam[(u16)(0xFE02 + (i * 4))];
                 sprites.Add(Tuple.Create((oamRam[(u16)(0xFE01 + (i * 4))] - 0x08), i));
             }
             sprites = sprites.OrderByDescending(t => t.Item1).ThenByDescending(t => t.Item2).ToList();
@@ -400,21 +400,38 @@ namespace FrozenBoyCore.Graphics {
                 u8 spriteY = (u8)(oamRam[(u16)(0xFE00 + offset)] - 0x10);
                 u8 spriteX = (u8)sprite.Item1;
 
-                if ((_LY >= spriteY) && (_LY < (spriteY + size))) {
+                if ((_LY >= spriteY) && (_LY < (spriteY + spriteSize))) {
                     u8 spriteID = oamRam[(u16)(0xFE02 + offset)];
+
                     u8 spriteAttr = oamRam[(u16)(0xFE03 + offset)];
 
-                    int spriteRow = IsYFlipped(spriteAttr) ? size - 1 - (_LY - spriteY) : (_LY - spriteY);
-                    u16 spriteAddress = (u16)(0x8000 + (spriteID * 16) + (spriteRow * 2));
+                    int spriteRow = IsYFlipped(spriteAttr) ? spriteSize - 1 - (_LY - spriteY) : (_LY - spriteY);
 
-                    u8 spriteRowLsb = vRam[spriteAddress];
-                    u8 spriteRowMsb = vRam[(u16)(spriteAddress + 1)];
+                    u16 spriteRowAddress;
+                    if (spriteSize == 8) {
+                        spriteRowAddress = (u16)(0x8000 + (spriteID * 16) + (spriteRow * 2));
+                    }
+                    else {
+                        // In 8x16 mode, in OAM they don't put the ID of the two sprites and we need to handle the 
+                        // case in which they put the ID of the second sprite
+                        if (spriteID % 2 == 0) {
+                            spriteRowAddress = (u16)(0x8000 + (spriteID * 16) + (spriteRow * 2));
+                        }
+                        else {
+                            // If they put the ID of the second one, we fetch the first one
+                            spriteRowAddress = (u16)(0x8000 + ((spriteID - 1) * 16) + (spriteRow * 2));
+                        }
+                    }
+
+                    u8 spriteRowLsb = vRam[spriteRowAddress];
+                    u8 spriteRowMsb = vRam[(u16)(spriteRowAddress + 1)];
 
                     u8[] spritePalette = BitUtils.IsBitSet(spriteAttr, 4) ? GetPalette(OBP1) : GetPalette(OBP0);
                     int priority = BitUtils.IsBitSet(spriteAttr, 7) ? 1 : 0;
 
                     // render the 8 pixels in the row
                     for (int p = 0; p < 8; p++) {
+
                         if ((spriteX + p) >= 0 && (spriteX + p) < 160) {
                             int bitPos = !IsXFlipped(spriteAttr) ? p : 7 - p;
 
@@ -498,7 +515,7 @@ namespace FrozenBoyCore.Graphics {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void WriteBuffer(int x, int y, u8 color) {
             int offset = (y * 160) + x;
-            // B G R Alpha
+            // RGB Alpha
             frameBuffer[(offset * 4) + 0] = color;
             frameBuffer[(offset * 4) + 1] = color;
             frameBuffer[(offset * 4) + 2] = color;
