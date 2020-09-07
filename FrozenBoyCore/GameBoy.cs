@@ -3,12 +3,11 @@ using FrozenBoyCore.Processor;
 using FrozenBoyCore.Graphics;
 using FrozenBoyCore.Util;
 using FrozenBoyCore.Memory;
-using u8 = System.Byte;
-using u16 = System.UInt16;
 using FrozenBoyCore.Controls;
 using System.Text;
-using System.ComponentModel.Design;
 using FrozenBoyCore.Serial;
+using u8 = System.Byte;
+using u16 = System.UInt16;
 
 namespace FrozenBoyCore {
 
@@ -35,9 +34,15 @@ namespace FrozenBoyCore {
         public GameBoy(string romName) {
             this.romName = romName;
 
+            GPU_Color myWhite = new GPU_Color(224, 248, 208, 255);
+            GPU_Color myLightGray = new GPU_Color(136, 192, 112, 255);
+            GPU_Color myDarkGray = new GPU_Color(52, 104, 86, 255);
+            GPU_Color myBlack = new GPU_Color(8, 24, 32, 255);
+            GPU_Palette lcd_palette = new GPU_Palette(myWhite, myLightGray, myDarkGray, myBlack);
+
             intManager = new InterruptManager();
             timer = new Timer(intManager);
-            gpu = new GPU(intManager);
+            gpu = new GPU(intManager, lcd_palette);
             joypad = new Joypad(intManager);
             dma = new Dma();
             serial = new SerialPort(intManager);

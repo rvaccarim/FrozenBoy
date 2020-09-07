@@ -14,6 +14,23 @@ using System.Linq;
 namespace FrozenBoyCore.Graphics {
 
     public class GPU {
+
+        public GPU(InterruptManager iManager, GPU_Palette gpu_palette) {
+            vRam = new Space(0x8000, 0x9FFF);
+            oamRam = new Space(0xFE00, 0xFE9F);
+
+            this.intManager = iManager;
+            this.gpu_palette = gpu_palette;
+
+            mode = 0;
+            //lcd_control = 0x91;
+            _stat = 0b1000_0110;
+            _LY = 0;
+            //LYC = 0x0;
+        }
+
+        private GPU_Palette gpu_palette;
+
         public Space vRam;
         public Space oamRam;
 
@@ -136,17 +153,7 @@ namespace FrozenBoyCore.Graphics {
         // 0xFF4B The X Positions -7 of the VIEWING AREA to start drawing the window from
         public u8 WX { get; set; }
 
-        public GPU(InterruptManager iManager) {
-            vRam = new Space(0x8000, 0x9FFF);
-            oamRam = new Space(0xFE00, 0xFE9F);
 
-            this.intManager = iManager;
-            mode = 0;
-            //lcd_control = 0x91;
-            _stat = 0b1000_0110;
-            _LY = 0;
-            //LYC = 0x0;
-        }
 
         public void EnableLCD() {
             enableDelay = 244;
@@ -362,8 +369,7 @@ namespace FrozenBoyCore.Graphics {
             u8 tileMsb = vRam[(u16)(tileAddress + (tileYPos * 2) + 1)];
 
             int colorIndex = GetColorIndex(tileMsb, tileLsb, tileXpos);
-            u8 color = (u8)((0b_0000_0011 - palette[colorIndex]) * 85);
-
+            u8 color = palette[colorIndex];
             WriteBuffer(x, y, color);
         }
 
@@ -443,9 +449,7 @@ namespace FrozenBoyCore.Graphics {
                             int colorIdx = GetColorIndex(spriteRowMsb, spriteRowLsb, bitPos);
 
                             if (DrawPixel(spriteX + p, _LY, colorIdx, priority)) {
-                                // 00 is white, but in RGB is black
-                                // we take the inverse and have 4 colors: 0, 85, 190, 255
-                                u8 color = (u8)((0b_0000_0011 - spritePalette[colorIdx]) * 85);
+                                u8 color = spritePalette[colorIdx];
                                 WriteBuffer(spriteX + p, _LY, color);
                             }
                         }
@@ -524,10 +528,10 @@ namespace FrozenBoyCore.Graphics {
         private void WriteBuffer(int x, int y, u8 color) {
             int offset = (y * 160) + x;
             // RGB Alpha
-            frameBuffer[(offset * 4) + 0] = color;
-            frameBuffer[(offset * 4) + 1] = color;
-            frameBuffer[(offset * 4) + 2] = color;
-            frameBuffer[(offset * 4) + 3] = 255;
+            frameBuffer[(offset * 4) + 0] = gpu_palette.colors[color].Red;
+            frameBuffer[(offset * 4) + 1] = gpu_palette.colors[color].Green;
+            frameBuffer[(offset * 4) + 2] = gpu_palette.colors[color].Blue;
+            frameBuffer[(offset * 4) + 3] = gpu_palette.colors[color].Alpha;
         }
 
         public void SetCoincidenceFlag() {
