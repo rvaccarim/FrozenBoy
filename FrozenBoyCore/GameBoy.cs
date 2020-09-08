@@ -13,7 +13,7 @@ namespace FrozenBoyCore {
 
     public class GameBoy {
         public const int ClockSpeed = 4_194_304;
-        private string romName;
+        private GameOptions gbOptions;
 
         public Cartridge cartridge;
         public CPU cpu;
@@ -31,18 +31,12 @@ namespace FrozenBoyCore {
         public int totalCycles;
 
         // constructor
-        public GameBoy(string romName) {
-            this.romName = romName;
-
-            GPU_Color myWhite = new GPU_Color(224, 248, 208, 255);
-            GPU_Color myLightGray = new GPU_Color(136, 192, 112, 255);
-            GPU_Color myDarkGray = new GPU_Color(52, 104, 86, 255);
-            GPU_Color myBlack = new GPU_Color(8, 24, 32, 255);
-            GPU_Palette lcd_palette = new GPU_Palette(myWhite, myLightGray, myDarkGray, myBlack);
+        public GameBoy(GameOptions gbOptions) {
+            this.gbOptions = gbOptions;
 
             intManager = new InterruptManager();
             timer = new Timer(intManager);
-            gpu = new GPU(intManager, lcd_palette);
+            gpu = new GPU(intManager, gbOptions.Palette);
             joypad = new Joypad(intManager);
             dma = new Dma();
             serial = new SerialPort(intManager);
@@ -51,7 +45,7 @@ namespace FrozenBoyCore {
 
             dma.SetMMU(mmu);
 
-            mmu.LoadData(romName);
+            mmu.LoadData(gbOptions.RomPath);
 
         }
 
@@ -64,8 +58,6 @@ namespace FrozenBoyCore {
             return 1;
         }
 
-        private int MD5_Cycles = 69905;
-        private int md5_cycles;
 
         public bool RunTest(TestOptions options) {
             totalCycles = 0;
@@ -74,6 +66,8 @@ namespace FrozenBoyCore {
                 logger = new Logger(options.logFilename);
             }
 
+            int FPS_max_cycles = 69905;
+            int fps_cycles = 0;
             int MD5_attemtps = 0;
             int MD5_max_attempts = 500;
 
@@ -107,8 +101,8 @@ namespace FrozenBoyCore {
                 }
                 else {
                     // 60 FPS
-                    md5_cycles++;
-                    if (md5_cycles == MD5_Cycles) {
+                    fps_cycles++;
+                    if (fps_cycles == FPS_max_cycles) {
                         string md5 = MD5(gpu.GetScreenBuffer());
                         if (options.expectedMD5 == md5) {
                             testResult = md5;
@@ -118,7 +112,7 @@ namespace FrozenBoyCore {
                             return true;
                         }
 
-                        md5_cycles = 0;
+                        fps_cycles = 0;
                         MD5_attemtps++;
                     }
 

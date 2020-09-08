@@ -199,10 +199,12 @@ namespace FrozenBoyTest {
             string romFilename = path + romName;
             string logFilename = debugPath + romName + ".log.frozenBoy.txt";
 
-            TestOptions options = new TestOptions(testOutput, "", logExecution, logFilename);
-            GameBoy gb = new GameBoy(romFilename);
+            GameOptions gameOptions = new GameOptions(romFilename, new Util().GetTestPalette());
+            GameBoy gb = new GameBoy(gameOptions);
 
-            bool passed = gb.RunTest(options);
+            TestOptions testOptions = new TestOptions(testOutput, "", logExecution, logFilename);
+
+            bool passed = gb.RunTest(testOptions);
             output.WriteLine(gb.testResult);
 
             return passed;

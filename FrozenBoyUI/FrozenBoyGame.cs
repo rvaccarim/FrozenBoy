@@ -9,6 +9,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Threading;
+using FrozenBoyCore.Graphics;
 
 namespace FrozenBoyUI {
 
@@ -50,7 +51,8 @@ namespace FrozenBoyUI {
             if (result == System.Windows.Forms.DialogResult.OK) {
                 romFilename = Path.GetFileName(ofd.FileName);
 
-                gameboy = new GameBoy(ofd.FileName);
+                GameOptions gbOptions = new GameOptions(ofd.FileName, GetPalette());
+                gameboy = new GameBoy(gbOptions);
 
                 base.Window.Title = "FrozenBoy - " + romFilename;
 
@@ -98,6 +100,14 @@ namespace FrozenBoyUI {
                 gameboyBuffer.SetData<byte>(backbuffer);
 
             base.Update(gameTime);
+        }
+
+        private GPU_Palette GetPalette() {
+            GPU_Color white = new GPU_Color(224, 248, 208, 255);
+            GPU_Color lightGray = new GPU_Color(136, 192, 112, 255);
+            GPU_Color darkGray = new GPU_Color(52, 104, 86, 255);
+            GPU_Color black = new GPU_Color(8, 24, 32, 255);
+            return new GPU_Palette(white, lightGray, darkGray, black);
         }
 
         protected override void Draw(GameTime gameTime) {

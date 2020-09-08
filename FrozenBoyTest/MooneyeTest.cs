@@ -1,4 +1,5 @@
 ﻿using FrozenBoyCore;
+using FrozenBoyCore.Graphics;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -253,13 +254,16 @@ namespace FrozenBoyTest {
             string logFilename = debugPath + romName + ".log.frozenBoy.txt";
             string expectedMD5 = File.ReadAllText(hashesPath + extraPath + romName + ".hash.txt");
 
-            TestOptions options = new TestOptions(TestOutput.MD5, expectedMD5, logExecution, logFilename);
-            GameBoy gb = new GameBoy(romFilename);
+            GameOptions gameOptions = new GameOptions(romFilename, new Util().GetTestPalette());
+            GameBoy gb = new GameBoy(gameOptions);
 
-            bool passed = gb.RunTest(options);
+            TestOptions testOptions = new TestOptions(TestOutput.MD5, expectedMD5, logExecution, logFilename);
+            bool passed = gb.RunTest(testOptions);
             output.WriteLine(gb.testResult);
             return passed;
 
         }
+
+
     }
 }
