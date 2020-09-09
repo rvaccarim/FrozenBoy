@@ -22,6 +22,7 @@ namespace FrozenBoyUI {
         private bool scheduledScreenshot;
         private byte[] backbuffer;
         private string romFilename;
+        private string romPath;
         private int screenshotCount = 1;
 
         // the amount of clock cycles the gameboy can exectue every second is 4194304
@@ -51,8 +52,9 @@ namespace FrozenBoyUI {
             System.Windows.Forms.DialogResult result = ofd.ShowDialog();
             if (result == System.Windows.Forms.DialogResult.OK) {
                 romFilename = Path.GetFileName(ofd.FileName);
+                romPath = Path.GetDirectoryName(ofd.FileName) + @"\";
 
-                GameOptions gbOptions = new GameOptions(ofd.FileName, GetPalette());
+                GameOptions gbOptions = new GameOptions(romFilename, romPath, GetGreenPalette());
                 gameboy = new GameBoy(gbOptions);
 
                 base.Window.Title = "FrozenBoy - " + romFilename;
@@ -103,11 +105,19 @@ namespace FrozenBoyUI {
             base.Update(gameTime);
         }
 
-        private GPU_Palette GetPalette() {
+        private GPU_Palette GetGreenPalette() {
             GPU_Color white = new GPU_Color(224, 248, 208, 255);
             GPU_Color lightGray = new GPU_Color(136, 192, 112, 255);
             GPU_Color darkGray = new GPU_Color(52, 104, 86, 255);
             GPU_Color black = new GPU_Color(8, 24, 32, 255);
+            return new GPU_Palette(white, lightGray, darkGray, black);
+        }
+
+        public GPU_Palette GetWhitePalette() {
+            var white = new GPU_Color(255, 255, 255, 255);
+            var lightGray = new GPU_Color(170, 170, 170, 255);
+            var darkGray = new GPU_Color(85, 85, 85, 255);
+            var black = new GPU_Color(0, 0, 0, 255);
             return new GPU_Palette(white, lightGray, darkGray, black);
         }
 
@@ -142,9 +152,6 @@ namespace FrozenBoyUI {
 
             base.Draw(gameTime);
 
-            if (scheduledScreenshot) {
-                TakeScreenshotAndHash();
-            }
         }
 
         private void UpdateWorld() {
@@ -152,6 +159,10 @@ namespace FrozenBoyUI {
 
             while (cyclesThisUpdate < CYCLES_FOR_60FPS) {
                 cyclesThisUpdate += gameboy.Step();
+            }
+
+            if (scheduledScreenshot) {
+                TakeScreenshotAndHash();
             }
 
         }

@@ -9,33 +9,12 @@ using System.IO;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using FrozenBoyTest;
+using Xunit;
 
 namespace FrozenBoyTest {
     public class Driver {
 
         private string hashesPath = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\FrozenBoyTest\Hashes\";
-
-        public GPU_Palette GetTestPalette() {
-            var white = new GPU_Color(255, 255, 255, 255);
-            var lightGray = new GPU_Color(170, 170, 170, 255);
-            var darkGray = new GPU_Color(85, 85, 85, 255);
-            var black = new GPU_Color(0, 0, 0, 255);
-            return new GPU_Palette(white, lightGray, darkGray, black);
-        }
-
-        public List<MD5_Progress> GetExpected(string romName, string targetDirectory) {
-            var md5_list = new List<MD5_Progress>();
-
-            // Process the list of files found in the directory.
-            string[] fileEntries = Directory.GetFiles(targetDirectory);
-            foreach (string fileName in fileEntries) {
-                if (fileName.StartsWith(romName) && fileName.EndsWith("hash.txt")) {
-                    md5_list.Add(new MD5_Progress(File.ReadAllText(fileName), false));
-                }
-            }
-            return md5_list;
-        }
-
 
         public Result RunTest(GameBoy gb, TestOptions options) {
 
@@ -47,31 +26,37 @@ namespace FrozenBoyTest {
 
             int totalCycles = 0;
             int FPS_max_cycles = 69905;
-            int fps_cycles = 0;
+            int fps_cycles;
             int attempts = 0;
-            int maxAttempts = 5000;
+            int maxAttempts = 7000;
             string memoryOutput = "";
-            List<MD5_Progress> md5s = null;
+            List<MD5_Item> md5s = null;
 
             if (options.testOutput == TestOutput.MD5) {
-                md5s = GetExpected(gb.gbOptions.RomPath, hashesPath);
+                md5s = GetExpected(gb.gbOptions.RomFilename);
+                if (md5s.Count == 0) {
+                    return new Result(false, "No MD5s found");
+                }
             }
 
-            while (true) {
+            while (attempts <= maxAttempts) {
+                attempts++;
 
-                gb.Step();
+                fps_cycles = 0;
+                while (fps_cycles < FPS_max_cycles) {
+                    fps_cycles += gb.Step();
 
-                if (options.logExecution) {
-                    if (gb.cpu.state == InstructionState.Fetch) {
-                        LogState(logFile, gb, totalCycles);
+                    // for comparisons with CoreBoy
+                    totalCycles++;
+                    if (totalCycles == 65536) {
+                        totalCycles = 0;
                     }
-                }
 
-                // do the equivalent to produce 60 FPS
-                fps_cycles++;
-                if (fps_cycles == FPS_max_cycles) {
-                    fps_cycles = 0;
-                    attempts++;
+                    if (options.logExecution) {
+                        if (gb.cpu.state == InstructionState.Fetch) {
+                            LogState(logFile, gb, totalCycles);
+                        }
+                    }
                 }
 
                 switch (options.testOutput) {
@@ -109,42 +94,33 @@ namespace FrozenBoyTest {
                         break;
 
                     case TestOutput.MD5:
-                        string md5 = Crypto.MD5(gb.gpu.GetScreenBuffer());
+                        string md5_frame = Crypto.MD5(gb.gpu.GetScreenBuffer());
 
                         bool allPassed = true;
                         for (int i = 0; i < md5s.Count; i++) {
-                            if (md5.Equals(md5s[i])) {
+                            if (md5_frame.Equals(md5s[i].Hash)) {
                                 md5s[i].Passed = true;
                             }
 
                             if (!md5s[i].Passed) {
                                 allPassed = false;
                             }
+
                         }
 
-                        if (allPassed) {
+                        if (md5s.Count > 0 && allPassed) {
                             CloseLog(logFile);
                             return new Result(true, "All MD5s matched");
                         }
 
                         break;
                 }
-
-                if (attempts == maxAttempts) {
-                    if (logFile != null) {
-                        CloseLog(logFile);
-                    }
-                    return new Result(false, "Timeout reached");
-                }
-
-
-                // for comparisons with CoreBoy
-                totalCycles++;
-                if (totalCycles == 65536) {
-                    totalCycles = 0;
-                }
-
             }
+
+            if (logFile != null) {
+                CloseLog(logFile);
+            }
+            return new Result(false, "Timeout reached");
         }
 
         private static void CloseLog(StreamWriter logFile) {
@@ -153,6 +129,21 @@ namespace FrozenBoyTest {
                 logFile.Close();
                 logFile.Dispose();
             }
+        }
+
+        public List<MD5_Item> GetExpected(string romFilename) {
+            var md5_list = new List<MD5_Item>();
+
+            // Process the list of files found in the directory.
+            string[] fileEntries = Directory.GetFiles(hashesPath);
+            foreach (string fileFullName in fileEntries) {
+                string fileName = Path.GetFileName(fileFullName);
+
+                if (fileName.StartsWith(romFilename) && fileName.EndsWith("hash.txt")) {
+                    md5_list.Add(new MD5_Item(File.ReadAllText(fileFullName), false));
+                }
+            }
+            return md5_list;
         }
 
         private const string gameboyState =

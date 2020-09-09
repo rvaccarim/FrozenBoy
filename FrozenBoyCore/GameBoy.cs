@@ -39,7 +39,7 @@ namespace FrozenBoyCore {
 
             dma.SetMMU(mmu);
 
-            mmu.LoadData(gbOptions.RomPath);
+            mmu.LoadData(gbOptions.RomPath + gbOptions.RomFilename);
         }
 
         public int Step() {

@@ -11,45 +11,42 @@ using Xunit.Abstractions;
 namespace FrozenBoyTest {
     public class GamesTest {
         private readonly ITestOutputHelper output;
+        private Palettes palettes;
 
         private string gamesPath = @"D:\Users\frozen\Documents\09_software\ROMs\GameBoy\Game Boy\Tested\";
-        private string hashesPath = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\FrozenBoyTest\Hashes\";
         private const string debugPath = @"D:\Users\frozen\Documents\99_temp\GB_Debug\";
 
         public GamesTest(ITestOutputHelper output) {
             this.output = output;
+            palettes = new Palettes();
         }
 
-
-        public GamesTest() {
+        [Fact]
+        public void Test_Alleyway() {
+            bool passed = Test("Alleyway (World).gb", false);
+            Assert.True(passed);
         }
 
+        [Fact]
+        public void Test_Zelda() {
+            bool passed = Test("Legend of Zelda, The - Link's Awakening.gb", false);
+            Assert.True(passed);
+        }
 
-        //[Fact]
-        //public void Test_Zelda() {
-        //    bool passed = Test(@"", "Alleyway (World).gb", false);
-        //    Assert.True(passed);
-        //}
+        private bool Test(string romFilename, bool logExecution) {
+            string logFilename = debugPath + romFilename + ".log.frozenBoy.txt";
 
-        //private bool Test(string romName, bool logExecution) {
-        //    string romFilename = gamesPath + romName;
-        //    string logFilename = debugPath + romName + ".log.frozenBoy.txt";
+            GameOptions gameOptions = new GameOptions(romFilename, gamesPath, palettes.GetGreenPalette());
+            GameBoy gb = new GameBoy(gameOptions);
 
-        //    var expectedList = util.GetExpected(romFilename, gamesPath);
+            TestOptions testOptions = new TestOptions(TestOutput.MD5, logExecution, logFilename);
 
-        //    foreach (var e in expectedList) {
+            Driver driver = new Driver();
+            Result result = driver.RunTest(gb, testOptions);
+            output.WriteLine(result.Message);
+            return result.Passed;
 
-        //    }
-        //    //string expectedMD5 = File.ReadAllText(hashesPath + romName + ".hash.txt");
-
-        //    //GameOptions gameOptions = new GameOptions(romFilename, new TestUtils().GetTestPalette());
-        //    //GameBoy gb = new GameBoy(gameOptions);
-
-        //    //TestOptions testOptions = new TestOptions(TestOutput.MD5, expectedList, logExecution, logFilename);
-        //    //bool passed = gb.RunTest(testOptions);
-        //    //output.WriteLine(gb.testResult);
-        //    return passed;
-        //}
+        }
 
 
     }
