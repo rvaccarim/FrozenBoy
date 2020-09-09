@@ -33,6 +33,42 @@ namespace FrozenBoyTest {
             Assert.True(passed);
         }
 
+        [Fact]
+        public void Test_CastlevaniaTheAdventure() {
+            bool passed = Test("Castlevania - The Adventure (USA).gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_Castlevania2() {
+            bool passed = Test("Castlevania II - Belmont's Revenge (USA, Europe).gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_DonkeyKong() {
+            bool passed = Test("Donkey Kong (World) (Rev A) (SGB Enhanced).gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_DrMario() {
+            bool passed = Test("Dr. Mario (World) (Rev A).gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_Kirby() {
+            bool passed = Test("Kirby's Dream Land (USA, Europe).gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_SpaceInvaders() {
+            bool passed = Test("Space Invaders (USA) (SGB Enhanced).gb", false);
+            Assert.True(passed);
+        }
+
         private bool Test(string romFilename, bool logExecution) {
             string logFilename = debugPath + romFilename + ".log.frozenBoy.txt";
 
