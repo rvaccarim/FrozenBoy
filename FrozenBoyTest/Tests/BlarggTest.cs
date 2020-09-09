@@ -27,10 +27,6 @@ namespace FrozenBoyTest {
             this.output = output;
         }
 
-        //public BlarggTest() {
-
-        //}
-
         [Fact]
         public void TestCPU_01() {
             bool passed = Test(CPU_Path, @"01-special.gb", logExecution: false, TestOutput.LinkPort);
@@ -181,33 +177,26 @@ namespace FrozenBoyTest {
             Assert.True(passed);
         }
 
-        //[Fact]
-        //public void TestOAM_TimingEffect() {
-        //    bool passed = Test(OAMPath, @"7-timing_effect.gb", logExecution: false, TestOutput.Memory);
-        //    Assert.True(passed);
-        //}
-
-
         [Fact]
         public void TestOAM_InstrEffect() {
             bool passed = Test(OAMPath, @"8-instr_effect.gb", logExecution: false, TestOutput.Memory);
             Assert.True(passed);
         }
 
-
         public bool Test(string path, string romName, bool logExecution, TestOutput testOutput) {
             string romFilename = path + romName;
             string logFilename = debugPath + romName + ".log.frozenBoy.txt";
 
-            GameOptions gameOptions = new GameOptions(romFilename, new Util().GetTestPalette());
+            GameOptions gameOptions = new GameOptions(romFilename, new Driver().GetTestPalette());
             GameBoy gb = new GameBoy(gameOptions);
 
             TestOptions testOptions = new TestOptions(testOutput, "", logExecution, logFilename);
 
-            bool passed = gb.RunTest(testOptions);
-            output.WriteLine(gb.testResult);
+            Driver driver = new Driver();
+            Result result = driver.RunTest(gb, testOptions);
+            output.WriteLine(result.Message);
 
-            return passed;
+            return result.Passed;
 
         }
     }

@@ -10,6 +10,7 @@ using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Threading;
 using FrozenBoyCore.Graphics;
+using FrozenBoyCore.Util;
 
 namespace FrozenBoyUI {
 
@@ -164,17 +165,8 @@ namespace FrozenBoyUI {
             Bitmap bmp = BuildImage(backbuffer, width, height, width * bytesPerPixel, PixelFormat.Format32bppArgb);
             bmp.Save(outputFile + ".png", ImageFormat.Png);
 
-            byte[] hash;
-            using var md5 = System.Security.Cryptography.MD5.Create();
-            md5.TransformFinalBlock(backbuffer, 0, backbuffer.Length);
-            hash = md5.Hash;
-
-            StringBuilder result = new StringBuilder(hash.Length * 2);
-
-            for (int i = 0; i < hash.Length; i++)
-                result.Append(hash[i].ToString("X2"));
-
-            File.WriteAllText(outputFile + ".hash.txt", result.ToString());
+            string result = Crypto.MD5(backbuffer);
+            File.WriteAllText(outputFile + ".hash.txt", result);
 
             screenshotCount++;
             scheduledScreenshot = false;

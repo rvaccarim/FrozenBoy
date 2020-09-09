@@ -35,8 +35,6 @@ namespace FrozenBoyCore.Processor {
         public u8 lsb;
         public u8 msb;
         public bool haltBug;
-
-        public bool shouldLog;
         public InstructionState state;
 
         private int currM;
@@ -68,7 +66,6 @@ namespace FrozenBoyCore.Processor {
             // we do something every exactly 4 ticks
             executeLock++;
             if (executeLock < 4) {
-                shouldLog = false;
                 return;
             }
             else {
@@ -104,7 +101,6 @@ namespace FrozenBoyCore.Processor {
                 case InstructionState.Fetch:
                     currM = 0;
                     opHandler.stop = false;
-                    shouldLog = false;
 
                     opcode = Disassemble();
 
@@ -139,7 +135,6 @@ namespace FrozenBoyCore.Processor {
                             opcode.steps[0].Invoke();
 
                             intManager.OnInstructionFinished();
-                            shouldLog = true;
                         }
                         else {
                             // for the other operations, fetch takes one cycle 
@@ -159,7 +154,6 @@ namespace FrozenBoyCore.Processor {
 
                         state = InstructionState.Fetch;
                         intManager.OnInstructionFinished();
-                        shouldLog = true;
                     }
                     else {
                         totalM = opcode.mcycles - 2;   // +1 for fecth and +1 for fetch prefix 
@@ -175,13 +169,11 @@ namespace FrozenBoyCore.Processor {
                     if (opHandler.stop) {
                         state = InstructionState.Fetch;
                         intManager.OnInstructionFinished();
-                        shouldLog = true;
                     }
                     else {
                         if (currM == totalM) {
                             state = InstructionState.Fetch;
                             intManager.OnInstructionFinished();
-                            shouldLog = true;
                         }
                     }
                     break;

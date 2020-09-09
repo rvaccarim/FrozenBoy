@@ -254,13 +254,15 @@ namespace FrozenBoyTest {
             string logFilename = debugPath + romName + ".log.frozenBoy.txt";
             string expectedMD5 = File.ReadAllText(hashesPath + extraPath + romName + ".hash.txt");
 
-            GameOptions gameOptions = new GameOptions(romFilename, new Util().GetTestPalette());
+            GameOptions gameOptions = new GameOptions(romFilename, new Driver().GetTestPalette());
             GameBoy gb = new GameBoy(gameOptions);
 
             TestOptions testOptions = new TestOptions(TestOutput.MD5, expectedMD5, logExecution, logFilename);
-            bool passed = gb.RunTest(testOptions);
-            output.WriteLine(gb.testResult);
-            return passed;
+
+            Driver driver = new Driver();
+            Result result = driver.RunTest(gb, testOptions);
+            output.WriteLine(result.Message);
+            return result.Passed;
 
         }
 
