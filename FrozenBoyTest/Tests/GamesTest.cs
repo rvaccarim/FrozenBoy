@@ -64,8 +64,26 @@ namespace FrozenBoyTest {
         }
 
         [Fact]
+        public void Test_Retroid() {
+            bool passed = Test("Retroid.gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_RoadRash() {
+            bool passed = Test("Road Rash (USA, Europe).gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
         public void Test_SpaceInvaders() {
             bool passed = Test("Space Invaders (USA) (SGB Enhanced).gb", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_Tetris() {
+            bool passed = Test("Tetris (World) (Rev A).gb", false);
             Assert.True(passed);
         }
 

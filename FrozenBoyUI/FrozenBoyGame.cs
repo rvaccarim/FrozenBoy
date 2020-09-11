@@ -168,7 +168,7 @@ namespace FrozenBoyUI {
         }
 
         private void TakeScreenshotAndHash() {
-            string outputFile = @"D:\Users\frozen\Documents\99_temp\GB_Debug\" + romFilename + "_" + screenshotCount.ToString();
+            string outputFile = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\FrozenBoyTest\hashes\" + romFilename + "_" + screenshotCount.ToString();
 
             int width = 160;
             int height = 144;

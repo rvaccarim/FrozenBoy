@@ -361,6 +361,10 @@ namespace FrozenBoyCore.Graphics {
                 }
             }
 
+            if (tileAddress == 0x88F0) {
+                int dummy = 0;
+            }
+
             int tileXpos = realX % 8;
             int tileYPos = realY % 8;
 
