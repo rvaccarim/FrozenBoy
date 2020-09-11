@@ -54,7 +54,7 @@ namespace FrozenBoyUI {
                 romFilename = Path.GetFileName(ofd.FileName);
                 romPath = Path.GetDirectoryName(ofd.FileName) + @"\";
 
-                GameOptions gbOptions = new GameOptions(romFilename, romPath, GetGreenPalette());
+                GameOptions gbOptions = new GameOptions(romFilename, romPath, GetWhitePalette());
                 gameboy = new GameBoy(gbOptions);
 
                 base.Window.Title = "FrozenBoy - " + romFilename;

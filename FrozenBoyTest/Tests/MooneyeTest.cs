@@ -23,6 +23,18 @@ namespace FrozenBoyTest {
         }
 
         [Fact]
+        public void Test_bits_bank1() {
+            bool passed = Test("bits_bank1.gb", @"emulator-only\mbc1\", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_bits_bank2() {
+            bool passed = Test("bits_bank2.gb", @"emulator-only\mbc1\", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
         public void Test_call_timing() {
             bool passed = Test("call_timing.gb", @"acceptance\", false);
             Assert.True(passed);
