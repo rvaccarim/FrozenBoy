@@ -17,16 +17,19 @@ namespace FrozenBoyCore.Memory {
         public Space unusable;
         public Space IO;
         public Space highRam;
+        public Cartridge cartridge;
 
-        private Cartridge cartridge;
         private readonly Timer timer;
         private readonly InterruptManager intManager;
         private readonly GPU gpu;
         private readonly Joypad joypad;
         private readonly Dma dma;
         private readonly SerialPort serial;
+        // private StreamWriter logFile;
 
         public MMU(Timer timer, InterruptManager intManager, GPU gpu, Joypad joypad, Dma dma, SerialPort serial) {
+            // logFile = new StreamWriter(@"D:\Users\frozen\Documents\99_temp\GB_Debug\rom_1Mb.gb.log.FrozenBoy.memory.txt");
+
             this.timer = timer;
             this.intManager = intManager;
             this.gpu = gpu;
@@ -92,14 +95,38 @@ namespace FrozenBoyCore.Memory {
         public u8 Read8(u16 address) {
 
             // Regular ROM
-            if (address >= 0 && address < 0x4000) {
-                return cartridge.rom[address];
+            if (address < 0x4000) {
+                if (cartridge.mbc == Cartridge.BankType.None) {
+                    return cartridge.rom[address];
+                }
+                else {
+                    if (cartridge.mbc == Cartridge.BankType.MBC1) {
+                        var bank = GetMBC1_RomBankLow();
+                        int newAddress = (bank * 0x4000) + address;
+                        // Log("R", newAddress, cartridge.rom[newAddress]);
+                        return cartridge.rom[newAddress];
+                    }
+                }
             }
 
             // Switchable ROM / ROM memory bank
             if (address >= 0x4000 && address < 0x8000) {
-                u16 newAdress = (u16)(address - 0x4000);
-                return cartridge.rom[newAdress + (cartridge.currentRomBank * 0x4000)];
+                if (cartridge.mbc == Cartridge.BankType.None) {
+                    return cartridge.rom[address];
+                }
+                else {
+                    if (cartridge.mbc == Cartridge.BankType.MBC1) {
+                        // this can be larger than u16
+                        int newAdress = address - 0x4000 + (GetMBC1_RomBankHigh() * 0x4000);
+
+                        if (newAdress < cartridge.rom.Length) {
+                            // Log("R", address, cartridge.rom[newAdress]);
+                            return cartridge.rom[newAdress];
+                        }
+                        // Log("R", address, 0xff);
+                        return 0xff;
+                    }
+                }
             }
 
             // Video Ram
@@ -107,10 +134,26 @@ namespace FrozenBoyCore.Memory {
                 return gpu.vRam[address];
             }
 
-            // Switchable RAM 
+            // RAM 
             if (address >= 0xA000 && address < 0xC000) {
-                u16 newAdress = (u16)(address - 0xA000);
-                return cartridge.switchableRAM[newAdress + (cartridge.currentRamBank * 0x2000)];
+                int newAdress;
+
+                if (cartridge.mbc == Cartridge.BankType.None) {
+                    return cartridge.rom[address];
+                }
+                else {
+                    if (cartridge.mbc == Cartridge.BankType.MBC1) {
+                        if (cartridge.ramWriteEnabled) {
+                            newAdress = GetMBC1_RamAddress(address);
+
+                            if (newAdress < cartridge.ram.Length) {
+                                return cartridge.ram[newAdress];
+                            }
+                            return 0xff;
+                        }
+                        return 0xff;
+                    }
+                }
             }
 
             if (internalRam.Manages(address)) {
@@ -180,22 +223,28 @@ namespace FrozenBoyCore.Memory {
 
             // ROM memory is read only, but there are some interactions to enable ROM and RAM banking
             if (address < 0x8000) {
-                HandleBanking(address, value);
+                if (cartridge.mbc != Cartridge.BankType.None) {
+                    HandleBanking(address, value);
+                }
+                return;
+            }
+
+            if ((address >= 0xA000) && (address < 0xC000)) {
+                if (cartridge.mbc == Cartridge.BankType.MBC1) {
+                    if (cartridge.ramWriteEnabled) {
+                        int newAddress = GetMBC1_RamAddress(address);
+                        if (newAddress < cartridge.ram.Length) {
+                            cartridge.ram[newAddress] = value;
+                            // Log("W", address, value);
+                        }
+                    }
+                }
                 return;
             }
 
             // video Ram
             if (gpu.vRam.Manages(address)) {
                 gpu.vRam[address] = value;
-                return;
-            }
-
-            // switchable RAM
-            if ((address >= 0xA000) && (address < 0xC000)) {
-                if (cartridge.RAMEnabled) {
-                    u16 newAddress = (u16)(address - 0xA000);
-                    cartridge.switchableRAM[newAddress + (cartridge.currentRamBank * 0x2000)] = value;
-                }
                 return;
             }
 
@@ -259,98 +308,110 @@ namespace FrozenBoyCore.Memory {
             }
         }
 
-        public void HandleBanking(u16 address, u8 data) {
-            // do RAM enabling
-            if (address < 0x2000) {
-                if (cartridge.mbc1 || cartridge.mbc2) {
-                    DoRAMBankEnable(address, data);
-                }
-            }
-            else {
-                // do ROM bank change
-                if ((address >= 0x200) && (address < 0x4000)) {
-                    if (cartridge.mbc1 || cartridge.mbc2) {
-                        DoChangeLowROMBank(data);
+        public void HandleBanking(u16 address, u8 value) {
+            // This is Read only memory, no data is changed, only the values related to ROM
+            // and RAM banking
+
+            if (address >= 0x0000 && address < 0x2000) {
+                if (cartridge.mbc == Cartridge.BankType.MBC1) {
+                    cartridge.ramWriteEnabled = (value & 0b1111) == 0b1010;
+                    // Log("W", address, value);
+                    if (!cartridge.ramWriteEnabled) {
+                        // _battery.SaveRam(cartridge.ram);
                     }
                 }
-                else {
-                    // do ROM or RAM bank change
-                    if ((address >= 0x4000) && (address < 0x6000)) {
-                        // there is no rambank in mbc2 so always use rambank 0
-                        if (cartridge.mbc1) {
-                            if (cartridge.romBanking) {
-                                DoChangeHighRomBank(data);
-                            }
-                            else {
-                                DoRAMBankChange(data);
-                            }
-                        }
-                    }
-                    else {
-                        // this will change whether we are doing ROM banking
-                        // or RAM banking with the above if statement
-                        if ((address >= 0x6000) && (address < 0x8000)) {
-                            if (cartridge.mbc1) {
-                                DoChangeROMRAMMode(data);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        private void DoRAMBankChange(u8 data) {
-            cartridge.currentRamBank = data & 0x3;
-        }
-
-        private void DoRAMBankEnable(u16 address, u8 data) {
-            if (cartridge.mbc2) {
-                if (BitUtils.IsBitSet(BitUtils.Lsb(address), 4)) return;
-            }
-
-            u8 testData = (u8)(data & 0xF);
-            if (testData == 0xA)
-                cartridge.RAMEnabled = true;
-            else if (testData == 0x0)
-                cartridge.RAMEnabled = false;
-        }
-
-        private void DoChangeROMRAMMode(u8 data) {
-            u8 newData = (u8)(data & 0x1);
-            cartridge.romBanking = (newData == 0);
-            if (cartridge.romBanking)
-                cartridge.currentRamBank = 0;
-        }
-
-        private void DoChangeLowROMBank(u8 data) {
-            if (cartridge.mbc2) {
-                cartridge.currentRomBank = (u8)(data & 0xF);
-                if (cartridge.currentRomBank == 0) {
-                    cartridge.currentRomBank++;
-                }
-
                 return;
             }
 
-            u8 lower5 = (u8)(data & 31);
-            cartridge.currentRomBank &= 224; // turn off the lower 5
-            cartridge.currentRomBank |= lower5;
+            if ((address >= 0x2000) && (address < 0x4000)) {
+                if (cartridge.mbc == Cartridge.BankType.MBC1) {
+                    var bank = cartridge.currentRomBank & 0b0110_0000;
+                    bank |= (value & 0b00011111);
+                    cartridge.currentRomBank = bank;
+                    // Log("W", address, value);
+                }
+                return;
+            }
 
-            if (cartridge.currentRomBank == 0)
-                cartridge.currentRomBank++;
-        }
-
-        private void DoChangeHighRomBank(u8 data) {
-            // turn off the upper 3 bits of the current rom
-            cartridge.currentRomBank &= 31;
-
-            // turn off the lower 5 bits of the data
-            data &= 224;
-            cartridge.currentRomBank |= data;
-
-            if (cartridge.currentRomBank == 0) {
-                cartridge.currentRomBank++;
+            if ((address >= 0x4000) && (address < 0x8000)) {
+                if (cartridge.mbc == Cartridge.BankType.MBC1) {
+                    if ((address >= 0x4000) && (address < 0x6000) && cartridge.memoryModel == 0) {
+                        var bank = cartridge.currentRomBank & 0b0001_1111;
+                        bank |= ((value & 0b11) << 5);
+                        cartridge.currentRomBank = bank;
+                        // Log("W", address, value);
+                    }
+                    else {
+                        if ((address >= 0x4000) && (address < 0x6000) && cartridge.memoryModel == 1) {
+                            var bank = value & 0b11;
+                            cartridge.currentRamBank = bank;
+                        }
+                        else {
+                            if ((address >= 0x6000) && (address < 0x8000)) {
+                                cartridge.memoryModel = value & 1;
+                            }
+                        }
+                    }
+                }
+                return;
             }
         }
+
+        private int GetMBC1_RamAddress(int address) {
+            if (cartridge.memoryModel == 0) {
+                return address - 0xA000;
+            }
+            else {
+                return (cartridge.currentRamBank % cartridge.ramBanks) * 0x2000 + (address - 0xA000);
+            }
+        }
+
+        private int GetMBC1_RomBankLow() {
+            if (cartridge.memoryModel == 0) {
+                return 0;
+            }
+            else {
+                var bank = (cartridge.currentRamBank << 5);
+                if (cartridge.multicart) {
+                    bank >>= 1;
+                }
+
+                bank %= cartridge.romBanks;
+                return bank;
+            }
+        }
+
+        private int GetMBC1_RomBankHigh() {
+            var bank = cartridge.currentRomBank;
+            if (bank % 0x20 == 0) {
+                bank++;
+            }
+
+            if (cartridge.memoryModel == 1) {
+                bank &= 0b0001_1111;
+                bank |= (cartridge.currentRamBank << 5);
+            }
+
+            if (cartridge.multicart) {
+                bank = ((bank >> 1) & 0x30) | (bank & 0x0f);
+            }
+
+            bank %= cartridge.romBanks;
+
+            return bank;
+        }
+
+
+        //public void Log(string action, int adddress, int value) {
+
+        //    if (action.Equals("R") && adddress == 0x4000 && cartridge.currentRomBank == 3) {
+        //        int z = 0;
+        //    }
+
+        //    logFile.WriteLine(String.Format("{0} {1:x4} {2:x2} cRom={3} cRam={4} mm={5} rw={6}",
+        //                             action, adddress, value, cartridge.currentRomBank, cartridge.currentRamBank,
+        //                             cartridge.memoryModel, cartridge.ramWriteEnabled));
+        //    logFile.Flush();
+        //}
     }
 }

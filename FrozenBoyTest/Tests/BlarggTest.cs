@@ -162,29 +162,29 @@ namespace FrozenBoyTest {
             Assert.True(passed);
         }
 
-        [Fact]
-        public void TestOAM_Scanline_Timing() {
-            bool passed = Test(@"4-scanline_timing.gb", OAMPath, logExecution: false, testOutput: TestOutput.Memory);
-            Assert.True(passed);
-        }
+        //[Fact]
+        //public void TestOAM_Scanline_Timing() {
+        //    bool passed = Test(@"4-scanline_timing.gb", OAMPath, logExecution: false, testOutput: TestOutput.Memory);
+        //    Assert.True(passed);
+        //}
 
-        [Fact]
-        public void TestOAM_TimingBug() {
-            bool passed = Test(@"5-timing_bug.gb", OAMPath, logExecution: false, testOutput: TestOutput.Memory);
-            Assert.True(passed);
-        }
+        //[Fact]
+        //public void TestOAM_TimingBug() {
+        //    bool passed = Test(@"5-timing_bug.gb", OAMPath, logExecution: false, testOutput: TestOutput.Memory);
+        //    Assert.True(passed);
+        //}
 
-        [Fact]
-        public void TestOAM_TimingNoBug() {
-            bool passed = Test(@"6-timing_no_bug.gb", OAMPath, logExecution: false, testOutput: TestOutput.Memory);
-            Assert.True(passed);
-        }
+        //[Fact]
+        //public void TestOAM_TimingNoBug() {
+        //    bool passed = Test(@"6-timing_no_bug.gb", OAMPath, logExecution: false, testOutput: TestOutput.Memory);
+        //    Assert.True(passed);
+        //}
 
-        [Fact]
-        public void TestOAM_InstrEffect() {
-            bool passed = Test(@"8-instr_effect.gb", OAMPath, logExecution: false, testOutput: TestOutput.Memory);
-            Assert.True(passed);
-        }
+        //[Fact]
+        //public void TestOAM_InstrEffect() {
+        //    bool passed = Test(@"8-instr_effect.gb", OAMPath, logExecution: false, testOutput: TestOutput.Memory);
+        //    Assert.True(passed);
+        //}
 
         public bool Test(string romFilename, string romPath, bool logExecution, TestOutput testOutput) {
             string logFilename = debugPath + romFilename + ".log.frozenBoy.txt";

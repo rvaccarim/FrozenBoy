@@ -23,14 +23,80 @@ namespace FrozenBoyTest {
         }
 
         [Fact]
-        public void Test_bits_bank1() {
+        public void Test_MBC1_bits_bank1() {
             bool passed = Test("bits_bank1.gb", @"emulator-only\mbc1\", false);
             Assert.True(passed);
         }
 
         [Fact]
-        public void Test_bits_bank2() {
+        public void Test_MBC1_bits_bank2() {
             bool passed = Test("bits_bank2.gb", @"emulator-only\mbc1\", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_MBC1_bits_mode() {
+            bool passed = Test("bits_mode.gb", @"emulator-only\mbc1\", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_MBC1_bits_ramg() {
+            bool passed = Test("bits_ramg.gb", @"emulator-only\mbc1\", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_MBC1_ram_64kb() {
+            bool passed = Test("ram_64kb.gb", @"emulator-only\mbc1\", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_MBC1_ram256kb() {
+            bool passed = Test("ram_256kb.gb", @"emulator-only\mbc1\", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_MBC1_rom512kb() {
+            bool passed = Test("rom_512kb.gb", @"emulator-only\mbc1\", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_MBC1_rom_1Mb() {
+            bool passed = Test("rom_1Mb.gb", @"emulator-only\mbc1\", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_MBC1_rom_2Mb() {
+            bool passed = Test("rom_2Mb.gb", @"emulator-only\mbc1\", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_MBC1_rom_4Mb() {
+            bool passed = Test("rom_4Mb.gb", @"emulator-only\mbc1\", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_MBC1_rom_8Mb() {
+            bool passed = Test("rom_8Mb.gb", @"emulator-only\mbc1\", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_MBC1_rom_16Mb() {
+            bool passed = Test("rom_16Mb.gb", @"emulator-only\mbc1\", false);
+            Assert.True(passed);
+        }
+
+        [Fact]
+        public void Test_MBC1_multicart_rom_8Mb() {
+            bool passed = Test("multicart_rom_8Mb.gb", @"emulator-only\mbc1\", false);
             Assert.True(passed);
         }
 

@@ -14,7 +14,6 @@ namespace FrozenBoyCore {
     public class GameBoy {
         public const int ClockSpeed = 4_194_304;
         public GameOptions gbOptions;
-        public Cartridge cartridge;
         public CPU cpu;
         public GPU gpu;
         public MMU mmu;

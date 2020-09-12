@@ -149,7 +149,7 @@ namespace FrozenBoyTest {
         private const string gameboyState =
             "{0}   cycles:{1,6}  AF={2:x4} BC={3:x4} DE={4:x4} HL={5:x4}   Z={6} N={7} H={8} C={9}   " +
             "PC={10:x4} SP={11:x4}   IME={12} IE={13:x4} IF={14:x4} halted={15}   " +
-            "DIV={16:x4} TIMA={17:x4} TMA={18:x4} TAC={19:x4}   " + "" +
+            "DIV={16:x4} TIMA={17:x4} TMA={18:x4} TAC={19:x4}   " +
             "LCDC={20:x2} STAT={21} LY={22:x2} LYC={23:x2} gpuClock={24} delay={25}";
 
         public void LogState(StreamWriter logFile, GameBoy gb, int cycle) {
@@ -168,6 +168,7 @@ namespace FrozenBoyTest {
             else {
                 instruction = "";
             }
+
             logFile.WriteLine(
                 String.Format(gameboyState,
                 instruction, cycle,
@@ -179,7 +180,8 @@ namespace FrozenBoyTest {
                 Convert.ToInt32(gb.cpu.haltBug),
                 gb.timer.DIV, gb.timer.TIMA, gb.timer.TMA, gb.timer.tac,
                 Convert.ToString(gb.gpu.LCDC, 2).PadLeft(8, '0'), "",
-                gb.gpu.LY, gb.gpu.LYC, gb.gpu.lineTicks, (gb.gpu.wasDisabled && !gb.gpu.IsLcdEnabled()) ? -1 : gb.gpu.enableDelay));
+                gb.gpu.LY, gb.gpu.LYC, gb.gpu.lineTicks, (gb.gpu.wasDisabled && !gb.gpu.IsLcdEnabled()) ? -1 : gb.gpu.enableDelay,
+                gb.mmu.cartridge.romBanks, gb.mmu.cartridge.ramBanks, gb.mmu.cartridge.currentRomBank, gb.mmu.cartridge.currentRamBank));
         }
 
     }

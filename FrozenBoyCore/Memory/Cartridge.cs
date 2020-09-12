@@ -1,74 +1,129 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.IO;
 using u8 = System.Byte;
 using u16 = System.UInt16;
-using System.IO;
 
 namespace FrozenBoyCore.Memory {
+
     public class Cartridge {
 
-        public bool mbc1 = false;
-        public bool mbc2 = false;
+        private static readonly u8[] NintendoLogo =
+{           0xCE, 0xED, 0x66, 0x66, 0xCC, 0x0D, 0x00, 0x0B, 0x03, 0x73, 0x00, 0x83, 0x00, 0x0C, 0x00, 0x0D,
+            0x00, 0x08, 0x11, 0x1F, 0x88, 0x89, 0x00, 0x0E, 0xDC, 0xCC, 0x6E, 0xE6, 0xDD, 0xDD, 0xD9, 0x99,
+            0xBB, 0xBB, 0x67, 0x63, 0x6E, 0x0E, 0xEC, 0xCC, 0xDD, 0xDC, 0x99, 0x9F, 0xBB, 0xB9, 0x33, 0x3E
+        };
+
+        public enum BankType {
+            None,
+            MBC1,
+            MBC2,
+            MBC3
+        }
+
+        public BankType mbc;
         public int currentRomBank = 1;
         public int currentRamBank = 0;
-        public int ramSize;
+        public int ramBanks;
         public int romBanks;
+        public int memoryModel;
+        public bool multicart;
 
         // this includes fixed rom at romBank 0 and swappable ROM
+        // ROM banks are 0x4000 bytes long = 16K = 16384
         public u8[] rom;
 
         // max is 4 banks, 32K
-        public u8[] switchableRAM;
-
-        public bool RAMEnabled;
-        public bool romBanking;
+        // ROM banks are 0x2000 bytes long =  8K = 8192
+        public u8[] ram;
+        public bool ramWriteEnabled;
 
         public Cartridge(string romName) {
 
             byte[] data = File.ReadAllBytes(romName);
             rom = new u8[data.Length];
-
-            // 32K split in 16K
             Buffer.BlockCopy(data, 0, rom, 0, data.Length);
 
-            // Value Definition
-            // 00h No MBC
-            // 01h MBC1
-            // 02h MBC1 with external RAM
-            // 03h MBC1 with battery-backed external RAM
-            switch (rom[0x147]) {
-                case 1:
-                    mbc1 = true; break;
-                case 2:
-                    mbc1 = true; break;
-                case 3:
-                    mbc1 = true; break;
-                case 5:
-                    mbc2 = true; break;
-                case 6:
-                    mbc2 = true; break;
-                default: break;
+            mbc = (rom[0x147]) switch
+            {
+                0x00 => BankType.None,
+                0x01 => BankType.MBC1,
+                0x02 => BankType.MBC1,
+                0x03 => BankType.MBC1,
+                0x05 => BankType.MBC2,
+                0x06 => BankType.MBC2,
+                0x0F => BankType.MBC3,
+                0x10 => BankType.MBC3,
+                0x11 => BankType.MBC3,
+                0x12 => BankType.MBC3,
+                0x13 => BankType.MBC3,
+                _ => BankType.None,
+            };
+
+            romBanks = GetRomBanks(rom[0x0148]);
+            multicart = romBanks == 64 && IsMulticart(rom);
+
+            ramBanks = GetRamBanks(rom[0x0149]);
+
+            if (ramBanks == 0) {
+                ramBanks = 1;
             }
 
-            romBanks = rom[0x148];
-
-            switch (data[0x149]) {
-                case 0x00: ramSize = 0; break;
-                case 0x01: ramSize = 2048; break;
-                case 0x02: ramSize = 8192; break;
-                case 0x03: ramSize = 32768; break;
-                case 0x04: ramSize = 16 * 8192; break;
-                case 0x05: ramSize = 8 * 8192; break;
+            ram = new u8[0x2000 * ramBanks];
+            for (var i = 0; i < ram.Length; i++) {
+                ram[i] = 0xff;
             }
-
-            // 0 means no RAM, but the Halt Bug Blargg test sets 0 and then expects to use the memory...
-            if (ramSize == 0) {
-                ramSize = 2048;
-            }
-            switchableRAM = new u8[ramSize];
         }
 
+        private static int GetRomBanks(int id) {
+            return id switch
+            {
+                0 => 2,
+                1 => 4,
+                2 => 8,
+                3 => 16,
+                4 => 32,
+                5 => 64,
+                6 => 128,
+                7 => 256,
+                0x52 => 72,
+                0x53 => 80,
+                0x54 => 96,
+                _ => throw new ArgumentException("Unsupported ROM size")
+            };
+        }
+
+        private static int GetRamBanks(int id) {
+            return id switch
+            {
+                0 => 0,
+                1 => 1,
+                2 => 1,
+                3 => 4,
+                4 => 16,
+                _ => throw new ArgumentException("Unsupported RAM size: ")
+            };
+        }
+
+        private static bool IsMulticart(byte[] rom) {
+            var logoCount = 0;
+            for (var i = 0; i < rom.Length; i += 0x4000) {
+                var logoMatches = true;
+                for (var j = 0; j < NintendoLogo.Length; j++) {
+                    if (rom[i + 0x104 + j] != NintendoLogo[j]) {
+                        logoMatches = false;
+                        break;
+                    }
+                }
+
+                if (logoMatches) {
+                    logoCount++;
+                }
+            }
+
+            return logoCount > 1;
+        }
 
     }
 }
