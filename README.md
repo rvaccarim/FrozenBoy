@@ -1,7 +1,7 @@
 # FrozenBoy
 A GameBoy emulator written in C# (.Net Core + Monogame).
 
-This project started as a personal learning journey to understand emulation in general. If you are interested, you can read about it on my [blog](https://robertovaccari.com/blog/2020_09_27_gameboy_emulator/).
+This project started as a personal learning journey to understand emulation in general. If you are interested, you can read about it on my [blog](https://robertovaccari.com/blog/2020_09_26_gameboy_emulator/).
 
 The emulator supports the original GameBoy only (the one with the green LCD screen). I've tested several games with good results, but there might still be lots of bugs and glitches.
 
