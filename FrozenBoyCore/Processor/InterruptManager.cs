@@ -73,10 +73,10 @@ namespace FrozenBoyCore.Processor {
             return interruptBit;
         }
 
-        public void EnableInterrupts() {
-            IME = true;
-            IME_EnableScheduled = false;
-        }
+        //public void EnableInterrupts() {
+        //    IME = true;
+        //    IME_EnableScheduled = false;
+        //}
 
         public void DisableInterrupts() {
             pendingEnable = -1;

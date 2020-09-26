@@ -6,7 +6,7 @@ using u16 = System.UInt16;
 using FrozenBoyCore.Processor;
 
 namespace FrozenBoyCore.Serial {
-    public class SerialPort {
+    public class SerialLink {
 
         private u8 _sb;
         private u8 _sc;
@@ -15,7 +15,7 @@ namespace FrozenBoyCore.Serial {
         private readonly InterruptManager interruptManager;
         public string log = "";
 
-        public SerialPort(InterruptManager interruptManager) {
+        public SerialLink(InterruptManager interruptManager) {
             this.interruptManager = interruptManager;
         }
 

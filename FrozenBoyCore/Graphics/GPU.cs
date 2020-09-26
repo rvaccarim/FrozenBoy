@@ -137,9 +137,9 @@ namespace FrozenBoyCore.Graphics {
         // 0xFF45 LYC - Scanline compare register
         public u8 LYC { get; set; }
         // 0xFF47
-        // Every two bits in the palette data byte represent a colour.
-        // Bits 7-6 maps to colour id 11, bits 5-4 map to colour id 10, bits 3-2 map to colour id 01 and bits 1-0 map to colour id 00. 
-        // Each two bits will give the colour to use like so:
+        // Every two bits in the palette data byte represent a color.
+        // Bits 7-6 maps to color id 11, bits 5-4 map to color id 10, bits 3-2 map to color id 01 and bits 1-0 map to color id 00. 
+        // Each two bits will give the color to use like so:
         // 00: White
         // 01: Light Grey
         // 10: Dark Grey
@@ -152,8 +152,6 @@ namespace FrozenBoyCore.Graphics {
         public u8 WY { get; set; }
         // 0xFF4B The X Positions -7 of the VIEWING AREA to start drawing the window from
         public u8 WX { get; set; }
-
-
 
         public void EnableLCD() {
             enableDelay = 244;

@@ -24,10 +24,10 @@ namespace FrozenBoyCore.Memory {
         private readonly GPU gpu;
         private readonly Joypad joypad;
         private readonly Dma dma;
-        private readonly SerialPort serial;
+        private readonly SerialLink serial;
         // private StreamWriter logFile;
 
-        public MMU(Timer timer, InterruptManager intManager, GPU gpu, Joypad joypad, Dma dma, SerialPort serial) {
+        public MMU(Timer timer, InterruptManager intManager, GPU gpu, Joypad joypad, Dma dma, SerialLink serial) {
             // logFile = new StreamWriter(@"D:\Users\frozen\Documents\99_temp\GB_Debug\rom_1Mb.gb.log.FrozenBoy.memory.txt");
 
             this.timer = timer;

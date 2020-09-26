@@ -25,7 +25,7 @@ namespace FrozenBoyCore.Processor {
         }
 
         // The divider register increments at a fixed frequency
-        // For some reason it's inside a 16 bit value (the 8 most significant bytes)
+        // For some reason it's encoded inside a 16 bit value (the 8 most significant bytes)
         public u8 DIV {
             get => (u8)(timerCounter >> 8);
             set => UpdateDiv(0);
@@ -53,7 +53,7 @@ namespace FrozenBoyCore.Processor {
         //            10: 65536  Hz
         //            11: 16384  Hz
         // Bit  2   - Timer Enable
-        //Note: The "Timer Enable" bit only affects the timer, the divider is ALWAYS counting.
+        // Note: The "Timer Enable" bit only affects the timer, the divider is ALWAYS counting.
         public u8 TAC { get => (u8)(tac | 0b11111000); set => tac = value; }
 
         public void Tick() {

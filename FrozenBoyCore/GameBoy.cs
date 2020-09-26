@@ -20,7 +20,7 @@ namespace FrozenBoyCore {
         public Dma dma;
         public InterruptManager intManager;
         public Timer timer;
-        public SerialPort serial;
+        public SerialLink serial;
         public Joypad joypad;
 
         // constructor
@@ -32,7 +32,7 @@ namespace FrozenBoyCore {
             gpu = new GPU(intManager, gbOptions.Palette);
             joypad = new Joypad(intManager);
             dma = new Dma();
-            serial = new SerialPort(intManager);
+            serial = new SerialLink(intManager);
             mmu = new MMU(timer, intManager, gpu, joypad, dma, serial);
             cpu = new CPU(mmu, timer, intManager, gpu);
 
