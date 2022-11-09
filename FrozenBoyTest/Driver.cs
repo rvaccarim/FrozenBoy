@@ -14,7 +14,7 @@ using Xunit;
 namespace FrozenBoyTest {
     public class Driver {
 
-        private string hashesPath = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\FrozenBoyTest\Hashes\";
+        private string hashesPath = @"D:\Users\frozen\Documents\03_programming\emulation\FrozenBoy\FrozenBoyTest\Hashes\";
 
         public Result RunTest(GameBoy gb, TestOptions options) {
 

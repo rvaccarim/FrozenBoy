@@ -14,12 +14,12 @@ namespace FrozenBoyTest {
         private readonly ITestOutputHelper output;
         private Palettes palettes;
 
-        private const string CPU_Path = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\blargg\cpu_instrs\individual\";
-        private const string InstTimingPath = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\blargg\instr_timing\";
-        private const string MemTimingPath1 = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\blargg\mem_timing\individual\";
-        private const string MemTimingPath2 = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\blargg\mem_timing-2\rom_singles\";
-        private const string HaltPath = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\blargg\halt_bug\";
-        private const string OAMPath = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\blargg\oam_bug\rom_singles\";
+        private const string CPU_Path = @"D:\Users\frozen\Documents\03_programming\emulation\FrozenBoy\ROMS\blargg\cpu_instrs\individual\";
+        private const string InstTimingPath = @"D:\Users\frozen\Documents\03_programming\emulation\FrozenBoy\ROMS\blargg\instr_timing\";
+        private const string MemTimingPath1 = @"D:\Users\frozen\Documents\03_programming\emulation\FrozenBoy\ROMS\blargg\mem_timing\individual\";
+        private const string MemTimingPath2 = @"D:\Users\frozen\Documents\03_programming\emulation\FrozenBoy\ROMS\blargg\mem_timing-2\rom_singles\";
+        private const string HaltPath = @"D:\Users\frozen\Documents\03_programming\emulation\FrozenBoy\ROMS\blargg\halt_bug\";
+        private const string OAMPath = @"D:\Users\frozen\Documents\03_programming\emulation\FrozenBoy\ROMS\blargg\oam_bug\rom_singles\";
 
 
         private const string debugPath = @"D:\Users\frozen\Documents\99_temp\GB_Debug\";

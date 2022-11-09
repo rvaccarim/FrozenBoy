@@ -13,7 +13,7 @@ namespace FrozenBoyTest {
         private readonly ITestOutputHelper output;
         private Palettes palettes;
 
-        private string mooneyePath = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\ROMS\mooneye\";
+        private string mooneyePath = @"D:\Users\frozen\Documents\03_programming\emulation\FrozenBoy\ROMS\mooneye\";
         private const string debugPath = @"D:\Users\frozen\Documents\99_temp\GB_Debug\";
 
         public MooneyeTest(ITestOutputHelper output) {
