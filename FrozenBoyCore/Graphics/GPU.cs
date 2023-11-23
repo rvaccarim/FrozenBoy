@@ -1,5 +1,4 @@
 ﻿using FrozenBoyCore.Memory;
-using System.Runtime.ExceptionServices;
 using FrozenBoyCore.Processor;
 using System.Runtime.CompilerServices;
 using System;
@@ -7,32 +6,16 @@ using FrozenBoyCore.Util;
 using u8 = System.Byte;
 using s8 = System.SByte;
 using u16 = System.UInt16;
-using s16 = System.Int16;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace FrozenBoyCore.Graphics {
+namespace FrozenBoyCore.Graphics
+{
 
-    public class GPU {
-
-        public GPU(InterruptManager iManager, GPU_Palette gpu_palette) {
-            vRam = new Space(0x8000, 0x9FFF);
-            oamRam = new Space(0xFE00, 0xFE9F);
-
-            this.intManager = iManager;
-            this.gpu_palette = gpu_palette;
-
-            mode = 0;
-            //lcd_control = 0x91;
-            _stat = 0b1000_0110;
-            _LY = 0;
-            //LYC = 0x0;
-        }
-
-        private GPU_Palette gpu_palette;
-
-        public Space vRam;
-        public Space oamRam;
+    public class GPU(InterruptManager iManager, GPU_Palette gpu_palette)
+    {
+        public Space vRam = new(0x8000, 0x9FFF);
+        public Space oamRam = new(0xFE00, 0xFE9F);
 
         public const int MODE_HBLANK = 0b00;
         public const int MODE_VBLANK = 0b01;
@@ -52,8 +35,6 @@ namespace FrozenBoyCore.Graphics {
         public bool wasDisabled = false;
 
         private readonly u8[] frameBuffer = new byte[160 * 144 * 4];
-        private readonly InterruptManager intManager;
-
         private readonly byte modeMask = 0b_0000_0011;
 
         // Period                      GPU mode number     Time spent(clocks)
@@ -63,7 +44,7 @@ namespace FrozenBoyCore.Graphics {
         // Scanline(accessing VRAM)            3                  172
         // One line(scan and blank)                               456
         // Full frame(scans and vblank)                         70224
-        public int mode;
+        public int mode = 0;
         private byte lcd_control;
 
         // 0xFF40
@@ -102,7 +83,7 @@ namespace FrozenBoyCore.Graphics {
         // 3, 4, 5 are interrupt enabled flags (similar to how the IE Register works), when the mode changes the
         //         corresponding bit 3,4,5 is set
         // 6       LYC=LY Coincidence Interrupt (1=Enable) (Read/Write)
-        public u8 _stat;
+        public u8 _stat = 0b1000_0110;
 
         public u8 STAT {
             get => _stat;
@@ -112,7 +93,7 @@ namespace FrozenBoyCore.Graphics {
                 // http://www.devrs.com/gb/files/faqs.html#GBBugs
                 if (mode == MODE_VBLANK || mode == MODE_HBLANK) {
                     if (IsLcdEnabled()) {
-                        intManager.RequestInterruption(InterruptionType.LCD);
+                        iManager.RequestInterruption(InterruptionType.LCD);
                     }
                 }
                 _stat = BitUtils.ChangeBits(_stat, 0b_1111_1000, value);
@@ -124,7 +105,7 @@ namespace FrozenBoyCore.Graphics {
         // 0xFF43 The X Position of the BACKGROUND to start drawing the viewing area from
         public u8 SCX { get; set; }
         // 0xFF44 This is Y coordinate of the current line
-        private byte _LY;
+        private byte _LY = 0;
         public u8 LY {
             get { return _LY; }
             set { // it's ignored if the screen is enabled
@@ -196,7 +177,7 @@ namespace FrozenBoyCore.Graphics {
             if (modeTicks == 4 && mode == MODE_VBLANK && _LY == 153) {
                 _LY = 0;
                 if (BitUtils.IsBitSet(status, STATUS_SCANLINE_OAM_BITPOS)) {
-                    intManager.RequestInterruption(InterruptionType.LCD);
+                    iManager.RequestInterruption(InterruptionType.LCD);
                 }
             }
             else {
@@ -216,14 +197,14 @@ namespace FrozenBoyCore.Graphics {
 
                             if (_LY == LYC) {
                                 if (BitUtils.IsBitSet(status, STATUS_LC_EQUALS_LYC)) {
-                                    intManager.RequestInterruption(InterruptionType.LCD);
+                                    iManager.RequestInterruption(InterruptionType.LCD);
                                 }
                             }
 
                             RenderLine(_LY);
 
                             if (BitUtils.IsBitSet(_stat, STATUS_HBLANK_BITPOS)) {
-                                intManager.RequestInterruption(InterruptionType.LCD);
+                                iManager.RequestInterruption(InterruptionType.LCD);
                             }
                         }
                         break;
@@ -235,10 +216,10 @@ namespace FrozenBoyCore.Graphics {
 
                             if (_LY == 144) {
                                 mode = MODE_VBLANK;
-                                intManager.RequestInterruption(InterruptionType.VBlank);
+                                iManager.RequestInterruption(InterruptionType.VBlank);
 
                                 if (BitUtils.IsBitSet(status, STATUS_VBLANK_BITPOS)) {
-                                    intManager.RequestInterruption(InterruptionType.LCD);
+                                    iManager.RequestInterruption(InterruptionType.LCD);
                                 }
                             }
                             else {
@@ -259,7 +240,7 @@ namespace FrozenBoyCore.Graphics {
                                 _LY = 0;
 
                                 if (BitUtils.IsBitSet(status, STATUS_SCANLINE_OAM_BITPOS)) {
-                                    intManager.RequestInterruption(InterruptionType.LCD);
+                                    iManager.RequestInterruption(InterruptionType.LCD);
                                 }
                             }
                         }
@@ -359,9 +340,9 @@ namespace FrozenBoyCore.Graphics {
                 }
             }
 
-            if (tileAddress == 0x88F0) {
-                int dummy = 0;
-            }
+            // if (tileAddress == 0x88F0) {
+            //     int dummy = 0;
+            // }
 
             int tileXpos = realX % 8;
             int tileYPos = realY % 8;
@@ -399,7 +380,7 @@ namespace FrozenBoyCore.Graphics {
                 // we store the original X and index
                 sprites.Add(Tuple.Create((int)(oamRam[(u16)(0xFE01 + (i * 4))]), i));
             }
-            sprites = sprites.OrderByDescending(t => t.Item1).ThenByDescending(t => t.Item2).ToList();
+            sprites = [.. sprites.OrderByDescending(t => t.Item1).ThenByDescending(t => t.Item2)];
 
             int spritesInRow = 0;
 
@@ -492,20 +473,20 @@ namespace FrozenBoyCore.Graphics {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int GetColorIndex(u8 msb, u8 lsb, int bitPos) {
+        private static int GetColorIndex(u8 msb, u8 lsb, int bitPos) {
             u8 bitLsb = (u8)((u8)(lsb << bitPos) >> 7);
             u8 bitMsb = (u8)((u8)(msb << bitPos) >> 7);
             return (bitMsb << 1) | bitLsb;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsXFlipped(u8 attr) {
+        private static bool IsXFlipped(u8 attr) {
             //Bit5   X flip(0 = Normal, 1 = Horizontally mirrored)
             return BitUtils.IsBitSet(attr, 5);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsYFlipped(u8 attr) {
+        private static bool IsYFlipped(u8 attr) {
             //Bit6 Y flip(0 = Normal, 1 = Vertically mirrored)
             return BitUtils.IsBitSet(attr, 6);
         }
@@ -517,12 +498,14 @@ namespace FrozenBoyCore.Graphics {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private byte[] GetPalette(u8 rawPalette) {
-            u8[] palette = new u8[4];
-            palette[0] = (u8)(rawPalette & 0b_0000_0011);
-            palette[1] = (u8)((rawPalette & 0b_0000_1100) >> 2);
-            palette[2] = (u8)((rawPalette & 0b_0011_0000) >> 4);
-            palette[3] = (u8)((rawPalette & 0b_1100_0000) >> 6);
+        private static byte[] GetPalette(u8 rawPalette) {
+            u8[] palette =
+            [
+                (u8)(rawPalette & 0b_0000_0011),
+                (u8)((rawPalette & 0b_0000_1100) >> 2),
+                (u8)((rawPalette & 0b_0011_0000) >> 4),
+                (u8)((rawPalette & 0b_1100_0000) >> 6),
+            ];
             return palette;
         }
 

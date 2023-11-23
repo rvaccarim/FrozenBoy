@@ -1,15 +1,13 @@
-﻿using System;
-using FrozenBoyCore.Processor;
+﻿using FrozenBoyCore.Processor;
 using System.Runtime.CompilerServices;
-using System.IO;
 using FrozenBoyCore.Graphics;
 using FrozenBoyCore.Controls;
 using FrozenBoyCore.Serial;
-using FrozenBoyCore.Util;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 
-namespace FrozenBoyCore.Memory {
+namespace FrozenBoyCore.Memory
+{
 
     public class MMU {
         public Space internalRam;

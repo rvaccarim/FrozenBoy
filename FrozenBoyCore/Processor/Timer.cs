@@ -1,16 +1,11 @@
-﻿using FrozenBoyCore.Memory;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using u8 = System.Byte;
-using u16 = System.UInt16;
+﻿using u8 = System.Byte;
 
 
-namespace FrozenBoyCore.Processor {
-    public class Timer {
-
-        private InterruptManager interruptManager;
-        private static readonly int[] FreqToBit = { 9, 3, 5, 7 };
+namespace FrozenBoyCore.Processor
+{
+    public class Timer(InterruptManager interruptManager)
+    {
+        private static readonly int[] FreqToBit = [9, 3, 5, 7];
 
         // TODO: revoke public
         public int timerCounter = 0;
@@ -19,10 +14,6 @@ namespace FrozenBoyCore.Processor {
         public bool overflow;
         public int ticksSinceOverflow;
         public bool previousBit;
-
-        public Timer(InterruptManager interruptManager) {
-            this.interruptManager = interruptManager;
-        }
 
         // The divider register increments at a fixed frequency
         // For some reason it's encoded inside a 16 bit value (the 8 most significant bytes)

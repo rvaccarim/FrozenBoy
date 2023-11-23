@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Collections.Generic;
 using FrozenBoyCore.Memory;
-using System.Runtime.CompilerServices;
-using System.Reflection.Emit;
-using u8 = System.Byte;
-using u16 = System.UInt16;
 using FrozenBoyCore.Util;
 using FrozenBoyCore.Graphics;
+using u8 = System.Byte;
+using u16 = System.UInt16;
 
-namespace FrozenBoyCore.Processor {
+
+namespace FrozenBoyCore.Processor
+{
     public enum InstructionState {
         Fetch, FetchPrefix, WorkPending,
         Interrupt_IF, Interrupt_IE, Interrupt_Push1, Interrupt_Push2, Interrupt_Jump,
@@ -226,18 +225,18 @@ namespace FrozenBoyCore.Processor {
         public Opcode Disassemble() {
             u8 opcodeValue = mmu.Read8(regs.PC);
 
-            if (opHandler.opcodes.ContainsKey(opcodeValue)) {
+            if (opHandler.opcodes.TryGetValue(opcodeValue, out Opcode opValue)) {
 
-                opcode = opHandler.opcodes[opcodeValue];
+                opcode = opValue;
                 if (opcode.value != 0xCB) {
                     return opcode;
                 }
                 else {
                     u8 cbOpcodeValue = mmu.Read8((u16)(regs.PC + 1));
 
-                    if (cbHandler.cbOpcodes.ContainsKey(cbOpcodeValue)) {
+                    if (cbHandler.cbOpcodes.TryGetValue(cbOpcodeValue, out Opcode value)) {
                         cbPrefix = true;
-                        return cbHandler.cbOpcodes[cbOpcodeValue];
+                        return value;
                     }
                     else {
                         Debug.WriteLine(String.Format("Cb_opcode not found: {0:x2}", cbOpcodeValue));

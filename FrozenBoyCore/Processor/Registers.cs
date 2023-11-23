@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using u8 = System.Byte;
+﻿using u8 = System.Byte;
 using u16 = System.UInt16;
 
-namespace FrozenBoyCore.Processor {
+namespace FrozenBoyCore.Processor
+{
 
     public class Registers {
         private const int bitZeroPosition = 7;

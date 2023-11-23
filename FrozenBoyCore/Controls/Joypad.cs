@@ -1,16 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using u8 = System.Byte;
-using u16 = System.UInt16;
+﻿using u8 = System.Byte;
 using FrozenBoyCore.Util;
 using FrozenBoyCore.Processor;
 
-namespace FrozenBoyCore.Controls {
-    public class Joypad {
-
-        private readonly InterruptManager intManager;
-
+namespace FrozenBoyCore.Controls
+{
+    public class Joypad(InterruptManager intManager)
+    {
         public bool[] JoypadKeys = new bool[8];
         private const int Right = 0;
         private const int Left = 1;
@@ -39,10 +34,6 @@ namespace FrozenBoyCore.Controls {
                 return _JOYP;
             }
             set => _JOYP = value;
-        }
-
-        public Joypad(InterruptManager intManager) {
-            this.intManager = intManager;
         }
 
         public void BuildState() {

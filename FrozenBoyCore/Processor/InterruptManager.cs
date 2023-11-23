@@ -1,10 +1,9 @@
-﻿using FrozenBoyCore.Memory;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using u8 = System.Byte;
 using u16 = System.UInt16;
-using System;
 
-namespace FrozenBoyCore.Processor {
+namespace FrozenBoyCore.Processor
+{
 
     // for the IF register
     public enum InterruptionType : int {
@@ -44,7 +43,8 @@ namespace FrozenBoyCore.Processor {
         public u8 IF { get => _IF; set => _IF = value |= 0xE0; }
 
         // ISR addresses
-        public List<u16> ISR_Address = new List<u16> {
+        public List<u16> ISR_Address = new()
+        {
                 { 0x0040 },    // Vblank
                 { 0x0048 },    // LCD Status
                 { 0x0050 },    // TimerOverflow

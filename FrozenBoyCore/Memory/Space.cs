@@ -1,22 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Text;
+﻿using System.Runtime.CompilerServices;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 
-namespace FrozenBoyCore.Memory {
-    public class Space {
-        private readonly u8[] data;
-        private readonly u16 from;
-        private readonly u16 toInclusive;
-
-        public Space(u16 from, u16 toInclusive) {
-            this.from = from;
-            this.toInclusive = toInclusive;
-
-            data = new u8[toInclusive - from + 1];
-        }
+namespace FrozenBoyCore.Memory
+{
+    public class Space(u16 from, u16 toInclusive)
+    {
+        private readonly u8[] data = new u8[toInclusive - from + 1];
+        private readonly u16 from = from;
+        private readonly u16 toInclusive = toInclusive;
 
         public byte this[u16 address] {
             get {

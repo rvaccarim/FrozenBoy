@@ -1,23 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using u8 = System.Byte;
-using u16 = System.UInt16;
+﻿using u8 = System.Byte;
 using FrozenBoyCore.Processor;
 
-namespace FrozenBoyCore.Serial {
-    public class SerialLink {
-
+namespace FrozenBoyCore.Serial
+{
+    public class SerialLink(InterruptManager interruptManager)
+    {
         private u8 _sb;
         private u8 _sc;
         private bool _transferInProgress = false;
         private int _divider;
-        private readonly InterruptManager interruptManager;
         public string log = "";
-
-        public SerialLink(InterruptManager interruptManager) {
-            this.interruptManager = interruptManager;
-        }
 
         // FF01 - SB - Serial transfer data (R/W)
         public u8 SB {

@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using FrozenBoyCore;
 using System.IO;
-using System.Text;
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -12,10 +11,10 @@ using System.Threading;
 using FrozenBoyCore.Graphics;
 using FrozenBoyCore.Util;
 
-namespace FrozenBoyUI {
-
+namespace FrozenBoyUI
+{
     public class FrozenBoyGame : Game {
-        private GraphicsDeviceManager graphics;
+        private readonly GraphicsDeviceManager graphics;
         private SpriteBatch spriteBatch;
         private GameBoy gameboy;
         private Texture2D gameboyBuffer;
@@ -43,7 +42,8 @@ namespace FrozenBoyUI {
 
         protected override void Initialize() {
             // loading a rom and starting emulation
-            System.Windows.Forms.OpenFileDialog ofd = new System.Windows.Forms.OpenFileDialog {
+            System.Windows.Forms.OpenFileDialog ofd = new()
+            {
                 DefaultExt = ".gb",
                 Filter = "ROM files (.gb)|*.gb",
                 Multiselect = false
@@ -54,7 +54,7 @@ namespace FrozenBoyUI {
                 romFilename = Path.GetFileName(ofd.FileName);
                 romPath = Path.GetDirectoryName(ofd.FileName) + @"\";
 
-                GameOptions gbOptions = new GameOptions(romFilename, romPath, GetGreenPalette());
+                GameOptions gbOptions = new(romFilename, romPath, GetGreenPalette());
                 gameboy = new GameBoy(gbOptions);
 
                 base.Window.Title = "FrozenBoy - " + romFilename;
@@ -105,19 +105,19 @@ namespace FrozenBoyUI {
             base.Update(gameTime);
         }
 
-        private GPU_Palette GetGreenPalette() {
-            GPU_Color white = new GPU_Color(224, 248, 208, 255);
-            GPU_Color lightGray = new GPU_Color(136, 192, 112, 255);
-            GPU_Color darkGray = new GPU_Color(52, 104, 86, 255);
-            GPU_Color black = new GPU_Color(8, 24, 32, 255);
+        private static GPU_Palette GetGreenPalette() {
+            GPU_Color white = new(224, 248, 208, 255);
+            GPU_Color lightGray = new(136, 192, 112, 255);
+            GPU_Color darkGray = new(52, 104, 86, 255);
+            GPU_Color black = new(8, 24, 32, 255);
             return new GPU_Palette(white, lightGray, darkGray, black);
         }
 
-        public GPU_Palette GetWhitePalette() {
-            var white = new GPU_Color(255, 255, 255, 255);
-            var lightGray = new GPU_Color(170, 170, 170, 255);
-            var darkGray = new GPU_Color(85, 85, 85, 255);
-            var black = new GPU_Color(0, 0, 0, 255);
+        public static GPU_Palette GetWhitePalette() {
+            GPU_Color white = new(255, 255, 255, 255);
+            GPU_Color lightGray = new(170, 170, 170, 255);
+            GPU_Color darkGray = new(85, 85, 85, 255);
+            GPU_Color black = new(0, 0, 0, 255);
             return new GPU_Palette(white, lightGray, darkGray, black);
         }
 
@@ -168,7 +168,7 @@ namespace FrozenBoyUI {
         }
 
         private void TakeScreenshotAndHash() {
-            string outputFile = @"D:\Users\frozen\Documents\03_programming\online\emulation\FrozenBoy\FrozenBoyTest\hashes\" + romFilename + "_" + screenshotCount.ToString();
+            string outputFile = @"D:\Users\frozen\Documents\02_cold\c03_programming\emulation\FrozenBoy\FrozenBoyTest\hashes\" + romFilename + "_" + screenshotCount.ToString();
 
             int width = 160;
             int height = 144;
@@ -184,8 +184,8 @@ namespace FrozenBoyUI {
 
         }
 
-        private Bitmap BuildImage(Byte[] sourceData, Int32 width, Int32 height, Int32 stride, PixelFormat pixelFormat) {
-            Bitmap newImage = new Bitmap(width, height, pixelFormat);
+        private static Bitmap BuildImage(Byte[] sourceData, Int32 width, Int32 height, Int32 stride, PixelFormat pixelFormat) {
+            Bitmap newImage = new(width, height, pixelFormat);
             BitmapData targetData = newImage.LockBits(new System.Drawing.Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, newImage.PixelFormat);
             Int32 newDataWidth = ((Image.GetPixelFormatSize(pixelFormat) * width) + 7) / 8;
             // Compensate for possible negative stride on BMP format.

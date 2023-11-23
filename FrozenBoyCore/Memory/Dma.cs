@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using u8 = System.Byte;
+﻿using u8 = System.Byte;
 using u16 = System.UInt16;
 
-namespace FrozenBoyCore.Memory {
+namespace FrozenBoyCore.Memory
+{
 
     public class Dma {
         private MMU mmu;

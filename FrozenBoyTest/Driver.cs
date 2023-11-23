@@ -1,20 +1,14 @@
 ﻿using FrozenBoyCore;
-using FrozenBoyCore.Graphics;
-using FrozenBoyCore.Memory;
 using FrozenBoyCore.Processor;
 using FrozenBoyCore.Util;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using u8 = System.Byte;
 using u16 = System.UInt16;
-using FrozenBoyTest;
-using Xunit;
 
-namespace FrozenBoyTest {
+namespace FrozenBoyTest
+{
     public class Driver {
-
-        private string hashesPath = @"D:\Users\frozen\Documents\03_programming\emulation\FrozenBoy\FrozenBoyTest\Hashes\";
 
         public Result RunTest(GameBoy gb, TestOptions options) {
 
@@ -135,7 +129,7 @@ namespace FrozenBoyTest {
             var md5_list = new List<MD5_Item>();
 
             // Process the list of files found in the directory.
-            string[] fileEntries = Directory.GetFiles(hashesPath);
+            string[] fileEntries = Directory.GetFiles(Config.hashesPath);
             foreach (string fileFullName in fileEntries) {
                 string fileName = Path.GetFileName(fileFullName);
 
@@ -150,19 +144,20 @@ namespace FrozenBoyTest {
             "{0}   cycles:{1,6}  AF={2:x4} BC={3:x4} DE={4:x4} HL={5:x4}   Z={6} N={7} H={8} C={9}   " +
             "PC={10:x4} SP={11:x4}   IME={12} IE={13:x4} IF={14:x4} halted={15}   " +
             "DIV={16:x4} TIMA={17:x4} TMA={18:x4} TAC={19:x4}   " +
-            "LCDC={20:x2} STAT={21} LY={22:x2} LYC={23:x2} gpuClock={24} delay={25}";
+            "LCDC={20:x2} STAT={21} LY={22:x2} LYC={23:x2} gpuClock={24} delay={25:6}" +
+            "ROMBANKS={26} ROMBANKS={27} CURRROM={28} CURRRAM={29}";
 
-        public void LogState(StreamWriter logFile, GameBoy gb, int cycle) {
+        public static void LogState(StreamWriter logFile, GameBoy gb, int cycle) {
             string instruction;
 
-            bool disAsm = false;
+            // bool disAsm = false;
 
             if (gb.cpu.opcode != null) {
                 // if (disAsm) {
                 // instruction = Disassembler.OpcodeToStr(cpu, cpu.opcode, cpu.regs.OpcodePC);
                 // }
                 // else {
-                instruction = String.Format("O=0x{0:x2}", gb.cpu.opcode.value);
+                instruction = string.Format("O=0x{0:x2}", gb.cpu.opcode.value);
                 // }
             }
             else {
@@ -170,13 +165,13 @@ namespace FrozenBoyTest {
             }
 
             logFile.WriteLine(
-                String.Format(gameboyState,
+                string.Format(gameboyState,
                 instruction, cycle,
                 gb.cpu.regs.AF, gb.cpu.regs.BC, gb.cpu.regs.DE, gb.cpu.regs.HL,
                 Convert.ToInt32(gb.cpu.regs.FlagZ), Convert.ToInt32(gb.cpu.regs.FlagN),
                 Convert.ToInt32(gb.cpu.regs.FlagH), Convert.ToInt32(gb.cpu.regs.FlagC),
                 gb.cpu.regs.PC, gb.cpu.regs.SP,
-                Convert.ToInt32(gb.intManager.IME), gb.intManager.IE, Convert.ToString(gb.intManager.IF, 2).PadLeft(8, '0').Substring(3),
+                Convert.ToInt32(gb.intManager.IME), gb.intManager.IE, Convert.ToString(gb.intManager.IF, 2).PadLeft(8, '0')[3..],
                 Convert.ToInt32(gb.cpu.haltBug),
                 gb.timer.DIV, gb.timer.TIMA, gb.timer.TMA, gb.timer.tac,
                 Convert.ToString(gb.gpu.LCDC, 2).PadLeft(8, '0'), "",

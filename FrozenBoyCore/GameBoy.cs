@@ -1,16 +1,11 @@
-﻿using System;
-using FrozenBoyCore.Processor;
+﻿using FrozenBoyCore.Processor;
 using FrozenBoyCore.Graphics;
-using FrozenBoyCore.Util;
 using FrozenBoyCore.Memory;
 using FrozenBoyCore.Controls;
-using System.Text;
 using FrozenBoyCore.Serial;
-using u8 = System.Byte;
-using u16 = System.UInt16;
 
-namespace FrozenBoyCore {
-
+namespace FrozenBoyCore
+{
     public class GameBoy {
         public const int ClockSpeed = 4_194_304;
         public GameOptions gbOptions;

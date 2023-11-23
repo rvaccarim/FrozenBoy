@@ -1,19 +1,15 @@
-﻿using FrozenBoyCore.Memory;
-using FrozenBoyCore.Processor;
+﻿using FrozenBoyCore.Processor;
 using Xunit;
 using u8 = System.Byte;
-using u16 = System.UInt16;
-using FrozenBoyCore.Graphics;
-using FrozenBoyCore.Controls;
-using FrozenBoyCore;
 
-namespace FrozenBoyTest {
+namespace FrozenBoyTest
+{
     public class TimerTest {
 
         [Fact]
         public void TestDivIncrease() {
-            InterruptManager intManager = new InterruptManager();
-            Timer timer = new Timer(intManager);
+            InterruptManager intManager = new();
+            Timer timer = new(intManager);
 
             for (int i = 0; i < 255; i++) {
                 timer.Tick();
@@ -27,8 +23,8 @@ namespace FrozenBoyTest {
 
         [Fact]
         public void TestClockDisabled() {
-            InterruptManager intManager = new InterruptManager();
-            Timer timer = new Timer(intManager);
+            InterruptManager intManager = new();
+            Timer timer = new(intManager);
 
             for (int i = 0; i < 2056; i++) {
                 timer.Tick();
@@ -49,10 +45,12 @@ namespace FrozenBoyTest {
 
         [Fact]
         public void TestTimaOverflow() {
-            InterruptManager intManager = new InterruptManager();
-            Timer timer = new Timer(intManager);
+            InterruptManager intManager = new();
 
-            timer.TAC = 0b_0000_00101;  // frequency = 16
+            Timer timer = new(intManager)
+            {
+                TAC = 0b_0000_00101  // frequency = 16
+            };
 
             int max = 16 * 256;
             for (int i = 0; i < max; i++) {
@@ -76,11 +74,13 @@ namespace FrozenBoyTest {
 
         }
 
-        private int AddTima(u8 TAC) {
-            InterruptManager intManager = new InterruptManager();
-            Timer timer = new Timer(intManager);
-
-            timer.TAC = TAC;
+        private static int AddTima(u8 TAC) {
+            InterruptManager intManager = new();
+            
+            Timer timer = new(intManager)
+            {
+                TAC = TAC
+            };
 
             while (true) {
                 timer.Tick();

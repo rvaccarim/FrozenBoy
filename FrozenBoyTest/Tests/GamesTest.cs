@@ -1,24 +1,25 @@
 ﻿using FrozenBoyCore;
-using FrozenBoyCore.Graphics;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using System.Threading;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace FrozenBoyTest {
-    public class GamesTest {
-        private readonly ITestOutputHelper output;
-        private Palettes palettes;
+namespace FrozenBoyTest
+{
+    public class GamesTest(ITestOutputHelper output)
+    {
+        private bool Test(string romFilename, bool logExecution)
+        {
+            string logFilename = Config.debugOutPath + romFilename + ".log.frozenBoy.txt";
 
-        private string gamesPath = @"D:\Users\frozen\Documents\09_software\ROMs\GameBoy\Game Boy\Tested\";
-        private const string debugPath = @"D:\Users\frozen\Documents\99_temp\GB_Debug\";
+            GameOptions gameOptions = new(romFilename, Config.gamesPath, Palettes.GetGreenPalette());
+            GameBoy gb = new(gameOptions);
 
-        public GamesTest(ITestOutputHelper output) {
-            this.output = output;
-            palettes = new Palettes();
+            TestOptions testOptions = new(TestOutput.MD5, logExecution, logFilename);
+
+            Driver driver = new();
+            Result result = driver.RunTest(gb, testOptions);
+            output.WriteLine(result.Message);
+            return result.Passed;
+
         }
 
         [Fact]
@@ -87,20 +88,7 @@ namespace FrozenBoyTest {
             Assert.True(passed);
         }
 
-        private bool Test(string romFilename, bool logExecution) {
-            string logFilename = debugPath + romFilename + ".log.frozenBoy.txt";
 
-            GameOptions gameOptions = new GameOptions(romFilename, gamesPath, palettes.GetGreenPalette());
-            GameBoy gb = new GameBoy(gameOptions);
-
-            TestOptions testOptions = new TestOptions(TestOutput.MD5, logExecution, logFilename);
-
-            Driver driver = new Driver();
-            Result result = driver.RunTest(gb, testOptions);
-            output.WriteLine(result.Message);
-            return result.Passed;
-
-        }
 
 
     }

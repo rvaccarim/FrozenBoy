@@ -1,30 +1,32 @@
 ﻿using FrozenBoyCore;
-using FrozenBoyCore.Graphics;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using System.Threading;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace FrozenBoyTest {
-    public class MooneyeTest {
-        private readonly ITestOutputHelper output;
-        private Palettes palettes;
+namespace FrozenBoyTest
+{
+    public class MooneyeTest(ITestOutputHelper output)
+    {
 
-        private string mooneyePath = @"D:\Users\frozen\Documents\03_programming\emulation\FrozenBoy\ROMS\mooneye\";
-        private const string debugPath = @"D:\Users\frozen\Documents\99_temp\GB_Debug\";
+        private bool Test(string romFilename, string extraPath, bool logExecution)
+        {
+            string logFilename = Config.debugOutPath + romFilename + ".log.frozenBoy.txt";
 
-        public MooneyeTest(ITestOutputHelper output) {
-            this.output = output;
+            GameOptions gameOptions = new(romFilename, Config.mooneyePath + extraPath, Palettes.GetWhitePalette());
+            GameBoy gb = new(gameOptions);
 
-            palettes = new Palettes();
+            TestOptions testOptions = new(TestOutput.MD5, logExecution, logFilename);
+
+            Driver driver = new();
+            Result result = driver.RunTest(gb, testOptions);
+            output.WriteLine(result.Message);
+            return result.Passed;
+
         }
+
 
         [Fact]
         public void Test_MBC1_bits_bank1() {
-            bool passed = Test("bits_bank1.gb", @"emulator-only\mbc1\", false);
+            bool passed = Test("bits_bank1.gb", @"emulator-only\mbc1\", true);
             Assert.True(passed);
         }
 
@@ -329,20 +331,6 @@ namespace FrozenBoyTest {
             Assert.True(passed);
         }
 
-        private bool Test(string romFilename, string extraPath, bool logExecution) {
-            string logFilename = debugPath + romFilename + ".log.frozenBoy.txt";
-
-            GameOptions gameOptions = new GameOptions(romFilename, mooneyePath + extraPath, palettes.GetWhitePalette());
-            GameBoy gb = new GameBoy(gameOptions);
-
-            TestOptions testOptions = new TestOptions(TestOutput.MD5, logExecution, logFilename);
-
-            Driver driver = new Driver();
-            Result result = driver.RunTest(gb, testOptions);
-            output.WriteLine(result.Message);
-            return result.Passed;
-
-        }
 
 
     }

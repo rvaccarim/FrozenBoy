@@ -6,7 +6,7 @@ This project started as a personal learning journey to understand emulation in g
 The emulator supports the original GameBoy only (the one with the green LCD screen). I've tested several games with good results, but there might still be lots of bugs and glitches.
 
 ### Requisites
-- .Net 7.0
+- .Net 8.0 (C# 12)
 - Monogame 3.8.1.303
 
 ### Missing Features
