@@ -6,10 +6,12 @@ using FrozenBoyCore.Serial;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 
+
 namespace FrozenBoyCore.Memory
 {
 
-    public class MMU {
+    public class MMU
+    {
         public Space internalRam;
         public Space echoRam;
         public Space unusable;
@@ -25,8 +27,11 @@ namespace FrozenBoyCore.Memory
         private readonly SerialLink serial;
         // private StreamWriter logFile;
 
-        public MMU(Timer timer, InterruptManager intManager, GPU gpu, Joypad joypad, Dma dma, SerialLink serial) {
-            // logFile = new StreamWriter(@"D:\Users\frozen\Documents\99_temp\GB_Debug\rom_1Mb.gb.log.FrozenBoy.memory.txt");
+        public MMU(Timer timer, InterruptManager intManager, GPU gpu, Joypad joypad, Dma dma, SerialLink serial)
+        {
+            // string logFilePath = Path.Combine(AppContext.BaseDirectory, "GB_Debug");
+            // Directory.CreateDirectory(logFilePath);
+            // logFile = new StreamWriter(Path.Combine(logFilePath, "rom_1Mb.gb.log.FrozenBoy.memory.txt"));
 
             this.timer = timer;
             this.intManager = intManager;
@@ -85,20 +90,26 @@ namespace FrozenBoyCore.Memory
         }
 
 
-        public void LoadData(string romName) {
+        public void LoadData(string romName)
+        {
             cartridge = new Cartridge(romName);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public u8 Read8(u16 address) {
+        public u8 Read8(u16 address)
+        {
 
             // Regular ROM
-            if (address < 0x4000) {
-                if (cartridge.mbc == Cartridge.BankType.None) {
+            if (address < 0x4000)
+            {
+                if (cartridge.mbc == Cartridge.BankType.None)
+                {
                     return cartridge.rom[address];
                 }
-                else {
-                    if (cartridge.mbc == Cartridge.BankType.MBC1) {
+                else
+                {
+                    if (cartridge.mbc == Cartridge.BankType.MBC1)
+                    {
                         var bank = GetMBC1_RomBankLow();
                         int newAddress = (bank * 0x4000) + address;
                         // Log("R", newAddress, cartridge.rom[newAddress]);
@@ -108,16 +119,21 @@ namespace FrozenBoyCore.Memory
             }
 
             // Switchable ROM / ROM memory bank
-            if (address >= 0x4000 && address < 0x8000) {
-                if (cartridge.mbc == Cartridge.BankType.None) {
+            if (address >= 0x4000 && address < 0x8000)
+            {
+                if (cartridge.mbc == Cartridge.BankType.None)
+                {
                     return cartridge.rom[address];
                 }
-                else {
-                    if (cartridge.mbc == Cartridge.BankType.MBC1) {
+                else
+                {
+                    if (cartridge.mbc == Cartridge.BankType.MBC1)
+                    {
                         // this can be larger than u16
                         int newAdress = address - 0x4000 + (GetMBC1_RomBankHigh() * 0x4000);
 
-                        if (newAdress < cartridge.rom.Length) {
+                        if (newAdress < cartridge.rom.Length)
+                        {
                             // Log("R", address, cartridge.rom[newAdress]);
                             return cartridge.rom[newAdress];
                         }
@@ -128,23 +144,30 @@ namespace FrozenBoyCore.Memory
             }
 
             // Video Ram
-            if (gpu.vRam.Manages(address)) {
+            if (gpu.vRam.Manages(address))
+            {
                 return gpu.vRam[address];
             }
 
             // RAM 
-            if (address >= 0xA000 && address < 0xC000) {
+            if (address >= 0xA000 && address < 0xC000)
+            {
                 int newAdress;
 
-                if (cartridge.mbc == Cartridge.BankType.None) {
+                if (cartridge.mbc == Cartridge.BankType.None)
+                {
                     return cartridge.rom[address];
                 }
-                else {
-                    if (cartridge.mbc == Cartridge.BankType.MBC1) {
-                        if (cartridge.ramWriteEnabled) {
+                else
+                {
+                    if (cartridge.mbc == Cartridge.BankType.MBC1)
+                    {
+                        if (cartridge.ramWriteEnabled)
+                        {
                             newAdress = GetMBC1_RamAddress(address);
 
-                            if (newAdress < cartridge.ram.Length) {
+                            if (newAdress < cartridge.ram.Length)
+                            {
                                 return cartridge.ram[newAdress];
                             }
                             return 0xff;
@@ -154,31 +177,38 @@ namespace FrozenBoyCore.Memory
                 }
             }
 
-            if (internalRam.Manages(address)) {
+            if (internalRam.Manages(address))
+            {
                 return internalRam[address];
             }
 
-            if (echoRam.Manages(address)) {
+            if (echoRam.Manages(address))
+            {
                 return echoRam[address];
             }
 
             // OAM range - Sprites
-            if (address >= 0xFE00 && address < 0xFEA0) {
-                if (dma.IsOamBlocked()) {
+            if (address >= 0xFE00 && address < 0xFEA0)
+            {
+                if (dma.IsOamBlocked())
+                {
                     return 0xff;
                 }
             }
 
-            if (gpu.oamRam.Manages(address)) {
+            if (gpu.oamRam.Manages(address))
+            {
                 return gpu.oamRam[address];
             }
 
             // not sure if I should return something...
-            if (unusable.Manages(address)) {
+            if (unusable.Manages(address))
+            {
                 return unusable[address];
             }
 
-            if (highRam.Manages(address)) {
+            if (highRam.Manages(address))
+            {
                 return highRam[address];
             }
 
@@ -217,21 +247,28 @@ namespace FrozenBoyCore.Memory
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Write8(u16 address, u8 value) {
+        public void Write8(u16 address, u8 value)
+        {
 
             // ROM memory is read only, but there are some interactions to enable ROM and RAM banking
-            if (address < 0x8000) {
-                if (cartridge.mbc != Cartridge.BankType.None) {
+            if (address < 0x8000)
+            {
+                if (cartridge.mbc != Cartridge.BankType.None)
+                {
                     HandleBanking(address, value);
                 }
                 return;
             }
 
-            if ((address >= 0xA000) && (address < 0xC000)) {
-                if (cartridge.mbc == Cartridge.BankType.MBC1) {
-                    if (cartridge.ramWriteEnabled) {
+            if ((address >= 0xA000) && (address < 0xC000))
+            {
+                if (cartridge.mbc == Cartridge.BankType.MBC1)
+                {
+                    if (cartridge.ramWriteEnabled)
+                    {
                         int newAddress = GetMBC1_RamAddress(address);
-                        if (newAddress < cartridge.ram.Length) {
+                        if (newAddress < cartridge.ram.Length)
+                        {
                             cartridge.ram[newAddress] = value;
                             // Log("W", address, value);
                         }
@@ -241,42 +278,49 @@ namespace FrozenBoyCore.Memory
             }
 
             // video Ram
-            if (gpu.vRam.Manages(address)) {
+            if (gpu.vRam.Manages(address))
+            {
                 gpu.vRam[address] = value;
                 return;
             }
 
             // internal RAM 
-            if (internalRam.Manages(address)) {
+            if (internalRam.Manages(address))
+            {
                 internalRam[address] = value;
                 return;
             }
 
             // writing here also writes in RAM
-            if (echoRam.Manages(address)) {
+            if (echoRam.Manages(address))
+            {
                 echoRam[address] = value;
                 internalRam[(u16)(address - 0x2000)] = value;
                 return;
             }
 
-            if (gpu.oamRam.Manages(address)) {
+            if (gpu.oamRam.Manages(address))
+            {
                 gpu.oamRam[address] = value;
                 return;
             }
 
             // unusable memory
-            if (unusable.Manages(address)) {
+            if (unusable.Manages(address))
+            {
                 return;
             }
 
             // High Ram
-            if (highRam.Manages(address)) {
+            if (highRam.Manages(address))
+            {
                 highRam[address] = value;
                 return;
             }
 
             // IO
-            switch (address) {
+            switch (address)
+            {
                 case 0xFF04: timer.DIV = value; break;
                 case 0xFF05: timer.TIMA = value; break;
                 case 0xFF06: timer.TMA = value; break;
@@ -306,23 +350,29 @@ namespace FrozenBoyCore.Memory
             }
         }
 
-        public void HandleBanking(u16 address, u8 value) {
+        public void HandleBanking(u16 address, u8 value)
+        {
             // This is Read only memory, no data is changed, only the values related to ROM
             // and RAM banking
 
-            if (address >= 0x0000 && address < 0x2000) {
-                if (cartridge.mbc == Cartridge.BankType.MBC1) {
+            if (address >= 0x0000 && address < 0x2000)
+            {
+                if (cartridge.mbc == Cartridge.BankType.MBC1)
+                {
                     cartridge.ramWriteEnabled = (value & 0b1111) == 0b1010;
                     // Log("W", address, value);
-                    if (!cartridge.ramWriteEnabled) {
+                    if (!cartridge.ramWriteEnabled)
+                    {
                         // _battery.SaveRam(cartridge.ram);
                     }
                 }
                 return;
             }
 
-            if ((address >= 0x2000) && (address < 0x4000)) {
-                if (cartridge.mbc == Cartridge.BankType.MBC1) {
+            if ((address >= 0x2000) && (address < 0x4000))
+            {
+                if (cartridge.mbc == Cartridge.BankType.MBC1)
+                {
                     var bank = cartridge.currentRomBank & 0b0110_0000;
                     bank |= (value & 0b00011111);
                     cartridge.currentRomBank = bank;
@@ -331,21 +381,28 @@ namespace FrozenBoyCore.Memory
                 return;
             }
 
-            if ((address >= 0x4000) && (address < 0x8000)) {
-                if (cartridge.mbc == Cartridge.BankType.MBC1) {
-                    if ((address >= 0x4000) && (address < 0x6000) && cartridge.memoryModel == 0) {
+            if ((address >= 0x4000) && (address < 0x8000))
+            {
+                if (cartridge.mbc == Cartridge.BankType.MBC1)
+                {
+                    if ((address >= 0x4000) && (address < 0x6000) && cartridge.memoryModel == 0)
+                    {
                         var bank = cartridge.currentRomBank & 0b0001_1111;
                         bank |= ((value & 0b11) << 5);
                         cartridge.currentRomBank = bank;
                         // Log("W", address, value);
                     }
-                    else {
-                        if ((address >= 0x4000) && (address < 0x6000) && cartridge.memoryModel == 1) {
+                    else
+                    {
+                        if ((address >= 0x4000) && (address < 0x6000) && cartridge.memoryModel == 1)
+                        {
                             var bank = value & 0b11;
                             cartridge.currentRamBank = bank;
                         }
-                        else {
-                            if ((address >= 0x6000) && (address < 0x8000)) {
+                        else
+                        {
+                            if ((address >= 0x6000) && (address < 0x8000))
+                            {
                                 cartridge.memoryModel = value & 1;
                             }
                         }
@@ -355,22 +412,29 @@ namespace FrozenBoyCore.Memory
             }
         }
 
-        private int GetMBC1_RamAddress(int address) {
-            if (cartridge.memoryModel == 0) {
+        private int GetMBC1_RamAddress(int address)
+        {
+            if (cartridge.memoryModel == 0)
+            {
                 return address - 0xA000;
             }
-            else {
+            else
+            {
                 return (cartridge.currentRamBank % cartridge.ramBanks) * 0x2000 + (address - 0xA000);
             }
         }
 
-        private int GetMBC1_RomBankLow() {
-            if (cartridge.memoryModel == 0) {
+        private int GetMBC1_RomBankLow()
+        {
+            if (cartridge.memoryModel == 0)
+            {
                 return 0;
             }
-            else {
+            else
+            {
                 var bank = (cartridge.currentRamBank << 5);
-                if (cartridge.multicart) {
+                if (cartridge.multicart)
+                {
                     bank >>= 1;
                 }
 
@@ -379,18 +443,22 @@ namespace FrozenBoyCore.Memory
             }
         }
 
-        private int GetMBC1_RomBankHigh() {
+        private int GetMBC1_RomBankHigh()
+        {
             var bank = cartridge.currentRomBank;
-            if (bank % 0x20 == 0) {
+            if (bank % 0x20 == 0)
+            {
                 bank++;
             }
 
-            if (cartridge.memoryModel == 1) {
+            if (cartridge.memoryModel == 1)
+            {
                 bank &= 0b0001_1111;
                 bank |= (cartridge.currentRamBank << 5);
             }
 
-            if (cartridge.multicart) {
+            if (cartridge.multicart)
+            {
                 bank = ((bank >> 1) & 0x30) | (bank & 0x0f);
             }
 
@@ -399,8 +467,7 @@ namespace FrozenBoyCore.Memory
             return bank;
         }
 
-
-        //public void Log(string action, int adddress, int value) {
+        // public void Log(string action, int adddress, int value) {
 
         //    if (action.Equals("R") && adddress == 0x4000 && cartridge.currentRomBank == 3) {
         //        int z = 0;
@@ -410,6 +477,6 @@ namespace FrozenBoyCore.Memory
         //                             action, adddress, value, cartridge.currentRomBank, cartridge.currentRamBank,
         //                             cartridge.memoryModel, cartridge.ramWriteEnabled));
         //    logFile.Flush();
-        //}
+        // }
     }
 }
