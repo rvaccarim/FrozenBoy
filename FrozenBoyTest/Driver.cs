@@ -125,11 +125,11 @@ namespace FrozenBoyTest
             }
         }
 
-        public List<MD5_Item> GetExpected(string romFilename) {
+        public static List<MD5_Item> GetExpected(string romFilename) {
             var md5_list = new List<MD5_Item>();
 
             // Process the list of files found in the directory.
-            string[] fileEntries = Directory.GetFiles(Config.hashesPath);
+            string[] fileEntries = Directory.GetFiles(Config.gameHashesPath);
             foreach (string fileFullName in fileEntries) {
                 string fileName = Path.GetFileName(fileFullName);
 

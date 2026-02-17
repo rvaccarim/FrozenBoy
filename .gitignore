@@ -361,4 +361,9 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
+# VS Code
+.vscode
+
 FrozenBoyTest/TestData/TestROMs/boot/
+FrozenBoyTest/TestData/GameROMs/
+run.sh
