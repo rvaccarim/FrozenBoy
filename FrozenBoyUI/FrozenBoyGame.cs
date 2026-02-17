@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using FrozenBoyCore.Graphics;
 using FrozenBoyCore.Util;
+using SkiaSharp;
 
 namespace FrozenBoyUI
 {
@@ -173,47 +174,62 @@ namespace FrozenBoyUI
 
             if (scheduledScreenshot)
             {
-                // TakeScreenshotAndHash();
+                TakeScreenshotAndHash();
             }
 
         }
 
-        // private void TakeScreenshotAndHash() {
-        //     string outputFile = @"D:\Users\frozen\Documents\02_cold\c03_programming\emulation\FrozenBoy\FrozenBoyTest\hashes\" + romFilename + "_" + screenshotCount.ToString();
+        private void TakeScreenshotAndHash()
+        {
+            string screenshotPath = Path.Combine(AppContext.BaseDirectory, @"Screenshots");
+            Directory.CreateDirectory(screenshotPath);
+            string outputFile = Path.Combine(screenshotPath, romFilename + "_" + screenshotCount.ToString());
 
-        //     int width = 160;
-        //     int height = 144;
-        //     int bytesPerPixel = 4;
-        //     Bitmap bmp = BuildImage(backbuffer, width, height, width * bytesPerPixel, PixelFormat.Format32bppArgb);
-        //     bmp.Save(outputFile + ".png", ImageFormat.Png);
+            // hash the backbuffer
+            string result = Crypto.MD5(backbuffer);
+            File.WriteAllText(outputFile + ".hash.txt", result);
 
-        //     string result = Crypto.MD5(backbuffer);
-        //     File.WriteAllText(outputFile + ".hash.txt", result);
+            // the screenshot is just for reference, to know what was on the screen when the hash was calculated
+            int width = 160;
+            int height = 144;
+            int bytesPerPixel = 4;
+            int stride = width * bytesPerPixel;
+            using var bitmap = BuildImageZeroCopy(backbuffer, width, height, stride);
+            using var image = SKImage.FromBitmap(bitmap);
+            using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+            using var stream = File.OpenWrite(outputFile + ".png");
+            data.SaveTo(stream);
 
-        //     screenshotCount++;
-        //     scheduledScreenshot = false;
+            screenshotCount++;
+            scheduledScreenshot = false;
+        }
 
-        // }
+        private static SKBitmap BuildImageZeroCopy(byte[] sourceData, int width, int height, int stride)
+        {
+            bool isFlipped = stride < 0;
 
-        // private static Bitmap BuildImage(Byte[] sourceData, Int32 width, Int32 height, Int32 stride, PixelFormat pixelFormat) {
-        //     Bitmap newImage = new(width, height, pixelFormat);
-        //     BitmapData targetData = newImage.LockBits(new System.Drawing.Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, newImage.PixelFormat);
-        //     Int32 newDataWidth = ((Image.GetPixelFormatSize(pixelFormat) * width) + 7) / 8;
-        //     // Compensate for possible negative stride on BMP format.
-        //     Boolean isFlipped = stride < 0;
-        //     stride = Math.Abs(stride);
-        //     // Cache these to avoid unnecessary getter calls.
-        //     Int32 targetStride = targetData.Stride;
-        //     Int64 scan0 = targetData.Scan0.ToInt64();
-        //     for (Int32 y = 0; y < height; y++)
-        //         Marshal.Copy(sourceData, y * stride, new IntPtr(scan0 + y * targetStride), newDataWidth);
-        //     newImage.UnlockBits(targetData);
+            // SKColorType.Bgra8888 = Format32bppArgb equivalent
+            var info = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
+            var bitmap = new SKBitmap();
 
-        //     // Fix negative stride on BMP format.
-        //     if (isFlipped)
-        //         newImage.RotateFlip(RotateFlipType.Rotate180FlipX);
+            GCHandle handle = GCHandle.Alloc(sourceData, GCHandleType.Pinned);
+            IntPtr basePtr = handle.AddrOfPinnedObject();
 
-        //     return newImage;
-        // }
+            if (isFlipped)
+            {
+                stride = Math.Abs(stride);
+
+                // Move pointer to last row
+                basePtr = IntPtr.Add(basePtr, stride * (height - 1));
+
+                // Use negative rowBytes so Skia walks upward
+                stride = -stride;
+            }
+
+            bitmap.InstallPixels(info, basePtr, stride, (_, ctx) => ((GCHandle)ctx!).Free(), handle);
+
+            return bitmap;
+        }
+
     }
 }
