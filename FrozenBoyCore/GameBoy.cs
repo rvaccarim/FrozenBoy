@@ -3,6 +3,7 @@ using FrozenBoyCore.Graphics;
 using FrozenBoyCore.Memory;
 using FrozenBoyCore.Controls;
 using FrozenBoyCore.Serial;
+using System.IO;
 
 namespace FrozenBoyCore
 {
@@ -32,6 +33,11 @@ namespace FrozenBoyCore
             cpu = new CPU(mmu, timer, intManager, gpu);
 
             dma.SetMMU(mmu);
+
+            if (!gbOptions.RomPath.EndsWith(Path.DirectorySeparatorChar))
+            {
+                gbOptions.RomPath += Path.DirectorySeparatorChar;
+            }
 
             mmu.LoadData(gbOptions.RomPath + gbOptions.RomFilename);
         }

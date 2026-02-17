@@ -13,7 +13,8 @@ using FrozenBoyCore.Util;
 
 namespace FrozenBoyUI
 {
-    public class FrozenBoyGame : Game {
+    public class FrozenBoyGame : Game
+    {
         private readonly GraphicsDeviceManager graphics;
         private SpriteBatch spriteBatch;
         private GameBoy gameboy;
@@ -28,7 +29,8 @@ namespace FrozenBoyUI
         // 4194304 / 60
         private const int CYCLES_FOR_60FPS = 69905;
 
-        public FrozenBoyGame() {
+        public FrozenBoyGame()
+        {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
 
@@ -40,44 +42,44 @@ namespace FrozenBoyUI
 
         }
 
-        protected override void Initialize() {
-            // loading a rom and starting emulation
-            System.Windows.Forms.OpenFileDialog ofd = new()
+        protected override void Initialize()
+        {
+            string[] args = Environment.GetCommandLineArgs();
+
+            if (args.Length > 1 && File.Exists(args[1]))
             {
-                DefaultExt = ".gb",
-                Filter = "ROM files (.gb)|*.gb",
-                Multiselect = false
-            };
+                string fullPath = args[1];
 
-            System.Windows.Forms.DialogResult result = ofd.ShowDialog();
-            if (result == System.Windows.Forms.DialogResult.OK) {
-                romFilename = Path.GetFileName(ofd.FileName);
-                romPath = Path.GetDirectoryName(ofd.FileName) + @"\";
+                romFilename = Path.GetFileName(fullPath);
+                romPath = Path.GetDirectoryName(fullPath)! + Path.DirectorySeparatorChar;
 
-                GameOptions gbOptions = new(romFilename, romPath, GetGreenPalette());
-                gameboy = new GameBoy(gbOptions);
-
+                GameOptions gbOoptions = new(romFilename, romPath, GetGreenPalette());
+                gameboy = new GameBoy(gbOoptions);
                 base.Window.Title = "FrozenBoy - " + romFilename;
-
             }
-            else {
+            else
+            {
+                Console.WriteLine("Usage: FrozenBoy <romfile.gb>");
                 Environment.Exit(0);
             }
 
             base.Initialize();
         }
 
-        protected override void LoadContent() {
+        protected override void LoadContent()
+        {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
             gameboyBuffer = new Texture2D(GraphicsDevice, 160, 144);
         }
 
-        protected override void UnloadContent() {
+        protected override void UnloadContent()
+        {
 
         }
 
-        protected override void Update(GameTime gameTime) {
+        protected override void Update(GameTime gameTime)
+        {
             KeyboardState keyboardState = Keyboard.GetState();
 
             // inputs
@@ -93,7 +95,8 @@ namespace FrozenBoyUI
             // upload backbuffer to texture
             backbuffer = gameboy.gpu.GetScreenBuffer();
 
-            if (keyboardState.IsKeyDown(Keys.F10) && !scheduledScreenshot) {
+            if (keyboardState.IsKeyDown(Keys.F10) && !scheduledScreenshot)
+            {
                 scheduledScreenshot = true;
                 // F10 was being reported as pressed multiple times so multiple screenshots were being generated
                 Thread.Sleep(1500);
@@ -105,7 +108,8 @@ namespace FrozenBoyUI
             base.Update(gameTime);
         }
 
-        private static GPU_Palette GetGreenPalette() {
+        private static GPU_Palette GetGreenPalette()
+        {
             GPU_Color white = new(224, 248, 208, 255);
             GPU_Color lightGray = new(136, 192, 112, 255);
             GPU_Color darkGray = new(52, 104, 86, 255);
@@ -113,7 +117,8 @@ namespace FrozenBoyUI
             return new GPU_Palette(white, lightGray, darkGray, black);
         }
 
-        public static GPU_Palette GetWhitePalette() {
+        public static GPU_Palette GetWhitePalette()
+        {
             GPU_Color white = new(255, 255, 255, 255);
             GPU_Color lightGray = new(170, 170, 170, 255);
             GPU_Color darkGray = new(85, 85, 85, 255);
@@ -121,7 +126,8 @@ namespace FrozenBoyUI
             return new GPU_Palette(white, lightGray, darkGray, black);
         }
 
-        protected override void Draw(GameTime gameTime) {
+        protected override void Draw(GameTime gameTime)
+        {
             GraphicsDevice.Clear(Microsoft.Xna.Framework.Color.Black);
 
             // compute bounds
@@ -130,12 +136,14 @@ namespace FrozenBoyUI
             float aspectRatio = GraphicsDevice.Viewport.Bounds.Width / (float)GraphicsDevice.Viewport.Bounds.Height;
             float targetAspectRatio = 160.0f / 144.0f;
 
-            if (aspectRatio > targetAspectRatio) {
+            if (aspectRatio > targetAspectRatio)
+            {
                 int targetWidth = (int)(bounds.Height * targetAspectRatio);
                 bounds.X = (bounds.Width - targetWidth) / 2;
                 bounds.Width = targetWidth;
             }
-            else if (aspectRatio < targetAspectRatio) {
+            else if (aspectRatio < targetAspectRatio)
+            {
                 int targetHeight = (int)(bounds.Width / targetAspectRatio);
                 bounds.Y = (bounds.Height - targetHeight) / 2;
                 bounds.Height = targetHeight;
@@ -154,55 +162,58 @@ namespace FrozenBoyUI
 
         }
 
-        private void UpdateWorld() {
+        private void UpdateWorld()
+        {
             int cyclesThisUpdate = 0;
 
-            while (cyclesThisUpdate < CYCLES_FOR_60FPS) {
+            while (cyclesThisUpdate < CYCLES_FOR_60FPS)
+            {
                 cyclesThisUpdate += gameboy.Step();
             }
 
-            if (scheduledScreenshot) {
-                TakeScreenshotAndHash();
+            if (scheduledScreenshot)
+            {
+                // TakeScreenshotAndHash();
             }
 
         }
 
-        private void TakeScreenshotAndHash() {
-            string outputFile = @"D:\Users\frozen\Documents\02_cold\c03_programming\emulation\FrozenBoy\FrozenBoyTest\hashes\" + romFilename + "_" + screenshotCount.ToString();
+        // private void TakeScreenshotAndHash() {
+        //     string outputFile = @"D:\Users\frozen\Documents\02_cold\c03_programming\emulation\FrozenBoy\FrozenBoyTest\hashes\" + romFilename + "_" + screenshotCount.ToString();
 
-            int width = 160;
-            int height = 144;
-            int bytesPerPixel = 4;
-            Bitmap bmp = BuildImage(backbuffer, width, height, width * bytesPerPixel, PixelFormat.Format32bppArgb);
-            bmp.Save(outputFile + ".png", ImageFormat.Png);
+        //     int width = 160;
+        //     int height = 144;
+        //     int bytesPerPixel = 4;
+        //     Bitmap bmp = BuildImage(backbuffer, width, height, width * bytesPerPixel, PixelFormat.Format32bppArgb);
+        //     bmp.Save(outputFile + ".png", ImageFormat.Png);
 
-            string result = Crypto.MD5(backbuffer);
-            File.WriteAllText(outputFile + ".hash.txt", result);
+        //     string result = Crypto.MD5(backbuffer);
+        //     File.WriteAllText(outputFile + ".hash.txt", result);
 
-            screenshotCount++;
-            scheduledScreenshot = false;
+        //     screenshotCount++;
+        //     scheduledScreenshot = false;
 
-        }
+        // }
 
-        private static Bitmap BuildImage(Byte[] sourceData, Int32 width, Int32 height, Int32 stride, PixelFormat pixelFormat) {
-            Bitmap newImage = new(width, height, pixelFormat);
-            BitmapData targetData = newImage.LockBits(new System.Drawing.Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, newImage.PixelFormat);
-            Int32 newDataWidth = ((Image.GetPixelFormatSize(pixelFormat) * width) + 7) / 8;
-            // Compensate for possible negative stride on BMP format.
-            Boolean isFlipped = stride < 0;
-            stride = Math.Abs(stride);
-            // Cache these to avoid unnecessary getter calls.
-            Int32 targetStride = targetData.Stride;
-            Int64 scan0 = targetData.Scan0.ToInt64();
-            for (Int32 y = 0; y < height; y++)
-                Marshal.Copy(sourceData, y * stride, new IntPtr(scan0 + y * targetStride), newDataWidth);
-            newImage.UnlockBits(targetData);
+        // private static Bitmap BuildImage(Byte[] sourceData, Int32 width, Int32 height, Int32 stride, PixelFormat pixelFormat) {
+        //     Bitmap newImage = new(width, height, pixelFormat);
+        //     BitmapData targetData = newImage.LockBits(new System.Drawing.Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, newImage.PixelFormat);
+        //     Int32 newDataWidth = ((Image.GetPixelFormatSize(pixelFormat) * width) + 7) / 8;
+        //     // Compensate for possible negative stride on BMP format.
+        //     Boolean isFlipped = stride < 0;
+        //     stride = Math.Abs(stride);
+        //     // Cache these to avoid unnecessary getter calls.
+        //     Int32 targetStride = targetData.Stride;
+        //     Int64 scan0 = targetData.Scan0.ToInt64();
+        //     for (Int32 y = 0; y < height; y++)
+        //         Marshal.Copy(sourceData, y * stride, new IntPtr(scan0 + y * targetStride), newDataWidth);
+        //     newImage.UnlockBits(targetData);
 
-            // Fix negative stride on BMP format.
-            if (isFlipped)
-                newImage.RotateFlip(RotateFlipType.Rotate180FlipX);
+        //     // Fix negative stride on BMP format.
+        //     if (isFlipped)
+        //         newImage.RotateFlip(RotateFlipType.Rotate180FlipX);
 
-            return newImage;
-        }
+        //     return newImage;
+        // }
     }
 }
